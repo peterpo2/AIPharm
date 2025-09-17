@@ -1,4 +1,6 @@
+# =========================================
 # Logs
+# =========================================
 logs
 *.log
 npm-debug.log*
@@ -7,19 +9,74 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# =========================================
+# Frontend (Node / Vite)
+# =========================================
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
+# =========================================
+# Environment files
+# =========================================
+.env
+.env.*.local
+
+# =========================================
+# OS / Editor junk
+# =========================================
+.DS_Store
+Thumbs.db
+.idea/
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.env
+
+# =========================================
+# .NET / Visual Studio
+# =========================================
+.vs/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# Generated files
+*.dbmdl
+*.bak
+*.backup
+*.mdf
+*.ldf
+*.log
+*.nupkg
+*.snupkg
+
+# Test results
+TestResult*/
+[Bb]enchmarkDotNet.Artifacts/
+
+# Publish artifacts
+*.Publish.xml
+*.pubxml
+*.publishsettings
+
+# Others
+_ReSharper*/
+*.resharper
+*.DotSettings
