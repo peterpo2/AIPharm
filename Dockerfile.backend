@@ -1,0 +1,34 @@
+# ---------- build stage ----------
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy solution and project files for restore
+COPY AIPharm.Backend/AIPharm.sln AIPharm.Backend/
+COPY AIPharm.Backend/AIPharm.Core/AIPharm.Core.csproj AIPharm.Backend/AIPharm.Core/
+COPY AIPharm.Backend/AIPharm.Domain/AIPharm.Domain.csproj AIPharm.Backend/AIPharm.Domain/
+COPY AIPharm.Backend/AIPharm.Infrastructure/AIPharm.Infrastructure.csproj AIPharm.Backend/AIPharm.Infrastructure/
+COPY AIPharm.Backend/AIPharm.Web/AIPharm.Web.csproj AIPharm.Backend/AIPharm.Web/
+
+# Restore dependencies
+RUN dotnet restore AIPharm.Backend/AIPharm.sln
+
+# Copy the rest of the source code
+COPY AIPharm.Backend/ ./AIPharm.Backend/
+
+# Publish the app to the /out directory
+RUN dotnet publish AIPharm.Backend/AIPharm.Web/AIPharm.Web.csproj -c Release -o /out /p:UseAppHost=false
+
+# ---------- runtime stage ----------
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+
+# Copy the published files from the build stage to runtime
+COPY --from=build /out/ ./
+
+# Check if the files are in place
+RUN ls -la /app
+
+EXPOSE 5000
+
+# Entry point to run the app
+ENTRYPOINT ["dotnet", "AIPharm.Web.dll"]

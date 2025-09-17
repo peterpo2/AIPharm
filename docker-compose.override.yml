@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ./AIPharm.Backend:/app
+    ports:
+      - "5000:5000"
+      - "5001:5001"  # HTTPS port if needed
+
+  frontend:
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./src:/app/src:cached
+      - ./public:/app/public:cached
+      - /app/node_modules  # Anonymous volume for node_modules
+
+  database:
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=AIPharm123!

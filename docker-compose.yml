@@ -1,0 +1,78 @@
+services:
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: aipharm-database
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=AIPharm123!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - aipharm-network
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'SQL Server is now ready for client connections' /var/opt/mssql/log/errorlog"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 25s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: aipharm-backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Server=database,1433;Database=AIPharm;User Id=sa;Password=AIPharm123!;TrustServerCertificate=true;MultipleActiveResultSets=true
+      - Jwt__Key=AIPharm-Super-Secret-Key-For-JWT-Tokens-2024-Very-Long-Key-Docker
+      - Jwt__Issuer=AIPharm
+      - Jwt__Audience=AIPharm-Users
+    ports:
+      - "5000:5000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - aipharm-network
+    restart: unless-stopped
+    healthcheck:
+      # Using curl to check health, ensure curl is installed in the image
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s  # Increased start period
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: aipharm-frontend
+    environment:
+      # The frontend talks to the backend service by name, not localhost
+      - VITE_API_BASE_URL=http://backend:5000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - aipharm-network
+    restart: unless-stopped
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      - ./package.json:/app/package.json
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./tailwind.config.js:/app/tailwind.config.js
+
+networks:
+  aipharm-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:

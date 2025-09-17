@@ -1,0 +1,143 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\AIPharm\\AIPharm.Backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{8B5CA653-AD3D-4C80-BCFB-F1DD78C256ED}|AIPharm.Web\\AIPharm.Web.csproj|c:\\aipharm\\aipharm.backend\\aipharm.web\\aipharm.web.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{8B5CA653-AD3D-4C80-BCFB-F1DD78C256ED}|AIPharm.Web\\AIPharm.Web.csproj|solutionrelative:aipharm.web\\aipharm.web.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8B5CA653-AD3D-4C80-BCFB-F1DD78C256ED}|AIPharm.Web\\AIPharm.Web.csproj|c:\\aipharm\\aipharm.backend\\aipharm.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8B5CA653-AD3D-4C80-BCFB-F1DD78C256ED}|AIPharm.Web\\AIPharm.Web.csproj|solutionrelative:aipharm.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4E7A4AD8-AD6C-4E82-BCFB-F1DD78C256F0}|AIPharm.Infrastructure\\AIPharm.Infrastructure.csproj|c:\\aipharm\\aipharm.backend\\aipharm.infrastructure\\aipharm.infrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{4E7A4AD8-AD6C-4E82-BCFB-F1DD78C256F0}|AIPharm.Infrastructure\\AIPharm.Infrastructure.csproj|solutionrelative:aipharm.infrastructure\\aipharm.infrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3D6839C7-9C6B-4D81-BCFB-F1DD78C256EF}|AIPharm.Domain\\AIPharm.Domain.csproj|c:\\aipharm\\aipharm.backend\\aipharm.domain\\aipharm.domain.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{3D6839C7-9C6B-4D81-BCFB-F1DD78C256EF}|AIPharm.Domain\\AIPharm.Domain.csproj|solutionrelative:aipharm.domain\\aipharm.domain.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2C5728B6-8B5A-4C80-BCFB-F1DD78C256EE}|AIPharm.Core\\AIPharm.Core.csproj|c:\\aipharm\\aipharm.backend\\aipharm.core\\aipharm.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{2C5728B6-8B5A-4C80-BCFB-F1DD78C256EE}|AIPharm.Core\\AIPharm.Core.csproj|solutionrelative:aipharm.core\\aipharm.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\AIPharm\\src\\services\\api.ts||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4E7A4AD8-AD6C-4E82-BCFB-F1DD78C256F0}|AIPharm.Infrastructure\\AIPharm.Infrastructure.csproj|c:\\aipharm\\aipharm.backend\\aipharm.infrastructure\\data\\aipharmdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4E7A4AD8-AD6C-4E82-BCFB-F1DD78C256F0}|AIPharm.Infrastructure\\AIPharm.Infrastructure.csproj|solutionrelative:aipharm.infrastructure\\data\\aipharmdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "AIPharm.Infrastructure.csproj",
+              "DocumentMoniker": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Infrastructure\\AIPharm.Infrastructure.csproj",
+              "RelativeDocumentMoniker": "AIPharm.Infrastructure\\AIPharm.Infrastructure.csproj",
+              "ToolTip": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Infrastructure\\AIPharm.Infrastructure.csproj",
+              "RelativeToolTip": "AIPharm.Infrastructure\\AIPharm.Infrastructure.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-09-17T18:08:43.762Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "AIPharm.Domain.csproj",
+              "DocumentMoniker": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Domain\\AIPharm.Domain.csproj",
+              "RelativeDocumentMoniker": "AIPharm.Domain\\AIPharm.Domain.csproj",
+              "ToolTip": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Domain\\AIPharm.Domain.csproj",
+              "RelativeToolTip": "AIPharm.Domain\\AIPharm.Domain.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-09-17T18:08:39.68Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "AIPharm.Core.csproj",
+              "DocumentMoniker": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Core\\AIPharm.Core.csproj",
+              "RelativeDocumentMoniker": "AIPharm.Core\\AIPharm.Core.csproj",
+              "ToolTip": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Core\\AIPharm.Core.csproj",
+              "RelativeToolTip": "AIPharm.Core\\AIPharm.Core.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-09-17T18:08:35.382Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AIPharm.Web.csproj",
+              "DocumentMoniker": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Web\\AIPharm.Web.csproj",
+              "RelativeDocumentMoniker": "AIPharm.Web\\AIPharm.Web.csproj",
+              "ToolTip": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Web\\AIPharm.Web.csproj",
+              "RelativeToolTip": "AIPharm.Web\\AIPharm.Web.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAgwBwAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-09-17T10:11:30.916Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "AIPharmDbContext.cs",
+              "DocumentMoniker": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Infrastructure\\Data\\AIPharmDbContext.cs",
+              "RelativeDocumentMoniker": "AIPharm.Infrastructure\\Data\\AIPharmDbContext.cs",
+              "ToolTip": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Infrastructure\\Data\\AIPharmDbContext.cs",
+              "RelativeToolTip": "AIPharm.Infrastructure\\Data\\AIPharmDbContext.cs",
+              "ViewState": "AgIAACoAAAAAAAAAAAAgwGkAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-17T10:05:19.751Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "api.ts",
+              "DocumentMoniker": "C:\\AIPharm\\src\\services\\api.ts",
+              "RelativeDocumentMoniker": "..\\src\\services\\api.ts",
+              "ToolTip": "C:\\AIPharm\\src\\services\\api.ts",
+              "RelativeToolTip": "..\\src\\services\\api.ts",
+              "ViewState": "AgIAAMUAAAAAAAAAAAAUwPMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2025-09-17T10:01:06.737Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Web\\Program.cs",
+              "RelativeDocumentMoniker": "AIPharm.Web\\Program.cs",
+              "ToolTip": "C:\\AIPharm\\AIPharm.Backend\\AIPharm.Web\\Program.cs",
+              "RelativeToolTip": "AIPharm.Web\\Program.cs",
+              "ViewState": "AgIAAFQAAAAAAAAAAAAcwHkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-17T09:59:53.708Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
