@@ -6,4 +6,5 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- No project references here -->
 </Project>
