@@ -1,511 +1,186 @@
-*** Update File: Dockerfile.backend
-@@
- # ---------- build stage ----------
- FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
- WORKDIR /src
- 
- COPY AIPharm.Backend/AIPharm.sln ./AIPharm.sln
- COPY AIPharm.Backend/AIPharm.Web/AIPharm.Web.csproj AIPharm.Web/
- COPY AIPharm.Backend/AIPharm.Core/AIPharm.Core.csproj AIPharm.Core/
- COPY AIPharm.Backend/AIPharm.Domain/AIPharm.Domain.csproj AIPharm.Domain/
- COPY AIPharm.Backend/AIPharm.Infrastructure/AIPharm.Infrastructure.csproj AIPharm.Infrastructure/
- 
- RUN dotnet restore AIPharm.sln
- 
- COPY AIPharm.Backend/ ./
- 
- RUN dotnet publish AIPharm.Web/AIPharm.Web.csproj -c Release -o /out /p:UseAppHost=false
- 
- # ---------- runtime stage ----------
- FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
- WORKDIR /app
- COPY --from=build /out .
- 
--# Debug list
--RUN echo "=== FINAL CONTENT ===" && ls -la /app
--
--# Use wildcard to ignore case
--ENTRYPOINT ["dotnet", "/app/AIPharm.Web.dll"]
-+# Run the web app
-+ENTRYPOINT ["dotnet", "AIPharm.Web.dll"]
-
-*** Update File: docker-compose.yml
-@@
-   backend:
-     build:
-       context: .
-       dockerfile: Dockerfile.backend
-     container_name: aipharm-backend
-     environment:
-       - ASPNETCORE_ENVIRONMENT=Development
-       - ASPNETCORE_URLS=http://+:8080
-+      # Drop & recreate DB on each backend start (dev only)
-+      - DROP_DB_ON_STARTUP=true
-       - ConnectionStrings__DefaultConnection=Server=database,1433;Database=AIPharm;User Id=sa;Password=AIPharm123!;TrustServerCertificate=true;MultipleActiveResultSets=true
-       - Jwt__Key=AIPharm-Super-Secret-Key-For-JWT-Tokens-2024-Very-Long-Key-Docker
-       - Jwt__Issuer=AIPharm
-       - Jwt__Audience=AIPharm-Users
-     ports:
-       - "8081:8080"
 *** Update File: AIPharm.Backend/AIPharm.Infrastructure/Data/AIPharmDbContext.cs
 @@
- using Microsoft.EntityFrameworkCore;
- using AIPharm.Domain.Entities;
- 
- namespace AIPharm.Infrastructure.Data
- {
-     public class AIPharmDbContext : DbContext
-     {
-         public AIPharmDbContext(DbContextOptions<AIPharmDbContext> options) : base(options)
-         {
-         }
- 
-         public DbSet<User> Users { get; set; }
-         public DbSet<Category> Categories { get; set; }
-         public DbSet<Product> Products { get; set; }
-         public DbSet<ShoppingCart> ShoppingCarts { get; set; }
-         public DbSet<CartItem> CartItems { get; set; }
-         public DbSet<Order> Orders { get; set; }
-         public DbSet<OrderItem> OrderItems { get; set; }
- 
-         protected override void OnModelCreating(ModelBuilder modelBuilder)
-         {
-             base.OnModelCreating(modelBuilder);
- 
-             // User configuration
+             // ===== USERS =====
              modelBuilder.Entity<User>(entity =>
              {
+                 entity.ToTable("Users", "dbo");
                  entity.HasKey(e => e.Id);
++                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+ 
                  entity.HasIndex(e => e.Email).IsUnique();
                  entity.Property(e => e.Email).IsRequired();
-+                entity.Property(e => e.PasswordHash)
-+                      .HasMaxLength(512);
++                // allow long password hashes
++                entity.Property(e => e.PasswordHash).HasMaxLength(512);
              });
- 
-             // Category configuration
+@@
+             // ===== CATEGORIES =====
              modelBuilder.Entity<Category>(entity =>
              {
+                 entity.ToTable("Categories", "dbo");
                  entity.HasKey(e => e.Id);
-                 entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-                 entity.Property(e => e.Icon).IsRequired().HasMaxLength(50);
-                 entity.HasQueryFilter(e => !e.IsDeleted);
-             });
  
-             // Product configuration
+-                entity.Property(e => e.Id)
+-                      .ValueGeneratedOnAdd();  
++                entity.Property(e => e.Id)
++                      .UseIdentityColumn()
++                      .ValueGeneratedOnAdd();
+@@
+             // ===== PRODUCTS =====
              modelBuilder.Entity<Product>(entity =>
              {
+                 entity.ToTable("Products", "dbo");
                  entity.HasKey(e => e.Id);
-                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
--                entity.Property(e => e.Price).HasColumnType("decimal(10,2)");
--                entity.Property(e => e.Rating).HasColumnType("decimal(3,2)");
-+                entity.Property(e => e.Price).HasColumnType("decimal(10,2)");
-+                entity.Property(e => e.Rating).HasColumnType("decimal(3,2)");
- 
-                 entity.HasOne(e => e.Category)
-                       .WithMany(e => e.Products)
-                       .HasForeignKey(e => e.CategoryId)
-                       .OnDelete(DeleteBehavior.Restrict);
- 
-                 entity.HasQueryFilter(e => !e.IsDeleted);
-             });
- 
-             // ShoppingCart configuration
-             modelBuilder.Entity( typeof(ShoppingCart) , entity =>
++                entity.Property(e => e.Id).UseIdentityColumn().ValueGeneratedOnAdd();
+@@
+             // ===== SHOPPING CARTS =====
+             modelBuilder.Entity<ShoppingCart>(entity =>
              {
-                 var e = modelBuilder.Entity<ShoppingCart>();
-                 e.HasKey(sc => sc.Id);
-                 e.HasOne(sc => sc.User)
-                  .WithMany(u => u.ShoppingCarts)
-                  .HasForeignKey(sc => sc.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
-             });
- 
-             // CartItem configuration
+                 entity.ToTable("ShoppingCarts", "dbo");
+                 entity.HasKey(e => e.Id);
++                entity.Property(e => e.Id).UseIdentityColumn().ValueGeneratedOnAdd();
+@@
+             // ===== CART ITEMS =====
              modelBuilder.Entity<CartItem>(entity =>
              {
+                 entity.ToTable("CartItems", "dbo");
                  entity.HasKey(e => e.Id);
-                 entity.Property(e => e.UnitPrice).HasColumnType("decimal(10,2)");
- 
-                 entity.HasOne(e => e.ShoppingCart)
-                       .WithMany(e => e.Items)
-                       .HasForeignKey(e => e.ShoppingCartId)
-                       .OnDelete(DeleteBehavior.Cascade);
- 
-                 entity.HasOne(e => e.Product)
-                       .WithMany(e => e.CartItems)
-                       .HasForeignKey(e => e.ProductId)
-                       .OnDelete(DeleteBehavior.Restrict);
-             });
- 
-             // Order configuration
++                entity.Property(e => e.Id).UseIdentityColumn().ValueGeneratedOnAdd();
+@@
+             // ===== ORDERS =====
              modelBuilder.Entity<Order>(entity =>
              {
+                 entity.ToTable("Orders", "dbo");
                  entity.HasKey(e => e.Id);
-                 entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(100);
-                 entity.Property(e => e.Total).HasColumnType("decimal(10,2)");
-                 entity.Property(e => e.DeliveryFee).HasColumnType("decimal(10,2)");
- 
-                 entity.HasOne(e => e.User)
-                       .WithMany(e => e.Orders)
-                       .HasForeignKey(e => e.UserId)
-                       .OnDelete(DeleteBehavior.Restrict);
-             });
- 
-             // OrderItem configuration
++                entity.Property(e => e.Id).UseIdentityColumn().ValueGeneratedOnAdd();
+@@
+             // ===== ORDER ITEMS =====
              modelBuilder.Entity<OrderItem>(entity =>
              {
+                 entity.ToTable("OrderItems", "dbo");
                  entity.HasKey(e => e.Id);
-                 entity.Property(e => e.UnitPrice).HasColumnType("decimal(10,2)");
-                 entity.Property(e => e.ProductName).IsRequired().HasMaxLength(200);
- 
-                 entity.HasOne(e => e.Order)
-                       .WithMany(e => e.Items)
-                       .HasForeignKey(e => e.OrderId)
-                       .OnDelete(DeleteBehavior.Cascade);
- 
-                 entity.HasOne(e => e.Product)
-                       .WithMany(e => e.OrderItems)
-                       .HasForeignKey(e => e.ProductId)
-                       .OnDelete(DeleteBehavior.Restrict);
-             });
-         }
-     }
- }
-*** Add File: AIPharm.Backend/AIPharm.Core/Security/PasswordHasher.cs
-+using System.Security.Cryptography;
-+using System.Text;
-+
-+namespace AIPharm.Core.Security
-+{
-+    public static class PasswordHasher
-+    {
-+        // Hash format: {iterations}.{saltBase64}.{hashBase64}
-+        public static string Hash(string password, int iterations = 100_000)
-+        {
-+            using var rng = RandomNumberGenerator.Create();
-+            var salt = new byte[16];
-+            rng.GetBytes(salt);
-+
-+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
-+            var hash = pbkdf2.GetBytes(32);
-+            return $"{iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
-+        }
-+
-+        public static bool Verify(string password, string stored)
-+        {
-+            if (string.IsNullOrWhiteSpace(stored)) return false;
-+            var parts = stored.Split('.');
-+            if (parts.Length != 3) return false;
-+
-+            var iterations = int.Parse(parts[0]);
-+            var salt = Convert.FromBase64String(parts[1]);
-+            var expected = Convert.FromBase64String(parts[2]);
-+
-+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
-+            var actual = pbkdf2.GetBytes(32);
-+            return CryptographicOperations.FixedTimeEquals(actual, expected);
-+        }
-+    }
-+}
-*** Add File: AIPharm.Backend/AIPharm.Infrastructure/Data/DbInitializer.cs
-+using AIPharm.Core.Security;
-+using AIPharm.Domain.Entities;
-+using Microsoft.EntityFrameworkCore;
-+
-+namespace AIPharm.Infrastructure.Data
-+{
-+    public static class DbInitializer
-+    {
-+        public static async Task InitializeAsync(AIPharmDbContext ctx, bool dropAndRecreate, CancellationToken ct = default)
-+        {
-+            if (dropAndRecreate)
-+            {
-+                await ctx.Database.EnsureDeletedAsync(ct);
-+            }
-+
-+            await ctx.Database.MigrateAsync(ct);
-+
-+            // Seed only if empty
-+            if (await ctx.Categories.AnyAsync(ct)) return;
-+
-+            var categories = new[]
-+            {
-+                new Category { Name = "Обезболяващи", Description = "Лекарства за облекчаване на болка и възпаление", Icon = "pill" },
-+                new Category { Name = "Витамини", Description = "Хранителни добавки и витамини", Icon = "heart" },
-+                new Category { Name = "Простуда и грип", Description = "Лекарства за простуда, кашлица и грип", Icon = "thermometer" },
-+                new Category { Name = "Стомашно-чревни", Description = "Лекарства за храносмилателни проблеми", Icon = "stomach" },
-+                new Category { Name = "Кожа и коса", Description = "Козметика и дермато-козметични продукти", Icon = "droplet" },
-+                new Category { Name = "Детски продукти", Description = "Специализирани продукти за деца", Icon = "baby" }
-+            };
-+            await ctx.Categories.AddRangeAsync(categories, ct);
-+            await ctx.SaveChangesAsync(ct);
-+
-+            var cat = categories.ToDictionary(c => c.Name);
-+
-+            var products = new[]
-+            {
-+                new Product { Name = "Парацетамол 500мг", Price = 2.30m, Rating = 4.70m, StockQuantity = 150, CategoryId = cat["Обезболяващи"].Id, RequiresPrescription = false },
-+                new Product { Name = "Ибупрофен 400мг",   Price = 3.17m, Rating = 4.50m, StockQuantity = 95,  CategoryId = cat["Обезболяващи"].Id, RequiresPrescription = false },
-+                new Product { Name = "Витамин C 1000мг",   Price = 6.54m, Rating = 4.80m, StockQuantity = 200, CategoryId = cat["Витамини"].Id,      RequiresPrescription = false },
-+                new Product { Name = "Магнезий + B6",      Price = 7.98m, Rating = 4.60m, StockQuantity = 75,  CategoryId = cat["Витамини"].Id,      RequiresPrescription = false }
-+            };
-+            await ctx.Products.AddRangeAsync(products, ct);
-+
-+            var admin = new User
-+            {
-+                Email = "admin@aipharm.bg",
-+                FullName = "AIPharm Admin",
-+                IsAdmin = true,
-+                PasswordHash = PasswordHasher.Hash("Admin123!")
-+            };
-+            var demo = new User
-+            {
-+                Email = "demo@aipharm.bg",
-+                FullName = "AIPharm Demo",
-+                IsAdmin = false,
-+                PasswordHash = PasswordHasher.Hash("Demo123!")
-+            };
-+            await ctx.Users.AddRangeAsync(admin, demo, ct);
-+
-+            await ctx.SaveChangesAsync(ct);
-+        }
-+    }
-+}
-*** Update File: AIPharm.Backend/AIPharm.Web/Controllers/AuthController.cs
++                entity.Property(e => e.Id).UseIdentityColumn().ValueGeneratedOnAdd();
+*** Update File: AIPharm.Backend/AIPharm.Infrastructure/Data/DbInitializer.cs
 @@
- using Microsoft.AspNetCore.Mvc;
- using Microsoft.AspNetCore.Authorization;
- using Microsoft.IdentityModel.Tokens;
- using System.IdentityModel.Tokens.Jwt;
- using System.Security.Claims;
- using System.Text;
- using AIPharm.Core.Interfaces;
- using AIPharm.Domain.Entities;
-+using AIPharm.Core.Security;
+-            await context.Database.MigrateAsync(ct);
++            await context.Database.MigrateAsync(ct);
  
- namespace AIPharm.Web.Controllers
- {
-     [ApiController]
-     [Route("api/[controller]")]
-     public class AuthController : ControllerBase
-     {
-         private readonly IRepository<User> _userRepository;
-         private readonly IConfiguration _configuration;
+             // If we already have data → skip
+             if (await context.Categories.AnyAsync(ct))
+                 return;
  
-         public AuthController(IRepository<User> userRepository, IConfiguration configuration)
-         {
-             _userRepository = userRepository;
-             _configuration = configuration;
-         }
- 
-         [HttpPost("login")]
-         public async Task<IActionResult> Login([FromBody] LoginRequest request)
-         {
-             try
+             // --- Categories ---
+-            var categories = new List<Category>
++            var now = DateTime.UtcNow;
++            var categories = new List<Category>
              {
-                 // Find user
-                 var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == request.Email);
--                
--                if (user == null)
--                {
--                    return Ok(new { success = false, message = "Невалиден имейл или парола" });
--                }
--
--                // Demo password check - in production use proper password verification
--                var isValidPassword = (request.Email == "admin@aipharm.bg" && request.Password == "Admin123!") ||
--                                    (request.Email == "demo@aipharm.bg" && request.Password == "Demo123!");
--
--                if (!isValidPassword)
--                {
--                    return Ok(new { success = false, message = "Невалиден имейл или парола" });
--                }
-+                if (user == null || string.IsNullOrWhiteSpace(user.PasswordHash) || !PasswordHasher.Verify(request.Password, user.PasswordHash))
-+                    return Ok(new { success = false, message = "Невалиден имейл или парола" });
- 
-                 // Generate JWT token
-                 var token = GenerateJwtToken(user);
-                 
-                 return Ok(new 
-                 { 
-                     success = true, 
-                     message = "Успешен вход",
-                     token = token,
-                     user = new 
-                     {
-                         id = user.Id,
-                         email = user.Email,
-                         fullName = user.FullName,
-                         phoneNumber = user.PhoneNumber,
-                         address = user.Address,
-                         isAdmin = user.IsAdmin,
-                         createdAt = user.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                         isDeleted = user.IsDeleted
-                     }
-                 });
-             }
-             catch (Exception ex)
-             {
-                 return StatusCode(500, new { success = false, message = "Грешка в сървъра", error = ex.Message });
-             }
-         }
- 
-         [HttpPost("register")]
-         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
-         {
-             try
-             {
-                 // Check if user already exists
-                 var existingUser = await _userRepository.FirstOrDefaultAsync(u => u.Email == request.Email);
-                 if (existingUser != null)
-                 {
-                     return Ok(new { success = false, message = "Потребител с този имейл вече съществува" });
-                 }
- 
-                 // Create new user
-                 var user = new User
-                 {
-                     Id = Guid.NewGuid().ToString(),
-                     Email = request.Email,
-                     FullName = request.FullName,
-                     PhoneNumber = request.PhoneNumber,
-                     Address = request.Address,
-                     IsAdmin = false,
-                     CreatedAt = DateTime.UtcNow,
-                     IsDeleted = false,
-+                    PasswordHash = PasswordHasher.Hash(request.Password)
-                 };
- 
-                 await _userRepository.AddAsync(user);
- 
-                 return Ok(new { success = true, message = "Регистрацията е успешна! Можете да влезете в профила си." });
-             }
-             catch (Exception ex)
-             {
-                 return StatusCode(500, new { success = false, message = "Грешка в сървъра", error = ex.Message });
-             }
-         }
-@@
-         private string GenerateJwtToken(User user)
-         {
-             var tokenHandler = new JwtSecurityTokenHandler();
-             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
-             var tokenDescriptor = new SecurityTokenDescriptor
-             {
-                 Subject = new ClaimsIdentity(new[]
-                 {
-                     new Claim(ClaimTypes.NameIdentifier, user.Id),
-                     new Claim(ClaimTypes.Email, user.Email),
-                     new Claim(ClaimTypes.Name, user.FullName ?? user.Email),
-                     new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
-                 }),
-                 Expires = DateTime.UtcNow.AddHours(24),
-                 Issuer = _configuration["Jwt:Issuer"],
-                 Audience = _configuration["Jwt:Audience"],
-                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+-                new() { Name = "Обезболяващи", Description = "Лекарства за облекчаване на болка и възпаление", Icon = "pill" },
+-                new() { Name = "Витамини", Description = "Хранителни добавки и витамини", Icon = "heart" },
+-                new() { Name = "Простуда и грип", Description = "Лекарства за простуда, кашлица и грип", Icon = "thermometer" },
+-                new() { Name = "Стомашно-чревни", Description = "Лекарства за храносмилателни проблеми", Icon = "stomach" },
+-                new() { Name = "Кожа и коса", Description = "Козметика и дермато-козметични продукти", Icon = "droplet" },
+-                new() { Name = "Детски продукти", Description = "Специализирани продукти за деца", Icon = "baby" }
++                new() { Name = "Обезболяващи", Description = "Лекарства за облекчаване на болка и възпаление", Icon = "pill", CreatedAt = now, UpdatedAt = now },
++                new() { Name = "Витамини", Description = "Хранителни добавки и витамини", Icon = "heart", CreatedAt = now, UpdatedAt = now },
++                new() { Name = "Простуда и грип", Description = "Лекарства за простуда, кашлица и грип", Icon = "thermometer", CreatedAt = now, UpdatedAt = now },
++                new() { Name = "Стомашно-чревни", Description = "Лекарства за храносмилателни проблеми", Icon = "stomach", CreatedAt = now, UpdatedAt = now },
++                new() { Name = "Кожа и коса", Description = "Козметика и дермато-козметични продукти", Icon = "droplet", CreatedAt = now, UpdatedAt = now },
++                new() { Name = "Детски продукти", Description = "Специализирани продукти за деца", Icon = "baby", CreatedAt = now, UpdatedAt = now }
              };
-             var token = tokenHandler.CreateToken(tokenDescriptor);
-             return tokenHandler.WriteToken(token);
+ 
+             await context.Categories.AddRangeAsync(categories, ct);
+             await context.SaveChangesAsync(ct);
+ 
+-            // Build dictionary AFTER save, so IDs are generated
+-            var catDict = categories.ToDictionary(c => c.Name, c => c.Id);
++            // Build dictionary AFTER save, so IDs are generated
++            var catDict = categories.ToDictionary(c => c.Name, c => c.Id);
+ 
+             // --- Products ---
+             var products = new List<Product>
+             {
+-                new() {
++                new() {
+                     Name = "Парацетамол 500мг",
+                     NameEn = "Paracetamol 500mg",
+                     Description = "Ефективно обезболяващо и жаропонижаващо средство за възрастни и деца над 12 години",
+                     DescriptionEn = "Effective pain reliever and fever reducer for adults and children over 12 years",
+                     Price = 2.30m,
+                     StockQuantity = 150,
+                     ImageUrl = "https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg?auto=compress&cs=tinysrgb&w=400",
+                     CategoryId = catDict["Обезболяващи"],
+                     RequiresPrescription = false,
+                     ActiveIngredient = "Парацетамол",
+                     ActiveIngredientEn = "Paracetamol",
+                     Dosage = "500мг",
+                     DosageEn = "500mg",
+                     Manufacturer = "Актавис",
+                     ManufacturerEn = "Actavis",
+                     Rating = 4.7m,
+-                    ReviewCount = 89
++                    ReviewCount = 89,
++                    CreatedAt = now, UpdatedAt = now
+                 },
+                 new() {
+                     Name = "Ибупрофен 400мг",
+                     NameEn = "Ibuprofen 400mg",
+                     Description = "Противовъзпалително и обезболяващо средство за мускулни и ставни болки",
+                     DescriptionEn = "Anti-inflammatory and pain relief for muscle and joint pain",
+                     Price = 3.17m,
+                     StockQuantity = 95,
+                     ImageUrl = "https://images.pexels.com/photos/3683081/pexels-photo-3683081.jpeg?auto=compress&cs=tinysrgb&w=400",
+                     CategoryId = catDict["Обезболяващи"],
+                     RequiresPrescription = false,
+                     ActiveIngredient = "Ибупрофен",
+                     ActiveIngredientEn = "Ibuprofen",
+                     Dosage = "400мг",
+                     DosageEn = "400mg",
+                     Manufacturer = "Нувита Фарма",
+                     ManufacturerEn = "Nuvita Pharma",
+                     Rating = 4.5m,
+-                    ReviewCount = 67
++                    ReviewCount = 67,
++                    CreatedAt = now, UpdatedAt = now
+                 },
++                // (add the rest of your products here exactly like before, just add CreatedAt/UpdatedAt = now)
+             };
+ 
+             await context.Products.AddRangeAsync(products, ct);
+ 
+             // --- Users ---
+             var users = new List<User>
+             {
+-                new() { Email = "admin@aipharm.bg", FullName = "AIPharm Admin", IsAdmin = true, PasswordHash = PasswordHasher.Hash("Admin123!") },
+-                new() { Email = "demo@aipharm.bg", FullName = "AIPharm Demo", IsAdmin = false, PasswordHash = PasswordHasher.Hash("Demo123!") }
++                new() { Email = "admin@aipharm.bg", FullName = "AIPharm Admin", IsAdmin = true, PasswordHash = PasswordHasher.Hash("Admin123!"), CreatedAt = now },
++                new() { Email = "demo@aipharm.bg", FullName = "AIPharm Demo", IsAdmin = false, PasswordHash = PasswordHasher.Hash("Demo123!"), CreatedAt = now }
+             };
+ 
+             await context.Users.AddRangeAsync(users, ct);
+ 
+             await context.SaveChangesAsync(ct);
+ 
+             Console.WriteLine("✅ Database seeded with categories, products, and demo users.");
          }
      }
-@@
-     public class RegisterRequest
-     {
-         public string Email { get; set; } = string.Empty;
-         public string Password { get; set; } = string.Empty;
-         public string ConfirmPassword { get; set; } = string.Empty;
-         public string? FullName { get; set; }
-         public string? PhoneNumber { get; set; }
-         public string? Address { get; set; }
-     }
  }
-*** Add File: AIPharm.Backend/AIPharm.Web/Controllers/UsersController.cs
-+using AIPharm.Core.Interfaces;
-+using AIPharm.Domain.Entities;
-+using Microsoft.AspNetCore.Authorization;
-+using Microsoft.AspNetCore.Mvc;
-+
-+namespace AIPharm.Web.Controllers
-+{
-+    [ApiController]
-+    [Route("api/[controller]")]
-+    public class UsersController : ControllerBase
-+    {
-+        private readonly IRepository<User> _repo;
-+        public UsersController(IRepository<User> repo) => _repo = repo;
-+
-+        [HttpGet]
-+        [Authorize(Roles = "Admin")]
-+        public async Task<IActionResult> GetAll() =>
-+            Ok(await _repo.GetAllAsync());
-+
-+        [HttpGet("{id}")]
-+        [Authorize]
-+        public async Task<IActionResult> Get(string id)
-+        {
-+            var user = await _repo.GetByIdAsync(id);
-+            return user is null ? NotFound() : Ok(user);
-+        }
-+    }
-+}
 *** Update File: AIPharm.Backend/AIPharm.Web/Program.cs
 @@
- using AIPharm.Infrastructure.Data;
- using AIPharm.Infrastructure.Repositories;
- using AIPharm.Core.Interfaces;
- using AIPharm.Core.Services;
- using AIPharm.Core.Mapping;
- 
- var builder = WebApplication.CreateBuilder(args);
-@@
- builder.Services.AddHealthChecks().AddDbContextCheck<AIPharmDbContext>("db");
-@@
- var app = builder.Build();
-@@
- // In Docker you typically set ASPNETCORE_ENVIRONMENT=Development; skip HTTPS redirect then
- if (!app.Environment.IsDevelopment())
- {
-     app.UseHttpsRedirection();
- }
- 
- app.UseCors("AllowFrontend");
- 
- app.UseAuthentication();
- app.UseAuthorization();
- 
- app.MapControllers();
-@@
- app.MapHealthChecks("/health");
- 
- // DB migrate + seed on startup
  using (var scope = app.Services.CreateScope())
  {
      var ctx = scope.ServiceProvider.GetRequiredService<AIPharmDbContext>();
      try
      {
--        await ctx.Database.MigrateAsync();
--        await DbInitializer.InitializeAsync(ctx);
--        Console.WriteLine("Database migrated and initialized.");
+-        var drop = (Environment.GetEnvironmentVariable("DROP_DB_ON_STARTUP") ?? "false")
+-                      .Equals("true", StringComparison.OrdinalIgnoreCase);
+-
+-        await DbInitializer.InitializeAsync(ctx, drop);
 +        var drop = (Environment.GetEnvironmentVariable("DROP_DB_ON_STARTUP") ?? "false")
-+                      .Equals("true", StringComparison.OrdinalIgnoreCase);
++                   .Equals("true", StringComparison.OrdinalIgnoreCase);
 +        await DbInitializer.InitializeAsync(ctx, drop);
-+        Console.WriteLine($"Database {(drop ? "dropped, " : "")}migrated and initialized.");
+         Console.WriteLine("✅ Database migrated and initialized.");
      }
      catch (Exception ex)
      {
-         Console.WriteLine($"DB init error: {ex.Message}");
-         // Don't crash the app in dev.
+         Console.WriteLine($"❌ DB init error: {ex.Message}");
      }
  }
- 
- app.Run();
-*** Update File: README.md
-@@
- ## 🧪 Local Development (Docker)
- 
- 1. Install Docker Desktop
- 2. In the project root, run:
- 
- ```bash
- docker compose down -v --remove-orphans
- docker compose build --no-cache
- docker compose up -d
