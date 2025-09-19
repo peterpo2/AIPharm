@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AIPharm.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8a0080fb878420c95115b34d6547ad689e5a2130")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+88d23c96c1fd4b35e627393edd60f13dcbe911db")]
 [assembly: System.Reflection.AssemblyProductAttribute("AIPharm.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AIPharm.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

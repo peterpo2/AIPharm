@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY AIPharm.Backend/AIPharm.sln ./
+COPY AIPharm.Backend/AIPharm.sln ./AIPharm.sln
 COPY AIPharm.Backend/AIPharm.Web/AIPharm.Web.csproj AIPharm.Web/
 COPY AIPharm.Backend/AIPharm.Core/AIPharm.Core.csproj AIPharm.Core/
 COPY AIPharm.Backend/AIPharm.Domain/AIPharm.Domain.csproj AIPharm.Domain/
@@ -12,10 +12,15 @@ RUN dotnet restore AIPharm.sln
 
 COPY AIPharm.Backend/ ./
 
-RUN dotnet publish AIPharm.Web/AIPharm.Web.csproj -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish AIPharm.Web/AIPharm.Web.csproj -c Release -o /out /p:UseAppHost=false
 
 # ---------- runtime stage ----------
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "AIPharm.Web.dll"]
+COPY --from=build /out .
+
+# Debug list
+RUN echo "=== FINAL CONTENT ===" && ls -la /app
+
+# Use wildcard to ignore case
+ENTRYPOINT ["dotnet", "/app/AIPharm.Web.dll"]

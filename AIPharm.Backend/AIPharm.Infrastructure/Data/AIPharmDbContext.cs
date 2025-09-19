@@ -21,100 +21,134 @@ namespace AIPharm.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // User configuration
+            // ===== USERS =====
             modelBuilder.Entity<User>(entity =>
             {
+                entity.ToTable("Users", "dbo");
                 entity.HasKey(e => e.Id);
+
                 entity.HasIndex(e => e.Email).IsUnique();
                 entity.Property(e => e.Email).IsRequired();
             });
 
-            // Category configuration
+            // ===== CATEGORIES =====
             modelBuilder.Entity<Category>(entity =>
             {
+                entity.ToTable("Categories", "dbo");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Icon).IsRequired().HasMaxLength(50);
+
+                entity.Property(e => e.Name)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.Property(e => e.Icon)
+                      .IsRequired()
+                      .HasMaxLength(50);
+
                 entity.HasQueryFilter(e => !e.IsDeleted);
             });
 
-            // Product configuration
+            // ===== PRODUCTS =====
             modelBuilder.Entity<Product>(entity =>
             {
+                entity.ToTable("Products", "dbo");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-                entity.Property(e => e.Price).HasColumnType("decimal(10,2)");
-                entity.Property(e => e.Rating).HasColumnType("decimal(3,2)");
-                
+
+                entity.Property(e => e.Name)
+                      .IsRequired()
+                      .HasMaxLength(200);
+
+                entity.Property(e => e.Price)
+                      .HasColumnType("decimal(10,2)");
+
+                entity.Property(e => e.Rating)
+                      .HasColumnType("decimal(3,2)");
+
                 entity.HasOne(e => e.Category)
-                      .WithMany(e => e.Products)
+                      .WithMany(c => c.Products)
                       .HasForeignKey(e => e.CategoryId)
                       .OnDelete(DeleteBehavior.Restrict);
-                
+
                 entity.HasQueryFilter(e => !e.IsDeleted);
             });
 
-            // ShoppingCart configuration
+            // ===== SHOPPING CARTS =====
             modelBuilder.Entity<ShoppingCart>(entity =>
             {
+                entity.ToTable("ShoppingCarts", "dbo");
                 entity.HasKey(e => e.Id);
+
                 entity.HasOne(e => e.User)
-                      .WithMany(e => e.ShoppingCarts)
+                      .WithMany(u => u.ShoppingCarts)
                       .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // CartItem configuration
+            // ===== CART ITEMS =====
             modelBuilder.Entity<CartItem>(entity =>
             {
+                entity.ToTable("CartItems", "dbo");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.UnitPrice).HasColumnType("decimal(10,2)");
-                
-                entity.HasOne(e => e.ShoppingCart)
-                      .WithMany(e => e.Items)
-                      .HasForeignKey(e => e.ShoppingCartId)
+
+                entity.Property(e => e.UnitPrice)
+                      .HasColumnType("decimal(10,2)");
+
+                entity.HasOne(ci => ci.ShoppingCart)
+                      .WithMany(sc => sc.Items)
+                      .HasForeignKey(ci => ci.ShoppingCartId)
                       .OnDelete(DeleteBehavior.Cascade);
-                
-                entity.HasOne(e => e.Product)
-                      .WithMany(e => e.CartItems)
-                      .HasForeignKey(e => e.ProductId)
+
+                entity.HasOne(ci => ci.Product)
+                      .WithMany(p => p.CartItems)
+                      .HasForeignKey(ci => ci.ProductId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Order configuration
+            // ===== ORDERS =====
             modelBuilder.Entity<Order>(entity =>
             {
+                entity.ToTable("Orders", "dbo");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Total).HasColumnType("decimal(10,2)");
-                entity.Property(e => e.DeliveryFee).HasColumnType("decimal(10,2)");
-                
-                entity.HasOne(e => e.User)
-                      .WithMany(e => e.Orders)
-                      .HasForeignKey(e => e.UserId)
+
+                entity.Property(e => e.OrderNumber)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.Property(e => e.Total)
+                      .HasColumnType("decimal(10,2)");
+
+                entity.Property(e => e.DeliveryFee)
+                      .HasColumnType("decimal(10,2)");
+
+                entity.HasOne(o => o.User)
+                      .WithMany(u => u.Orders)
+                      .HasForeignKey(o => o.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // OrderItem configuration
+            // ===== ORDER ITEMS =====
             modelBuilder.Entity<OrderItem>(entity =>
             {
+                entity.ToTable("OrderItems", "dbo");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.UnitPrice).HasColumnType("decimal(10,2)");
-                entity.Property(e => e.ProductName).IsRequired().HasMaxLength(200);
-                
-                entity.HasOne(e => e.Order)
-                      .WithMany(e => e.Items)
-                      .HasForeignKey(e => e.OrderId)
+
+                entity.Property(e => e.UnitPrice)
+                      .HasColumnType("decimal(10,2)");
+
+                entity.Property(e => e.ProductName)
+                      .IsRequired()
+                      .HasMaxLength(200);
+
+                entity.HasOne(oi => oi.Order)
+                      .WithMany(o => o.Items)
+                      .HasForeignKey(oi => oi.OrderId)
                       .OnDelete(DeleteBehavior.Cascade);
-                
-                entity.HasOne(e => e.Product)
-                      .WithMany(e => e.OrderItems)
-                      .HasForeignKey(e => e.ProductId)
+
+                entity.HasOne(oi => oi.Product)
+                      .WithMany(p => p.OrderItems)
+                      .HasForeignKey(oi => oi.ProductId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
-
-            // Seed data
-            // Seed data is now handled by DbInitializer
         }
     }
 }

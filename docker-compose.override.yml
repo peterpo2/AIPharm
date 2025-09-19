@@ -1,11 +1,4 @@
 services:
-  backend:
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-    volumes:
-      - ./AIPharm.Backend:/app
-    ports:
-      - "8082:8080"   # use different port for local dev if 8081 is busy
 
   frontend:
     environment:

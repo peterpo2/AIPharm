@@ -5,8 +5,8 @@ C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.Genera
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.AssemblyInfoInputs.cache
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.AssemblyInfo.cs
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.csproj.CoreCompileInputs.cache
+C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.sourcelink.json
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\refint\AIPharm.Domain.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.pdb
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\ref\AIPharm.Domain.dll
-C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.sourcelink.json

@@ -8,9 +8,9 @@ C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.GeneratedM
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.AssemblyInfoInputs.cache
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.AssemblyInfo.cs
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.csproj.CoreCompileInputs.cache
+C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.sourcelink.json
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm..DAE93185.Up2Date
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\refint\AIPharm.Core.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.pdb
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\ref\AIPharm.Core.dll
-C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.sourcelink.json
