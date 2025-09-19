@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { ChatMessage } from "../types";
 
 interface ChatContextType {
@@ -14,7 +20,9 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ChatProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -27,7 +35,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 📌 Load history when chat is opened
+  // Load history when chat is opened
   useEffect(() => {
     if (isOpen) {
       (async () => {
@@ -45,7 +53,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [isOpen]);
 
-  const addMessage = (content: string, isUser: boolean, productId?: number) => {
+  const addMessage = (
+    content: string,
+    isUser: boolean,
+    productId?: number
+  ) => {
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       content,
@@ -64,16 +76,26 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const res = await fetch("/api/assistant/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, productId }),
+        body: JSON.stringify(
+          productId ? { question, productId } : { question }
+        ),
       });
 
       if (!res.ok) throw new Error("❌ Failed to contact AI service");
 
       const data = await res.json();
-      addMessage(data.answer ?? "⚠️ AI did not return an answer.", false, productId);
+      addMessage(
+        data.answer ?? "⚠️ AI did not return an answer.",
+        false,
+        productId
+      );
     } catch (err) {
       console.error("Assistant error:", err);
-      addMessage("⚠️ Error: Could not connect to assistant.", false, productId);
+      addMessage(
+        "⚠️ Error: Could not connect to assistant.",
+        false,
+        productId
+      );
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +118,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const toggleChat = () => setIsOpen(!isOpen);
+  const toggleChat = () => setIsOpen((prev) => !prev);
 
   return (
     <ChatContext.Provider
@@ -116,6 +138,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
+// ✅ Named export to match usage: import { useChat }
 export const useChat = () => {
   const context = useContext(ChatContext);
   if (!context) {

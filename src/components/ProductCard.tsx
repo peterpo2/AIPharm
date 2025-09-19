@@ -33,7 +33,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       language === "bg"
         ? `Разкажете ми за ${productName}`
         : `Tell me about ${productName}`;
-    askAssistant(question, product.id);
+
+    if (product.id) {
+      askAssistant(question, product.id);
+    }
   };
 
   const getProductName = () =>
@@ -85,26 +88,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Content */}
       <div className="p-5">
-        {/* Rating */}
-        {product.rating && (
-          <div className="flex items-center space-x-1 mb-3">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-4 h-4 ${
-                    i < Math.floor(product.rating)
-                      ? "text-yellow-400 fill-current"
-                      : "text-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-gray-500">
-              ({product.reviewCount})
-            </span>
-          </div>
-        )}
+       {/* Rating */}
+{product.rating !== undefined && (
+  <div className="flex items-center space-x-1 mb-3">
+    <div className="flex items-center">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${
+            i < Math.floor(product.rating ?? 0)
+              ? "text-yellow-400 fill-current"
+              : "text-gray-300"
+          }`}
+        />
+      ))}
+    </div>
+    <span className="text-sm text-gray-500">
+      ({product.reviewCount ?? 0})
+    </span>
+  </div>
+)}
+
 
         {/* Title */}
         <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors duration-300">
