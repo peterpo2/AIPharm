@@ -11,12 +11,12 @@ using AIPharm.Core.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Basic API services
+// === Services ===
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// JWT
+// === JWT Auth ===
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -37,23 +37,24 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// AutoMapper
+// === AutoMapper ===
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// EF Core
+// === EF Core DbContext ===
 builder.Services.AddDbContextPool<AIPharmDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Repos & services
+// === Repositories & Services ===
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICartService, CartService>();
-builder.Services.AddScoped<IAssistantService, AssistantService>(); 
+builder.Services.AddScoped<IAssistantService, AssistantService>();
+
+// === Health checks ===
 builder.Services.AddHealthChecks().AddDbContextCheck<AIPharmDbContext>("db");
 
-
-// CORS for local & docker dev
+// === CORS (Frontend access) ===
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -69,19 +70,16 @@ builder.Services.AddCors(options =>
     );
 });
 
-// Health checks (simple)
-builder.Services.AddHealthChecks();
-
 var app = builder.Build();
 
-// Swagger � keep on in dev
+// === Swagger ===
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "AIPharm API v1");
 });
 
-// In Docker you typically set ASPNETCORE_ENVIRONMENT=Development; skip HTTPS redirect then
+// === HTTPS only outside Docker dev ===
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -94,24 +92,33 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// root ping + health
+// Root ping + health
 app.MapGet("/", () =>
     Results.Ok(new { name = "AIPharm API", env = app.Environment.EnvironmentName, time = DateTime.UtcNow }))
     .WithName("Root");
 
 app.MapHealthChecks("/health");
 
-// DB migrate + seed on startup
+// === DB migrate + seed ===
 using (var scope = app.Services.CreateScope())
 {
     var ctx = scope.ServiceProvider.GetRequiredService<AIPharmDbContext>();
     try
     {
+        // toggle with env var in docker-compose.yml
         var drop = (Environment.GetEnvironmentVariable("DROP_DB_ON_STARTUP") ?? "false")
                       .Equals("true", StringComparison.OrdinalIgnoreCase);
 
+        if (drop)
+        {
+            Console.WriteLine("⚠️ Dropping and recreating database...");
+            await ctx.Database.EnsureDeletedAsync();
+        }
+
+        await ctx.Database.MigrateAsync();
         await DbInitializer.InitializeAsync(ctx, drop);
-        Console.WriteLine("✅ Database migrated and initialized.");
+
+        Console.WriteLine("✅ Database migrated and seeded.");
     }
     catch (Exception ex)
     {

@@ -1,34 +1,46 @@
-import { useState, useEffect } from 'react';
-import { apiClient, ApiCart, ProductFilter } from '../services/api';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { apiClient, ApiCart, ProductFilter } from "../services/api";
 
-// Generic hook for API calls
-export function useApi<T>(apiCall: () => Promise<T>, dependencies: any[] = []) {
+// ===== Generic API Hook =====
+export function useApi<T>(
+  apiCall: (signal?: AbortSignal) => Promise<T>,
+  dependencies: any[] = []
+) {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const abortRef = useRef<AbortController | null>(null);
+
+  const fetchData = useCallback(async () => {
+    abortRef.current?.abort(); // cancel previous request
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       setLoading(true);
       setError(null);
-      const result = await apiCall();
+
+      const result = await apiCall(controller.signal);
       setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      if (err.name === "AbortError") return; // ignore cancelled requests
+      setError(err?.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiCall]);
 
   useEffect(() => {
     fetchData();
+    return () => abortRef.current?.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 
   return { data, loading, error, refetch: fetchData };
 }
 
-// Specific hooks for common API calls
+// ===== Specific API hooks =====
 export function useProducts(filter: ProductFilter = {}) {
   return useApi(() => apiClient.getProducts(filter), [JSON.stringify(filter)]);
 }
@@ -41,65 +53,52 @@ export function useCategories() {
   return useApi(() => apiClient.getCategories(), []);
 }
 
+// ===== Cart Hook (extended API) =====
 export function useCart() {
-  const [data, setData] = useState<ApiCart | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: cart,
+    loading,
+    error,
+    refetch,
+  } = useApi<ApiCart>(() => apiClient.getCart(), []);
 
-  const fetchCart = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const cart = await apiClient.getCart();
-      setData(cart);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch cart');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addToCart = async (productId: number, quantity: number = 1) => {
+  const addToCart = async (productId: number, quantity = 1) => {
     const updatedCart = await apiClient.addToCart(productId, quantity);
-    setData(updatedCart);
+    await refetch();
     return updatedCart;
   };
 
   const updateCartItem = async (cartItemId: number, quantity: number) => {
     const updatedCart = await apiClient.updateCartItem(cartItemId, quantity);
-    setData(updatedCart);
+    await refetch();
     return updatedCart;
   };
 
   const removeFromCart = async (cartItemId: number) => {
     const updatedCart = await apiClient.removeFromCart(cartItemId);
-    setData(updatedCart);
+    await refetch();
     return updatedCart;
   };
 
   const clearCart = async () => {
     const updatedCart = await apiClient.clearCart();
-    setData(updatedCart);
+    await refetch();
     return updatedCart;
   };
 
-  useEffect(() => {
-    fetchCart();
-  }, []);
-
   return {
-    cart: data,
+    cart,
     loading,
     error,
     addToCart,
     updateCartItem,
     removeFromCart,
     clearCart,
-    refetch: fetchCart,
+    refetch,
   };
 }
 
-// Hook for assistant chat
+// ===== Assistant Hook =====
 export function useAssistant() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,13 +107,11 @@ export function useAssistant() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.askAssistant(question, productId);
-      return response;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to get assistant response';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      return await apiClient.askAssistant(question, productId);
+    } catch (err: any) {
+      const msg = err?.message || "Failed to get assistant response";
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }

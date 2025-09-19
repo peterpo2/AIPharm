@@ -52,7 +52,8 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: aipharm-frontend
     environment:
-      - VITE_API_BASE_URL=http://localhost:8081/api
+      # Inside Docker, talk to backend by container name
+      - VITE_API_BASE_URL=http://aipharm-backend:8080
     ports:
       - "3000:3000"
     depends_on:

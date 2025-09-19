@@ -3,7 +3,9 @@ services:
   frontend:
     environment:
       - NODE_ENV=development
+      - DROP_DB_ON_STARTUP=true
     volumes:
       - ./src:/app/src:cached
       - ./public:/app/public:cached
       - /app/node_modules
+
