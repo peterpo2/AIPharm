@@ -13,3 +13,4 @@ C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\refint\AIPharm.Core.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.pdb
 C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\ref\AIPharm.Core.dll
+C:\AIPharm\AIPharm.Backend\AIPharm.Core\obj\Debug\net8.0\AIPharm.Core.sourcelink.json

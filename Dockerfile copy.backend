@@ -17,7 +17,7 @@ COPY AIPharm.Backend/ ./
 # Publish Web project
 RUN dotnet publish AIPharm.Web/AIPharm.Web.csproj -c Release -o /out /p:UseAppHost=false
 
-# 👀 Debug
+# 👀 Debug: show output
 RUN echo "=== LISTING /out ===" && ls -la /out
 
 # ---------- runtime stage ----------

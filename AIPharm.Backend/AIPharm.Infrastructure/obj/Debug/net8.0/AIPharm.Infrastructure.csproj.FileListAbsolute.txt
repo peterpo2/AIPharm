@@ -17,3 +17,4 @@ C:\AIPharm\AIPharm.Backend\AIPharm.Infrastructure\obj\Debug\net8.0\refint\AIPhar
 C:\AIPharm\AIPharm.Backend\AIPharm.Infrastructure\obj\Debug\net8.0\AIPharm.Infrastructure.pdb
 C:\AIPharm\AIPharm.Backend\AIPharm.Infrastructure\obj\Debug\net8.0\AIPharm.Infrastructure.genruntimeconfig.cache
 C:\AIPharm\AIPharm.Backend\AIPharm.Infrastructure\obj\Debug\net8.0\ref\AIPharm.Infrastructure.dll
+C:\AIPharm\AIPharm.Backend\AIPharm.Infrastructure\obj\Debug\net8.0\AIPharm.Infrastructure.sourcelink.json

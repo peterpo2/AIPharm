@@ -26,13 +26,13 @@ services:
     container_name: aipharm-backend
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5000
+      - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Server=database,1433;Database=AIPharm;User Id=sa;Password=AIPharm123!;TrustServerCertificate=true;MultipleActiveResultSets=true
       - Jwt__Key=AIPharm-Super-Secret-Key-For-JWT-Tokens-2024-Very-Long-Key-Docker
       - Jwt__Issuer=AIPharm
       - Jwt__Audience=AIPharm-Users
     ports:
-      - "5000:5000"
+      - "5001:8080"   # host:container
     depends_on:
       database:
         condition: service_healthy
@@ -40,12 +40,11 @@ services:
       - aipharm-network
     restart: unless-stopped
     healthcheck:
-      # Using curl to check health, ensure curl is installed in the image
-      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]  # ✅ fixed to 8080
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 60s  # Increased start period
+      start_period: 60s
 
   frontend:
     build:
@@ -53,8 +52,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: aipharm-frontend
     environment:
-      # The frontend talks to the backend service by name, not localhost
-      - VITE_API_BASE_URL=http://backend:5000/api
+      - VITE_API_BASE_URL=http://backend:8080/api   # ✅ fixed to 8080
     ports:
       - "3000:3000"
     depends_on:

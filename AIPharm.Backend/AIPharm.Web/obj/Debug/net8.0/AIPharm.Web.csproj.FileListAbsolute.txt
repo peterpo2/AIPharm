@@ -156,7 +156,6 @@ C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\staticwebassets.build.js
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\staticwebassets.development.json
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\AIPharm..8D7EF389.Up2Date
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\AIPharm.Web.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\refint\AIPharm.Web.dll
@@ -174,3 +173,4 @@ C:\AIPharm\AIPharm.Backend\AIPharm.Web\bin\Debug\net8.0\Microsoft.Extensions.Hos
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Web\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
+C:\AIPharm\AIPharm.Backend\AIPharm.Web\obj\Debug\net8.0\AIPharm.Web.sourcelink.json

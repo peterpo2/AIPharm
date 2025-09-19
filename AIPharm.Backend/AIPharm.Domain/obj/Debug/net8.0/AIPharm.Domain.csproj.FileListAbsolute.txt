@@ -9,3 +9,4 @@ C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\refint\AIPharm.Domain.dll
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.pdb
 C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\ref\AIPharm.Domain.dll
+C:\AIPharm\AIPharm.Backend\AIPharm.Domain\obj\Debug\net8.0\AIPharm.Domain.sourcelink.json
