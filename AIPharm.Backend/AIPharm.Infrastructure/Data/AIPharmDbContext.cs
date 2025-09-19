@@ -27,6 +27,9 @@ namespace AIPharm.Infrastructure.Data
                 entity.ToTable("Users", "dbo");
                 entity.HasKey(e => e.Id);
 
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd();   // auto increment
+
                 entity.HasIndex(e => e.Email).IsUnique();
                 entity.Property(e => e.Email).IsRequired();
             });
@@ -36,6 +39,9 @@ namespace AIPharm.Infrastructure.Data
             {
                 entity.ToTable("Categories", "dbo");
                 entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.Name)
                       .IsRequired()
@@ -53,6 +59,9 @@ namespace AIPharm.Infrastructure.Data
             {
                 entity.ToTable("Products", "dbo");
                 entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.Name)
                       .IsRequired()
@@ -78,6 +87,9 @@ namespace AIPharm.Infrastructure.Data
                 entity.ToTable("ShoppingCarts", "dbo");
                 entity.HasKey(e => e.Id);
 
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd();
+
                 entity.HasOne(e => e.User)
                       .WithMany(u => u.ShoppingCarts)
                       .HasForeignKey(e => e.UserId)
@@ -89,6 +101,9 @@ namespace AIPharm.Infrastructure.Data
             {
                 entity.ToTable("CartItems", "dbo");
                 entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.UnitPrice)
                       .HasColumnType("decimal(10,2)");
@@ -109,6 +124,9 @@ namespace AIPharm.Infrastructure.Data
             {
                 entity.ToTable("Orders", "dbo");
                 entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.OrderNumber)
                       .IsRequired()
@@ -131,6 +149,9 @@ namespace AIPharm.Infrastructure.Data
             {
                 entity.ToTable("OrderItems", "dbo");
                 entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.UnitPrice)
                       .HasColumnType("decimal(10,2)");

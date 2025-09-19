@@ -74,7 +74,7 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// Swagger � keep on in dev
+// Swagger � keep on in dev
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -107,14 +107,15 @@ using (var scope = app.Services.CreateScope())
     var ctx = scope.ServiceProvider.GetRequiredService<AIPharmDbContext>();
     try
     {
-        await ctx.Database.MigrateAsync();
-        await DbInitializer.InitializeAsync(ctx);
-        Console.WriteLine("Database migrated and initialized.");
+        var drop = (Environment.GetEnvironmentVariable("DROP_DB_ON_STARTUP") ?? "false")
+                      .Equals("true", StringComparison.OrdinalIgnoreCase);
+
+        await DbInitializer.InitializeAsync(ctx, drop);
+        Console.WriteLine("✅ Database migrated and initialized.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"DB init error: {ex.Message}");
-        // Don't crash the app in dev.
+        Console.WriteLine($"❌ DB init error: {ex.Message}");
     }
 }
 
