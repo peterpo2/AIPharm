@@ -3,6 +3,7 @@ using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
 using AIPharm.Domain.Entities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using OpenAI.Chat;
 
 namespace AIPharm.Core.Services
@@ -11,21 +12,15 @@ namespace AIPharm.Core.Services
     {
         private readonly IRepository<Product> _productRepository;
         private readonly ChatClient _chatClient;
-
-        // In-memory conversation storage (userId -> list of responses)
-        private static readonly ConcurrentDictionary<string, List<AssistantResponseDto>> _conversations
-            = new();
+        private static readonly ConcurrentDictionary<string, List<AssistantResponseDto>> _conversations = new();
 
         public AssistantService(IRepository<Product> productRepository, IConfiguration config)
         {
-            _productRepository = productRepository
-                ?? throw new ArgumentNullException(nameof(productRepository));
+            _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
 
             var apiKey = config["OpenAI:ApiKey"];
             if (string.IsNullOrWhiteSpace(apiKey))
-            {
                 throw new InvalidOperationException("❌ OpenAI API key is missing in configuration.");
-            }
 
             _chatClient = new ChatClient("gpt-4o-mini", apiKey);
         }
@@ -47,7 +42,6 @@ namespace AIPharm.Core.Services
                 if (product != null)
                 {
                     productContext =
-                        $"Product info:\n" +
                         $"- Name: {product.Name} / {product.NameEn}\n" +
                         $"- Active ingredient: {product.ActiveIngredient}\n" +
                         $"- Dosage: {product.Dosage}\n" +
@@ -56,18 +50,19 @@ namespace AIPharm.Core.Services
             }
 
             var prompt =
-                $"You are an AI medical assistant for a pharmacy app. " +
-                $"Answer in Bulgarian if the user asked in Bulgarian, otherwise in English. " +
-                $"Always be concise, safe, and clear.\n\n" +
+                "You are an AI medical assistant for a pharmacy app. " +
+                "Answer in Bulgarian if the user asked in Bulgarian, otherwise in English. " +
+                "Always be concise, safe, and clear.\n\n" +
                 $"User question: {request.Question}\n{productContext}\n\n" +
-                $"Also suggest (if relevant): dosage, side effects, alternatives.\n" +
-                $"Always include a disclaimer at the end.";
+                "Also suggest (if relevant): dosage, side effects, alternatives.\n" +
+                "Always include a disclaimer at the end.";
 
             try
             {
-                var chatResponse = await _chatClient.CompleteChatAsync(
-                    new List<ChatMessage> { new UserChatMessage(prompt) }
-                );
+                var chatResponse = await _chatClient.CompleteChatAsync(new List<ChatMessage>
+                {
+                    new UserChatMessage(prompt)
+                });
 
                 var completion = chatResponse.Value;
 
@@ -97,10 +92,7 @@ namespace AIPharm.Core.Services
         public async Task SaveConversationAsync(string userId, AssistantResponseDto response)
         {
             var history = _conversations.GetOrAdd(userId, _ => new List<AssistantResponseDto>());
-            lock (history)
-            {
-                history.Add(response);
-            }
+            lock (history) history.Add(response);
             await Task.CompletedTask;
         }
 

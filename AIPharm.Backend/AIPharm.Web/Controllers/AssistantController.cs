@@ -17,24 +17,26 @@ namespace AIPharm.Web.Controllers
         }
 
         /// <summary>
-        /// Ask the AI assistant a question (product-aware).
+        /// Ask the AI assistant a question (product-aware, safe medical advice).
         /// </summary>
         [HttpPost("ask")]
-        [AllowAnonymous] // or [Authorize] if you want only logged users
+        [AllowAnonymous] // change to [Authorize] if only authenticated users can ask
         public async Task<ActionResult<AssistantResponseDto>> AskQuestion([FromBody] AssistantRequestDto request)
         {
+            if (string.IsNullOrWhiteSpace(request.Question))
+            {
+                return BadRequest(new { message = "❌ Question is required" });
+            }
+
             try
             {
-                if (string.IsNullOrWhiteSpace(request.Question))
-                {
-                    return BadRequest(new { message = "❌ Question is required" });
-                }
-
                 var userId = GetUserId();
+
+                // Get AI response
                 var response = await _assistantService.AskQuestionAsync(request);
 
-                // Optional: persist the Q&A in DB for this user
-                // await _assistantService.SaveConversationAsync(userId, response);
+                // Save conversation for history
+                await _assistantService.SaveConversationAsync(userId, response);
 
                 return Ok(response);
             }
@@ -49,7 +51,7 @@ namespace AIPharm.Web.Controllers
         }
 
         /// <summary>
-        /// Get conversation history for the current user.
+        /// Get the AI conversation history for the current user.
         /// </summary>
         [HttpGet("history")]
         [AllowAnonymous]
@@ -72,11 +74,11 @@ namespace AIPharm.Web.Controllers
         }
 
         /// <summary>
-        /// Clear conversation history (for demo, resets memory).
+        /// Clear the AI conversation history for the current user.
         /// </summary>
         [HttpDelete("history")]
         [AllowAnonymous]
-        public async Task<IActionResult> ClearHistory()
+        public async Task<IActionResult> ClearConversationHistory()
         {
             try
             {
@@ -95,19 +97,20 @@ namespace AIPharm.Web.Controllers
         }
 
         /// <summary>
-        /// Helper: get user ID (from JWT if available, fallback to header or demo).
+        /// Helper method to extract the user ID.
+        /// Priority: JWT claim "sub" > Request header "X-User-Id" > fallback "demo-user".
         /// </summary>
         private string GetUserId()
         {
-            // If JWT auth is configured → use it
             if (User?.Identity?.IsAuthenticated == true)
             {
                 var userId = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
                 if (!string.IsNullOrEmpty(userId))
+                {
                     return userId;
+                }
             }
 
-            // Else, fallback
             return Request.Headers["X-User-Id"].FirstOrDefault() ?? "demo-user";
         }
     }

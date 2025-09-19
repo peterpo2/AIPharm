@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { ChatMessage } from "../types";
 
 interface ChatContextType {
@@ -9,6 +9,7 @@ interface ChatContextType {
   toggleChat: () => void;
   setIsOpen: (open: boolean) => void;
   askAssistant: (question: string, productId?: number) => Promise<void>;
+  clearChat: () => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -16,7 +17,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: "1",
+      id: "welcome",
       content:
         "Здравейте! Аз съм вашият AI асистент за лекарства. Как мога да ви помогна днес?",
       isUser: false,
@@ -25,6 +26,24 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   ]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 📌 Load history when chat is opened
+  useEffect(() => {
+    if (isOpen) {
+      (async () => {
+        try {
+          const res = await fetch("/api/assistant/history");
+          if (!res.ok) return;
+          const history: ChatMessage[] = await res.json();
+          if (history.length > 0) {
+            setMessages(history);
+          }
+        } catch (err) {
+          console.error("⚠️ Failed to load chat history", err);
+        }
+      })();
+    }
+  }, [isOpen]);
 
   const addMessage = (content: string, isUser: boolean, productId?: number) => {
     const newMessage: ChatMessage = {
@@ -48,16 +67,32 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: JSON.stringify({ question, productId }),
       });
 
-      if (!res.ok) throw new Error("Failed to contact AI service");
+      if (!res.ok) throw new Error("❌ Failed to contact AI service");
 
       const data = await res.json();
-
       addMessage(data.answer ?? "⚠️ AI did not return an answer.", false, productId);
     } catch (err) {
       console.error("Assistant error:", err);
       addMessage("⚠️ Error: Could not connect to assistant.", false, productId);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const clearChat = async () => {
+    try {
+      await fetch("/api/assistant/history", { method: "DELETE" });
+      setMessages([
+        {
+          id: "welcome",
+          content:
+            "Историята беше изчистена. Здравейте! Как мога да ви помогна днес?",
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (err) {
+      console.error("⚠️ Failed to clear chat history", err);
     }
   };
 
@@ -73,6 +108,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toggleChat,
         setIsOpen,
         askAssistant,
+        clearChat,
       }}
     >
       {children}
