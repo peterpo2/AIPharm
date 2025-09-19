@@ -1,22 +1,37 @@
+using System.Collections.Concurrent;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
+using AIPharm.Domain.Entities;
+using Microsoft.Extensions.Configuration;
+using OpenAI.Chat;
 
 namespace AIPharm.Core.Services
 {
     public class AssistantService : IAssistantService
     {
-        private readonly IRepository<Domain.Entities.Product> _productRepository;
+        private readonly IRepository<Product> _productRepository;
+        private readonly ChatClient _chatClient;
 
-        public AssistantService(IRepository<Domain.Entities.Product> productRepository)
+        // In-memory conversation storage (userId -> list of responses)
+        private static readonly ConcurrentDictionary<string, List<AssistantResponseDto>> _conversations
+            = new();
+
+        public AssistantService(IRepository<Product> productRepository, IConfiguration config)
         {
-            _productRepository = productRepository;
+            _productRepository = productRepository
+                ?? throw new ArgumentNullException(nameof(productRepository));
+
+            var apiKey = config["OpenAI:ApiKey"];
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new InvalidOperationException("❌ OpenAI API key is missing in configuration.");
+            }
+
+            _chatClient = new ChatClient("gpt-4o-mini", apiKey);
         }
 
         public async Task<AssistantResponseDto> AskQuestionAsync(AssistantRequestDto request)
         {
-            // Simulate AI processing delay
-            await Task.Delay(1000 + new Random().Next(2000));
-
             var response = new AssistantResponseDto
             {
                 Question = request.Question,
@@ -25,40 +40,47 @@ namespace AIPharm.Core.Services
                 Disclaimer = "⚠️ Това е обща информация. Консултирайте се с лекар."
             };
 
-            // Generate contextual response based on question content
-            var question = request.Question.ToLower();
-
-            if (question.Contains("парацетамол"))
+            string productContext = string.Empty;
+            if (request.ProductId.HasValue)
             {
-                response.Answer = "Парацетамолът е безопасно и ефективно обезболяващо средство. Препоръчваната доза за възрастни е 500-1000мг на 4-6 часа, максимум 4г дневно. Не трябва да се комбинира с алкохол и други лекарства съдържащи парацетамол.";
-            }
-            else if (question.Contains("ибупрофен"))
-            {
-                response.Answer = "Ибупрофенът е нестероидно противовъзпалително средство (НПВС). Препоръчва се прием с храна за предпазване на стомаха. Не се препоръчва при язва, бъбречни проблеми или алергия към НПВС.";
-            }
-            else if (question.Contains("витамин"))
-            {
-                response.Answer = "Витамините са важни за поддържане на здравето. Препоръчвам да се приемат според указанията на опаковката. При балансирано хранене, допълнителният прием може да не е необходим.";
-            }
-            else if (question.Contains("дозировка") || question.Contains("доза"))
-            {
-                response.Answer = "Дозировката зависи от конкретното лекарство, възрастта и теглото на пациента. Винаги следвайте указанията на опаковката или съветите на лекаря. При съмнения се консултирайте с фармацевт.";
-            }
-            else if (question.Contains("странични ефекти"))
-            {
-                response.Answer = "Всяко лекарство може да има странични ефекти. Най-честите са описани в листовката. При появата на необичайни симптоми спрете приема и се консултирайте с лекар.";
-            }
-            else
-            {
-                var responses = new[]
+                var product = await _productRepository.FirstOrDefaultAsync(p => p.Id == request.ProductId.Value);
+                if (product != null)
                 {
-                    "Според медицинската информация, която разполагам, този продукт се използва безопасно при спазване на указанията за дозиране.",
-                    "Базирано на активните съставки, мога да кажа, че препоръчвам да се консултирате с лекар или фармацевт преди употреба.",
-                    "От фармакологична гледна точка, важно е да прочетете внимателно листовката в опаковката.",
-                    "Според клиничните данни, може да има взаимодействия с други лекарства, които приемате."
-                };
+                    productContext =
+                        $"Product info:\n" +
+                        $"- Name: {product.Name} / {product.NameEn}\n" +
+                        $"- Active ingredient: {product.ActiveIngredient}\n" +
+                        $"- Dosage: {product.Dosage}\n" +
+                        $"- Manufacturer: {product.Manufacturer}\n";
+                }
+            }
 
-                response.Answer = responses[new Random().Next(responses.Length)] + " Винаги се консултирайте с медицински специалист за персонализиран съвет.";
+            var prompt =
+                $"You are an AI medical assistant for a pharmacy app. " +
+                $"Answer in Bulgarian if the user asked in Bulgarian, otherwise in English. " +
+                $"Always be concise, safe, and clear.\n\n" +
+                $"User question: {request.Question}\n{productContext}\n\n" +
+                $"Also suggest (if relevant): dosage, side effects, alternatives.\n" +
+                $"Always include a disclaimer at the end.";
+
+            try
+            {
+                var chatResponse = await _chatClient.CompleteChatAsync(
+                    new List<ChatMessage> { new UserChatMessage(prompt) }
+                );
+
+                var completion = chatResponse.Value;
+
+                response.Answer = string.Join(
+                    "\n",
+                    completion.Content
+                        .Select(c => c.Text)
+                        .Where(t => !string.IsNullOrWhiteSpace(t))
+                );
+            }
+            catch (Exception ex)
+            {
+                response.Answer = $"⚠️ Error: AI service unavailable. ({ex.Message})";
             }
 
             return response;
@@ -66,10 +88,26 @@ namespace AIPharm.Core.Services
 
         public async Task<IEnumerable<AssistantResponseDto>> GetConversationHistoryAsync(string userId)
         {
-            // In a real implementation, this would fetch from a database
-            // For now, return empty list
             await Task.CompletedTask;
-            return new List<AssistantResponseDto>();
+            return _conversations.TryGetValue(userId, out var history)
+                ? history
+                : Enumerable.Empty<AssistantResponseDto>();
+        }
+
+        public async Task SaveConversationAsync(string userId, AssistantResponseDto response)
+        {
+            var history = _conversations.GetOrAdd(userId, _ => new List<AssistantResponseDto>());
+            lock (history)
+            {
+                history.Add(response);
+            }
+            await Task.CompletedTask;
+        }
+
+        public async Task ClearConversationHistoryAsync(string userId)
+        {
+            _conversations.TryRemove(userId, out _);
+            await Task.CompletedTask;
         }
     }
 }

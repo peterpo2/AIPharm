@@ -6,5 +6,7 @@ namespace AIPharm.Core.Interfaces
     {
         Task<AssistantResponseDto> AskQuestionAsync(AssistantRequestDto request);
         Task<IEnumerable<AssistantResponseDto>> GetConversationHistoryAsync(string userId);
+        Task SaveConversationAsync(string userId, AssistantResponseDto response);
+        Task ClearConversationHistoryAsync(string userId);
     }
 }
