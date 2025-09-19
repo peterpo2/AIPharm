@@ -1,60 +1,40 @@
 import { useState, useEffect } from 'react';
-import { apiClient, ApiProduct, ApiCategory, ApiCart, ProductFilter } from '../services/api';
+import { apiClient, ApiCart, ProductFilter } from '../services/api';
 
 // Generic hook for API calls
-export function useApi<T>(
-  apiCall: () => Promise<T>,
-  dependencies: any[] = []
-) {
+export function useApi<T>(apiCall: () => Promise<T>, dependencies: any[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await apiCall();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await apiCall();
-        if (isMounted) {
-          setData(result);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'An error occurred');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
     fetchData();
-
-    return () => {
-      isMounted = false;
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 
-  return { data, loading, error, refetch: () => fetchData() };
+  return { data, loading, error, refetch: fetchData };
 }
 
 // Specific hooks for common API calls
 export function useProducts(filter: ProductFilter = {}) {
-  return useApi(
-    () => apiClient.getProducts(filter),
-    [JSON.stringify(filter)]
-  );
+  return useApi(() => apiClient.getProducts(filter), [JSON.stringify(filter)]);
 }
 
 export function useProduct(id: number) {
-  return useApi(
-    () => apiClient.getProduct(id),
-    [id]
-  );
+  return useApi(() => apiClient.getProduct(id), [id]);
 }
 
 export function useCategories() {
@@ -80,47 +60,27 @@ export function useCart() {
   };
 
   const addToCart = async (productId: number, quantity: number = 1) => {
-    try {
-      const updatedCart = await apiClient.addToCart(productId, quantity);
-      setData(updatedCart);
-      return updatedCart;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add to cart');
-      throw err;
-    }
+    const updatedCart = await apiClient.addToCart(productId, quantity);
+    setData(updatedCart);
+    return updatedCart;
   };
 
   const updateCartItem = async (cartItemId: number, quantity: number) => {
-    try {
-      const updatedCart = await apiClient.updateCartItem(cartItemId, quantity);
-      setData(updatedCart);
-      return updatedCart;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update cart item');
-      throw err;
-    }
+    const updatedCart = await apiClient.updateCartItem(cartItemId, quantity);
+    setData(updatedCart);
+    return updatedCart;
   };
 
   const removeFromCart = async (cartItemId: number) => {
-    try {
-      const updatedCart = await apiClient.removeFromCart(cartItemId);
-      setData(updatedCart);
-      return updatedCart;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove from cart');
-      throw err;
-    }
+    const updatedCart = await apiClient.removeFromCart(cartItemId);
+    setData(updatedCart);
+    return updatedCart;
   };
 
   const clearCart = async () => {
-    try {
-      const updatedCart = await apiClient.clearCart();
-      setData(updatedCart);
-      return updatedCart;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clear cart');
-      throw err;
-    }
+    const updatedCart = await apiClient.clearCart();
+    setData(updatedCart);
+    return updatedCart;
   };
 
   useEffect(() => {
@@ -151,7 +111,8 @@ export function useAssistant() {
       const response = await apiClient.askAssistant(question, productId);
       return response;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to get assistant response';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to get assistant response';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -159,9 +120,5 @@ export function useAssistant() {
     }
   };
 
-  return {
-    askQuestion,
-    loading,
-    error,
-  };
+  return { askQuestion, loading, error };
 }
