@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, DependencyList } from "react";
 import { apiClient, ApiCart, ProductFilter } from "../services/api";
 
 // ===== Generic API Hook =====
 export function useApi<T>(
   apiCall: (signal?: AbortSignal) => Promise<T>,
-  dependencies: any[] = []
+  dependencies: DependencyList = []
 ) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -23,9 +23,13 @@ export function useApi<T>(
 
       const result = await apiCall(controller.signal);
       setData(result);
-    } catch (err: any) {
-      if (err.name === "AbortError") return; // ignore cancelled requests
-      setError(err?.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") return; // ignore cancelled requests
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -108,8 +112,9 @@ export function useAssistant() {
       setLoading(true);
       setError(null);
       return await apiClient.askAssistant(question, productId);
-    } catch (err: any) {
-      const msg = err?.message || "Failed to get assistant response";
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to get assistant response";
       setError(msg);
       throw new Error(msg);
     } finally {

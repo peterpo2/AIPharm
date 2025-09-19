@@ -20,7 +20,7 @@ jobs:
         dotnet-version: '8.0.x'
     
     - name: Restore dependencies
-      run: dotnet restore AIPharm.Backend/AIPharm.sln
+      run: dotnet restore aipharm.backend/AIPharm.sln
     
     - name: Build
       run: dotnet build AIPharm.Backend/AIPharm.sln --no-restore

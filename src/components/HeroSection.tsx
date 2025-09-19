@@ -1,6 +1,6 @@
-import React from 'react';
-import { ArrowRight, Star, Sparkles } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
+import React from "react";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
 const HeroSection: React.FC = () => {
   const { t } = useLanguage();
@@ -10,8 +10,14 @@ const HeroSection: React.FC = () => {
       {/* Background decoration */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float"></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-teal-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style={{animationDelay: '2s'}}></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float" style={{animationDelay: '4s'}}></div>
+        <div
+          className="absolute top-40 right-10 w-72 h-72 bg-teal-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float"
+          style={{ animationDelay: "2s" }}
+        ></div>
+        <div
+          className="absolute -bottom-8 left-20 w-72 h-72 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-float"
+          style={{ animationDelay: "4s" }}
+        ></div>
       </div>
 
       <div className="relative container mx-auto px-4 py-12 lg:py-16">
@@ -20,37 +26,49 @@ const HeroSection: React.FC = () => {
             {/* Main Title */}
             <div className="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4 mr-2" />
-              {t('hero.certifiedQuality')}
+              {t("hero.certifiedQuality")}
             </div>
-            
+
             <p className="text-lg text-gray-600 mb-6 leading-relaxed max-w-xl mx-auto">
-              {t('hero.description')}
+              {t("hero.description")}
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mb-8 justify-center">
               <button className="group bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
-                <span>{t('hero.viewProducts')}</span>
+                <span>{t("hero.viewProducts")}</span>
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
               </button>
               <button className="group border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105">
-                {t('hero.aiAssistant')}
+                {t("hero.aiAssistant")}
               </button>
             </div>
 
             {/* Stats - Only 3 key stats */}
             <div className="grid grid-cols-3 gap-6 pt-6 border-t border-gray-200 max-w-xl mx-auto">
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-600 mb-1">10,000+</div>
-                <div className="text-sm text-gray-600">{t('hero.satisfiedClients')}</div>
+                <div className="text-2xl font-bold text-emerald-600 mb-1">
+                  10,000+
+                </div>
+                <div className="text-sm text-gray-600">
+                  {t("hero.satisfiedClients")}
+                </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-600 mb-1">5,000+</div>
-                <div className="text-sm text-gray-600">{t('hero.productsInStock')}</div>
+                <div className="text-2xl font-bold text-emerald-600 mb-1">
+                  5,000+
+                </div>
+                <div className="text-sm text-gray-600">
+                  {t("hero.productsInStock")}
+                </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-600 mb-1">24/7</div>
-                <div className="text-sm text-gray-600">{t('hero.professionalCare')}</div>
+                <div className="text-2xl font-bold text-emerald-600 mb-1">
+                  24/7
+                </div>
+                <div className="text-sm text-gray-600">
+                  {t("hero.professionalCare")}
+                </div>
               </div>
             </div>
           </div>
