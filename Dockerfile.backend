@@ -2,8 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution + projects
-COPY AIPharm.Backend/AIPharm.sln .
+COPY AIPharm.Backend/AIPharm.sln ./
 COPY AIPharm.Backend/AIPharm.Web/AIPharm.Web.csproj AIPharm.Web/
 COPY AIPharm.Backend/AIPharm.Core/AIPharm.Core.csproj AIPharm.Core/
 COPY AIPharm.Backend/AIPharm.Domain/AIPharm.Domain.csproj AIPharm.Domain/
@@ -11,18 +10,12 @@ COPY AIPharm.Backend/AIPharm.Infrastructure/AIPharm.Infrastructure.csproj AIPhar
 
 RUN dotnet restore AIPharm.sln
 
-# Copy everything
 COPY AIPharm.Backend/ ./
 
-# Publish Web project
-RUN dotnet publish AIPharm.Web/AIPharm.Web.csproj -c Release -o /out /p:UseAppHost=false
-
-# 👀 Debug
-RUN echo "=== LISTING /out ===" && ls -la /out
+RUN dotnet publish AIPharm.Web/AIPharm.Web.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # ---------- runtime stage ----------
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=build /out .
-RUN echo "=== LISTING /app ===" && ls -la /app
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "AIPharm.Web.dll"]
