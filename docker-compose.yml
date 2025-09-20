@@ -32,6 +32,8 @@ services:
       - database
     networks:
       - aipharm-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health || exit 1"]
     restart: unless-stopped
 
   frontend:
