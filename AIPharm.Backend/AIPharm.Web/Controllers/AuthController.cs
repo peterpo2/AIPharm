@@ -148,13 +148,11 @@ namespace AIPharm.Web.Controllers
             return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
         }
 
-        // For now just a demo hash/verify
-        private string HashPassword(string password) => Convert.ToBase64String(Encoding.UTF8.GetBytes(password));
-        private bool VerifyPassword(User user, string password) =>
-          PasswordHasher.Verify(user.PasswordHash, password);
-
+        // Use shared password hashing utility
+        private string HashPassword(string password) => PasswordHasher.Hash(password);
+        
+        private bool VerifyPassword(User user, string password) => PasswordHasher.Verify(password, user.PasswordHash);
     }
-
     public class LoginRequest
     {
         public string Email { get; set; } = string.Empty;
