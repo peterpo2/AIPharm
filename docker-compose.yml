@@ -25,7 +25,6 @@ services:
       - Jwt__Key=AIPharm-Super-Secret-Key-For-JWT-Tokens-2024-Very-Long-Key-Docker
       - Jwt__Issuer=AIPharm
       - Jwt__Audience=AIPharm-Users
-      - OpenAI__ApiKey=$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
       - ALLOWED_CORS_ORIGINS=http://localhost:3000
     ports:
       - "5000:8080"
