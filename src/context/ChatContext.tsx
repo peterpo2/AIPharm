@@ -6,6 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 import { ChatMessage } from "../types";
+import { buildApiUrl, logResolvedApiBase } from "../utils/apiBase";
 
 interface ChatContextType {
   messages: ChatMessage[];
@@ -20,16 +21,9 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-// 🔑 Get API base from environment
-const RAW_API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_URL_DOCKER ||
-  "http://localhost:8080/api";
+logResolvedApiBase();
 
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
-
-const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, "")}`;
+const buildUrl = (path: string) => buildApiUrl(path);
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   children,
