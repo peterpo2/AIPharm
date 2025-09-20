@@ -2,8 +2,9 @@ using System.Collections.Concurrent;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
 using AIPharm.Domain.Entities;
-using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 
 namespace AIPharm.Core.Services
@@ -11,18 +12,39 @@ namespace AIPharm.Core.Services
     public class AssistantService : IAssistantService
     {
         private readonly IRepository<Product> _productRepository;
-        private readonly ChatClient _chatClient;
+        private readonly ILogger<AssistantService> _logger;
+        private readonly ChatClient? _chatClient;
+        private readonly bool _assistantEnabled;
+        private const string ModelName = "gpt-4o-mini";
         private static readonly ConcurrentDictionary<string, List<AssistantResponseDto>> _conversations = new();
 
-        public AssistantService(IRepository<Product> productRepository, IConfiguration config)
+        public AssistantService(
+            IRepository<Product> productRepository,
+            IConfiguration config,
+            ILogger<AssistantService> logger)
         {
             _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             var apiKey = config["OpenAI:ApiKey"];
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new InvalidOperationException("❌ OpenAI API key is missing in configuration.");
 
-            _chatClient = new ChatClient("gpt-4o-mini", apiKey);
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                _logger.LogWarning("OpenAI API key is missing. Assistant responses will be disabled.");
+                _assistantEnabled = false;
+                return;
+            }
+
+            try
+            {
+                _chatClient = new ChatClient(ModelName, apiKey);
+                _assistantEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to initialise OpenAI chat client. Assistant responses will be disabled.");
+                _assistantEnabled = false;
+            }
         }
 
         public async Task<AssistantResponseDto> AskQuestionAsync(AssistantRequestDto request)
@@ -35,6 +57,13 @@ namespace AIPharm.Core.Services
                 Disclaimer = "⚠️ Това е обща информация. Консултирайте се с лекар."
             };
 
+            if (!_assistantEnabled || _chatClient is null)
+            {
+                response.Answer = "⚠️ AI assistant is currently disabled because the OpenAI API key is not configured.";
+                _logger.LogWarning("Assistant question skipped because the service is disabled. Question={Question}", request.Question);
+                return response;
+            }
+
             string productContext = string.Empty;
             if (request.ProductId.HasValue)
             {
@@ -46,6 +75,10 @@ namespace AIPharm.Core.Services
                         $"- Active ingredient: {product.ActiveIngredient}\n" +
                         $"- Dosage: {product.Dosage}\n" +
                         $"- Manufacturer: {product.Manufacturer}\n";
+                }
+                else
+                {
+                    _logger.LogInformation("Requested product context not found for ProductId={ProductId}", request.ProductId);
                 }
             }
 
@@ -75,6 +108,7 @@ namespace AIPharm.Core.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "OpenAI chat request failed.");
                 response.Answer = $"⚠️ Error: AI service unavailable. ({ex.Message})";
             }
 
