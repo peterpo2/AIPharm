@@ -271,7 +271,7 @@ server {
 
     # API proxy
     location /api/ {
-        proxy_pass http://localhost:8080/api/;
+        proxy_pass http://localhost:5000/api/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection keep-alive;
@@ -340,7 +340,7 @@ volumes:
 ### Health Checks
 ```bash
 # Check application health
-curl -f http://localhost:8080/api/health
+curl -f http://localhost:5000/api/health
 
 # Docker health check
 docker-compose ps
