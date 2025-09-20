@@ -41,11 +41,16 @@ interface RegisterData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 🔑 Environment-based API base
-const API_BASE =
+// 🔑 Environment-based API base (normalized)
+const RAW_API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_URL_DOCKER ||
   "http://localhost:8080/api";
+
+const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
+
+const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, "")}`;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -71,7 +76,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return;
       }
 
-      const response = await fetch(`${API_BASE}/api/auth/me`, {
+      const response = await fetch(buildUrl("auth/me"), {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -98,7 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     rememberMe: boolean = false
   ) => {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
+      const response = await fetch(buildUrl("auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, rememberMe }),
@@ -129,7 +134,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const register = async (registerData: RegisterData) => {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/register`, {
+      const response = await fetch(buildUrl("auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(registerData),
@@ -149,7 +154,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = async () => {
     try {
-      await fetch(`${API_BASE}/api/auth/logout`, {
+      await fetch(buildUrl("auth/logout"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${
@@ -171,7 +176,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (!user) return { success: false, message: "Не сте влезли в системата" };
 
     try {
-      await fetch(`${API_BASE}/api/auth/users/${user.id}`, {
+      await fetch(buildUrl(`auth/users/${user.id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

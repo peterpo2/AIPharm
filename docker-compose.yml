@@ -43,7 +43,7 @@ services:
     container_name: aipharm-frontend
     environment:
       - NODE_ENV=development
-      - VITE_API_BASE_URL=http://aipharm-backend:8080/api
+      - VITE_API_BASE_URL=http://localhost:5000/api
     ports:
       - "3000:3000"
     depends_on:
