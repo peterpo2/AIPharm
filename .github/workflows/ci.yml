@@ -37,15 +37,12 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        working-directory: ./
         run: npm install
 
       - name: Lint
-        working-directory: ./
         run: npm run lint
 
       - name: Build
-        working-directory: ./
         run: npm run build
 
   docker-build:
@@ -69,10 +66,24 @@ jobs:
         run: sleep 30
 
       - name: Test frontend health
+<<<<<<< HEAD
         run: curl -f http://localhost:5000 || exit 1
 
       - name: Test backend health
         run: curl -f http://localhost:8000/api/health || exit 1
+=======
+        run: curl -f http://localhost:3000 || exit 1
+
+      - name: Test backend health
+        run: curl -f http://localhost:5000/health || exit 1
+
+      - name: Verify DB seeded (admin user exists)
+        run: |
+          docker compose exec -T database /opt/mssql-tools/bin/sqlcmd \
+            -S localhost -U sa -P "$SA_PASSWORD" \
+            -d AIPharm \
+            -Q "SELECT Email FROM Users WHERE Email='admin@aipharm.bg'" | grep "admin@aipharm.bg"
+>>>>>>> main
 
       - name: Stop containers
         run: docker compose down
