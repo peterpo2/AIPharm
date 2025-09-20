@@ -1,11 +1,10 @@
 services:
-
   frontend:
     environment:
       - NODE_ENV=development
       - DROP_DB_ON_STARTUP=true
+      - VITE_API_URL_DOCKER=http://aipharm-backend:5000
     volumes:
       - ./src:/app/src:cached
       - ./public:/app/public:cached
       - /app/node_modules
-
