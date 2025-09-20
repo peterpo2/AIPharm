@@ -20,6 +20,12 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
+// 🔑 Get API base from environment
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_URL_DOCKER ||
+  "http://localhost:5000";
+
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -40,7 +46,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
     if (isOpen) {
       (async () => {
         try {
-          const res = await fetch("/api/assistant/history");
+          const res = await fetch(`${API_BASE}/api/assistant/history`);
           if (!res.ok) return;
           const history: ChatMessage[] = await res.json();
           if (history.length > 0) {
@@ -73,7 +79,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
     addMessage(question, true, productId);
 
     try {
-      const res = await fetch("/api/assistant/ask", {
+      const res = await fetch(`${API_BASE}/api/assistant/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
@@ -103,7 +109,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
 
   const clearChat = async () => {
     try {
-      await fetch("/api/assistant/history", { method: "DELETE" });
+      await fetch(`${API_BASE}/api/assistant/history`, { method: "DELETE" });
       setMessages([
         {
           id: "welcome",
@@ -138,7 +144,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   );
 };
 
-// ✅ Named export to match usage: import { useChat }
+// ✅ Named export for hook
 export const useChat = () => {
   const context = useContext(ChatContext);
   if (!context) {
