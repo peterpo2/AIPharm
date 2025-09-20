@@ -49,9 +49,9 @@ docker-compose up
 ```
 
 ### **Access the Application**
-- 🌐 **Frontend**: http://localhost:3000
-- 🔧 **Backend API**: http://localhost:8080
-- 📚 **Swagger Documentation**: http://localhost:8080/swagger
+- 🌐 **Frontend**: http://localhost:5000
+- 🔧 **Backend API**: http://localhost:8000
+- 📚 **Swagger Documentation**: http://localhost:8000/swagger
 - 🗄️ **Database**: localhost:1433 (sa/YOURPASSWORD)
 
 ### **Demo Accounts**
@@ -225,7 +225,7 @@ dotnet test              # Run backend tests
 cp .env.example .env
 
 # Configure your settings
-VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_BASE_URL=http://localhost:8000/api
 SA_PASSWORD=YourStrongPassword123!
 JWT_KEY=YourSuperSecretJWTKey
 ```
@@ -343,7 +343,7 @@ npm run test:coverage
 ```
 
 ### **API Testing**
-- 📚 **Swagger UI**: http://localhost:8080/swagger
+- 📚 **Swagger UI**: http://localhost:8000/swagger
 - 🔧 **Postman Collection**: Available in `/docs` folder
 - 🤖 **Automated Tests**: Included in CI/CD pipeline
 
@@ -518,7 +518,7 @@ docker-compose up
 <summary>❓ How do I add new products?</summary>
 
 1. Login as admin (admin@aipharm.bg / Admin123!)
-2. Use the Swagger UI at http://localhost:8080/swagger
+2. Use the Swagger UI at http://localhost:8000/swagger
 3. Use the POST /api/products endpoint
 </details>
 

@@ -20,20 +20,20 @@ services:
     container_name: aipharm-backend
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_URLS=http://+:8000
       - ConnectionStrings__DefaultConnection=Server=database,1433;Database=AIPharm;User Id=sa;Password=Xyzzy2005!;TrustServerCertificate=true;MultipleActiveResultSets=true
       - Jwt__Key=AIPharm-Super-Secret-Key-For-JWT-Tokens-2024-Very-Long-Key-Docker
       - Jwt__Issuer=AIPharm
       - Jwt__Audience=AIPharm-Users
-      - ALLOWED_CORS_ORIGINS=http://localhost:3000
+      - ALLOWED_CORS_ORIGINS=http://localhost:5000
     ports:
-      - "5000:8080"
+      - "8000:8000"
     depends_on:
       - database
     networks:
       - aipharm-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health || exit 1"]
     restart: unless-stopped
 
   frontend:
@@ -43,8 +43,9 @@ services:
     container_name: aipharm-frontend
     environment:
       - NODE_ENV=development
-      - VITE_API_BASE_URL=http://aipharm-backend:8080/api
-      - "3000:3000"
+      - VITE_API_BASE_URL=http://aipharm-backend:8000/api
+    ports:
+      - "5000:5000"
     depends_on:
       - backend
     networks:

@@ -31,7 +31,7 @@ index 62a53be7ed63b4552c2121e23df5eff2fd00db7f..196b614ea8ddfa12067f01fe0c846e6c
 +  import.meta.env.VITE_API_BASE_URL ||
    import.meta.env.VITE_API_URL ||
    import.meta.env.VITE_API_URL_DOCKER ||
-   "http://localhost:5000/api";
+  "http://localhost:8000/api";
  
 +const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
 +
