@@ -24,7 +24,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 const API_BASE =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_URL_DOCKER ||
-  "http://localhost:5000";
+  "http://localhost:5000/api";
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   children,

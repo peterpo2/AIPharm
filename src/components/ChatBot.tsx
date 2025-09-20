@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User, Loader2, Trash2 } from "lucide-react";
 import { useChat } from "../context/ChatContext";
-import { useLanguage } from "../context/LanguageContext";
+//import { useLanguage } from "../context/LanguageContext";
 import { ChatMessage } from "../types";
 
 const ChatBot: React.FC = () => {
   const { messages, isOpen, isLoading, toggleChat, askAssistant, clearChat } = useChat();
-  const { t } = useLanguage();
+  //const { t } = useLanguage();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

@@ -20,13 +20,13 @@ jobs:
         dotnet-version: '8.0.x'
     
     - name: Restore dependencies
-      run: dotnet restore aipharm.backend/AIPharm.sln
+      run: dotnet restore ./AIPharm.sln
     
     - name: Build
-      run: dotnet build AIPharm.Backend/AIPharm.sln --no-restore
+      run: dotnet build ./AIPharm.sln --no-restore
     
     - name: Test
-      run: dotnet test AIPharm.Backend/AIPharm.sln --no-build --verbosity normal
+      run: dotnet test ./AIPharm.sln --no-build --verbosity normal
 
   test-frontend:
     runs-on: ubuntu-latest
