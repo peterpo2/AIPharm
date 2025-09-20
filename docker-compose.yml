@@ -44,6 +44,7 @@ services:
     environment:
       - NODE_ENV=development
       - VITE_API_BASE_URL=http://aipharm-backend:8080/api
+    ports:
       - "3000:3000"
     depends_on:
       - backend
