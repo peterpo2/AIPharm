@@ -20,9 +20,9 @@ docker-compose up
 
 ### 2. Access the Application
 - **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-- **Swagger UI**: http://localhost:5000/swagger
-- **Database**: localhost:1433 (sa/AIPharm123!)
+- **Backend API**: http://localhost:8080
+- **Swagger UI**: http://localhost:8080/swagger
+- **Database**: localhost:1433 (sa/YOURPASSWORD)
 
 ## 🏗️ Architecture
 
@@ -31,7 +31,7 @@ docker-compose up
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │    Backend      │    │   Database      │
 │   React + Vite  │───▶│   .NET 8 API    │───▶│  SQL Server     │
-│   Port: 3000    │    │   Port: 5000    │    │   Port: 1433    │
+│   Port: 3000    │    │   Port: 8080    │    │   Port: 1433    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -113,7 +113,7 @@ docker-compose up backend
 ### Database Access
 ```bash
 # Connect to SQL Server
-docker exec -it aipharm-database /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P AIPharm123!
+docker exec -it aipharm-database /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YOURPASSWORD
 ```
 
 ## 🎯 Demo Accounts
@@ -130,7 +130,7 @@ docker exec -it aipharm-database /opt/mssql-tools/bin/sqlcmd -S localhost -U sa 
 ```bash
 # Check what's using the port
 netstat -ano | findstr :3000
-netstat -ano | findstr :5000
+netstat -ano | findstr :8080
 
 # Kill the process
 taskkill /PID <PID> /F
@@ -162,7 +162,7 @@ docker-compose up frontend
 docker-compose logs backend
 
 # Check database connection
-docker-compose exec backend curl http://localhost:5000/api/health
+docker-compose exec backend curl http://localhost:8080/api/health
 ```
 
 ### Reset Everything
@@ -229,7 +229,7 @@ docker-compose -f docker-compose.prod.yml up -d
 
 If you see:
 - Frontend at http://localhost:3000
-- Backend at http://localhost:5000/swagger
+- Backend at http://localhost:8080/swagger
 - No errors in logs
 
 You're ready to develop! 🚀

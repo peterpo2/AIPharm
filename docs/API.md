@@ -2,7 +2,7 @@
 
 ## 🔗 Base URL
 ```
-Development: http://localhost:5000/api
+Development: http://localhost:8080/api
 Production: https://your-domain.com/api
 ```
 

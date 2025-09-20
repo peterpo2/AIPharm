@@ -1,22 +1,4 @@
-# 🏥 AIPharm+ - Modern AI-Powered Digital Pharmacy
-
-<div align="center">
-
-![AIPharm+ Logo](https://img.shields.io/badge/AIPharm+-Digital%20Pharmacy-00D4AA?style=for-the-badge&logo=medical-cross&logoColor=white)
-
-**A full-featured e-commerce platform for pharmacies with AI assistant, modern design, and automated database management.**
-
-[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com/)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-
-[🚀 Quick Start](#-quick-start) • [✨ Features](#-features) • [🏗️ Architecture](#️-architecture) • [📖 Documentation](#-documentation) • [🤝 Contributing](#-contributing)
-
-</div>
-
----
+#
 
 ## 🌟 **Project Overview**
 
@@ -44,15 +26,33 @@ AIPharm+ is a cutting-edge digital pharmacy platform that combines traditional p
 git clone https://github.com/yourusername/aipharm-plus.git
 cd aipharm-plus
 
-# Start everything with Docker
+# Start everything with  🏥 AIPharm+ - Modern AI-Powered Digital Pharmacy
+
+<div align="center">
+
+![AIPharm+ Logo](https://img.shields.io/badge/AIPharm+-Digital%20Pharmacy-00D4AA?style=for-the-badge&logo=medical-cross&logoColor=white)
+
+**A full-featured e-commerce platform for pharmacies with AI assistant, modern design, and automated database management.**
+
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com/)
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+
+[🚀 Quick Start](#-quick-start) • [✨ Features](#-features) • [🏗️ Architecture](#️-architecture) • [📖 Documentation](#-documentation) • [🤝 Contributing](#-contributing)
+
+</div>
+
+---Docker
 docker-compose up
 ```
 
 ### **Access the Application**
 - 🌐 **Frontend**: http://localhost:3000
-- 🔧 **Backend API**: http://localhost:5000
-- 📚 **Swagger Documentation**: http://localhost:5000/swagger
-- 🗄️ **Database**: localhost:1433 (sa/AIPharm123!)
+- 🔧 **Backend API**: http://localhost:8080
+- 📚 **Swagger Documentation**: http://localhost:8080/swagger
+- 🗄️ **Database**: localhost:1433 (sa/YOURPASSWORD)
 
 ### **Demo Accounts**
 | Role | Email | Password |
@@ -225,7 +225,7 @@ dotnet test              # Run backend tests
 cp .env.example .env
 
 # Configure your settings
-VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_BASE_URL=http://localhost:8080/api
 SA_PASSWORD=YourStrongPassword123!
 JWT_KEY=YourSuperSecretJWTKey
 ```
@@ -343,7 +343,7 @@ npm run test:coverage
 ```
 
 ### **API Testing**
-- 📚 **Swagger UI**: http://localhost:5000/swagger
+- 📚 **Swagger UI**: http://localhost:8080/swagger
 - 🔧 **Postman Collection**: Available in `/docs` folder
 - 🤖 **Automated Tests**: Included in CI/CD pipeline
 
@@ -518,7 +518,7 @@ docker-compose up
 <summary>❓ How do I add new products?</summary>
 
 1. Login as admin (admin@aipharm.bg / Admin123!)
-2. Use the Swagger UI at http://localhost:5000/swagger
+2. Use the Swagger UI at http://localhost:8080/swagger
 3. Use the POST /api/products endpoint
 </details>
 

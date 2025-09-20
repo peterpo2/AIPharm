@@ -11,12 +11,12 @@ using AIPharm.Core.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// === Services ===
+// === Controllers / Swagger ===
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// === JWT Auth ===
+// === JWT Authentication ===
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -54,32 +54,35 @@ builder.Services.AddScoped<IAssistantService, AssistantService>();
 // === Health checks ===
 builder.Services.AddHealthChecks().AddDbContextCheck<AIPharmDbContext>("db");
 
-// === CORS (Frontend access) ===
+// === CORS ===
+// Reads from ALLOWED_CORS_ORIGINS in .env.prod
+// Multiple values can be separated with ; or ,
+var allowedOriginsRaw = builder.Configuration["ALLOWED_CORS_ORIGINS"] 
+                        ?? "http://localhost";
+var allowedOrigins = allowedOriginsRaw.Split(
+    new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "http://frontend:3000",
-                "http://aipharm-frontend:3000"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials()
-    );
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
 
-// === Swagger ===
+// === Swagger (always available) ===
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "AIPharm API v1");
 });
 
-// === HTTPS only outside Docker dev ===
+// === HTTPS redirection (skip in Docker) ===
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -92,22 +95,26 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Root ping + health
+// === Root health check endpoints ===
 app.MapGet("/", () =>
-    Results.Ok(new { name = "AIPharm API", env = app.Environment.EnvironmentName, time = DateTime.UtcNow }))
+    Results.Ok(new
+    {
+        name = "AIPharm API",
+        env = app.Environment.EnvironmentName,
+        time = DateTime.UtcNow
+    }))
     .WithName("Root");
 
 app.MapHealthChecks("/health");
 
-// === DB migrate + seed ===
+// === Auto-migrate & seed database ===
 using (var scope = app.Services.CreateScope())
 {
     var ctx = scope.ServiceProvider.GetRequiredService<AIPharmDbContext>();
     try
     {
-        // toggle with env var in docker-compose.yml
         var drop = (Environment.GetEnvironmentVariable("DROP_DB_ON_STARTUP") ?? "false")
-                      .Equals("true", StringComparison.OrdinalIgnoreCase);
+                   .Equals("true", StringComparison.OrdinalIgnoreCase);
 
         if (drop)
         {

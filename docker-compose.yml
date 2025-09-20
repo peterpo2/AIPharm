@@ -4,7 +4,7 @@ services:
     container_name: aipharm-database
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=YOURPASSWORD
+      - SA_PASSWORD=
       - MSSQL_PID=Express
     ports:
       - "1433:1433"
@@ -12,12 +12,6 @@ services:
       - sqlserver_data:/var/opt/mssql
     networks:
       - aipharm-network
-    healthcheck:
-      test: ["CMD-SHELL", "grep -q 'SQL Server is now ready for client connections' /var/opt/mssql/log/errorlog"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 25s
 
   backend:
     build:
@@ -31,21 +25,15 @@ services:
       - Jwt__Key=AIPharm-Super-Secret-Key-For-JWT-Tokens-2024-Very-Long-Key-Docker
       - Jwt__Issuer=AIPharm
       - Jwt__Audience=AIPharm-Users
-      
+      - OpenAI__ApiKey=$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
+      - ALLOWED_CORS_ORIGINS=http://localhost:3000
     ports:
-      - "8081:8080"
+      - "5000:8080"
     depends_on:
-      database:
-        condition: service_healthy
+      - database
     networks:
       - aipharm-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
 
   frontend:
     build:
@@ -53,8 +41,8 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: aipharm-frontend
     environment:
-      # Inside Docker, talk to backend by container name
-      - VITE_API_BASE_URL=http://aipharm-backend:8080
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:5000/api
     ports:
       - "3000:3000"
     depends_on:

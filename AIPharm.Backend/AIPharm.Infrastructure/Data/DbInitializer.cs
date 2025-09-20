@@ -1,13 +1,20 @@
 using AIPharm.Core.Security;
 using AIPharm.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace AIPharm.Infrastructure.Data
 {
     public static class DbInitializer
     {
+          private static string SimpleHash(string password)
+        {
+            // Must match AuthController.VerifyPassword
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(password));
+        }
         public static async Task InitializeAsync(AIPharmDbContext context, bool dropAndRecreate, CancellationToken ct = default)
         {
+
             if (dropAndRecreate)
             {
                 await context.Database.EnsureDeletedAsync(ct);
@@ -201,8 +208,18 @@ namespace AIPharm.Infrastructure.Data
             // --- Users ---
             var users = new List<User>
             {
-                new() { Email = "admin@aipharm.bg", FullName = "AIPharm Admin", IsAdmin = true, PasswordHash = PasswordHasher.Hash("Admin123!") },
-                new() { Email = "demo@aipharm.bg", FullName = "AIPharm Demo", IsAdmin = false, PasswordHash = PasswordHasher.Hash("Demo123!") }
+                new() {
+                    Email = "admin@aipharm.bg",
+                    FullName = "AIPharm Admin",
+                    IsAdmin = true,
+                    PasswordHash = SimpleHash("Admin123!")
+                },
+                new() {
+                    Email = "demo@aipharm.bg",
+                    FullName = "AIPharm Demo",
+                    IsAdmin = false,
+                    PasswordHash = SimpleHash("Demo123!")
+                }
             };
 
             await context.Users.AddRangeAsync(users, ct);

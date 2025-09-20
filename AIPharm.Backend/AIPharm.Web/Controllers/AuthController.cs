@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using AIPharm.Core.Interfaces;
 using AIPharm.Domain.Entities;
+using AIPharm.Core.Security;
 
 namespace AIPharm.Web.Controllers
 {
@@ -150,7 +151,8 @@ namespace AIPharm.Web.Controllers
         // For now just a demo hash/verify
         private string HashPassword(string password) => Convert.ToBase64String(Encoding.UTF8.GetBytes(password));
         private bool VerifyPassword(User user, string password) =>
-            user.PasswordHash == HashPassword(password);
+          PasswordHasher.Verify(user.PasswordHash, password);
+
     }
 
     public class LoginRequest
