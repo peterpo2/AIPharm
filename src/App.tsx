@@ -39,15 +39,35 @@ function AppContent() {
 
   const isDefaultView = !searchTerm.trim() && !selectedCategory;
 
-  const displayedProducts = useMemo(() => {
-    if (isDefaultView && !isProductExpanded) {
-      return filteredProducts.slice(0, 4);
-    }
-    return filteredProducts;
-  }, [filteredProducts, isDefaultView, isProductExpanded]);
-
   // Show hero only when no search or category is selected
   const showHero = isDefaultView;
+
+  const handleNavigateToCategories = () => {
+    setSearchTerm('');
+    setSelectedCategory(null);
+
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
+
+    if (typeof window !== 'undefined') {
+      const categoriesSection = document.getElementById('category-filter');
+      if (categoriesSection) {
+        categoriesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handleNavigateToProducts = () => {
+    setSelectedCategory(null);
+    setSearchTerm('');
+
+    if (location.pathname !== '/products') {
+      navigate('/products');
+    }
+  };
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -71,7 +91,12 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header onSearch={handleSearch} searchTerm={searchTerm} />
+      <Header
+        onSearch={handleSearch}
+        searchTerm={searchTerm}
+        onNavigateToCategories={handleNavigateToCategories}
+        onNavigateToProducts={handleNavigateToProducts}
+      />
       <div className="flex-1">
         <Routes>
           <Route

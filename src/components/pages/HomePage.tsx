@@ -38,11 +38,13 @@ const HomePage: React.FC<HomePageProps> = ({
       {showHero && <HeroSection />}
 
       <main className="container mx-auto px-4 py-8 bg-white min-h-screen">
-        <CategoryFilter
-          selectedCategory={selectedCategory}
-          onCategoryChange={onCategoryChange}
-          categories={categories}
-        />
+        <section id="category-filter">
+          <CategoryFilter
+            selectedCategory={selectedCategory}
+            onCategoryChange={onCategoryChange}
+            categories={categories}
+          />
+        </section>
 
         {(searchTerm || selectedCategory) && (
           <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
