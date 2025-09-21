@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, ShoppingCart, User, Menu, X, Phone, LogOut, Settings, Shield } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import LoginModal from './auth/LoginModal';
 import RegisterModal from './auth/RegisterModal';
 import AIPharmLogo from './Logo';
+import AdminPanel from './admin/AdminPanel';
 
 interface HeaderProps {
   onSearch: (term: string) => void;
@@ -21,10 +22,23 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setShowAdminPanel(false);
+    }
+  }, [isAdmin]);
 
   const handleLogout = async () => {
     await logout();
     setShowUserMenu(false);
+    setShowAdminPanel(false);
+  };
+
+  const openAdminPanel = () => {
+    setShowUserMenu(false);
+    setShowAdminPanel(true);
   };
 
   return (
@@ -41,6 +55,15 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
           </div>
           <div className="flex items-center space-x-6">
             <LanguageSwitcher />
+            {isAuthenticated && isAdmin && (
+              <button
+                onClick={openAdminPanel}
+                className="inline-flex items-center space-x-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
+              >
+                <Shield className="h-4 w-4" />
+                <span>{t('header.adminPanel')}</span>
+              </button>
+            )}
             {isAuthenticated ? (
               <span className="text-emerald-600 font-medium">
                 {t('header.hello')}, {user?.fullName || user?.email}
@@ -130,7 +153,10 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
                       <span>{t('header.settings')}</span>
                     </button>
                     {isAdmin && (
-                      <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                      <button
+                        onClick={openAdminPanel}
+                        className="w-full px-4 py-2 text-left text-amber-600 hover:bg-amber-50 flex items-center space-x-2"
+                      >
                         <Shield className="w-4 h-4" />
                         <span>{t('header.adminPanel')}</span>
                       </button>
@@ -215,14 +241,15 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
           setShowRegisterModal(true);
         }}
       />
-      <RegisterModal 
-        isOpen={showRegisterModal} 
+      <RegisterModal
+        isOpen={showRegisterModal}
         onClose={() => setShowRegisterModal(false)}
         onSwitchToLogin={() => {
           setShowRegisterModal(false);
           setShowLoginModal(true);
         }}
       />
+      <AdminPanel isOpen={isAdmin && showAdminPanel} onClose={() => setShowAdminPanel(false)} />
     </header>
   );
 };
