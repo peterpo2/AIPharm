@@ -74,6 +74,10 @@ namespace AIPharm.Web.Controllers
                 var product = await _productService.CreateProductAsync(createProductDto);
                 return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
             }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "An error occurred while creating the product", error = ex.Message });
@@ -89,6 +93,10 @@ namespace AIPharm.Web.Controllers
                 return Ok(product);
             }
             catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
             }
@@ -107,6 +115,10 @@ namespace AIPharm.Web.Controllers
                 return NoContent();
             }
             catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
             }
