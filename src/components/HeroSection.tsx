@@ -2,7 +2,12 @@ import React from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
-const HeroSection: React.FC = () => {
+interface HeroSectionProps {
+  onViewProducts: () => void;
+  onOpenAssistant: () => void;
+}
+
+const HeroSection: React.FC<HeroSectionProps> = ({ onViewProducts, onOpenAssistant }) => {
   const { t } = useLanguage();
 
   return (
@@ -35,11 +40,19 @@ const HeroSection: React.FC = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mb-8 justify-center">
-              <button className="group bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
+              <button
+                type="button"
+                onClick={onViewProducts}
+                className="group bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+              >
                 <span>{t("hero.viewProducts")}</span>
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
               </button>
-              <button className="group border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105">
+              <button
+                type="button"
+                onClick={onOpenAssistant}
+                className="group border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105"
+              >
                 {t("hero.aiAssistant")}
               </button>
             </div>

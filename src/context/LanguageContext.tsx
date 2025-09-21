@@ -12,6 +12,7 @@ const translations = {
   bg: {
     // Header
     'header.title': 'AIPHARM+',
+    'header.subtitle': 'AI аптека и асистент',
     'header.search': 'Търсете лекарства, витамини, козметика...',
     'header.phone': '+359 2 123 4567',
     'header.freeDelivery': 'Безплатна доставка над €25',
@@ -24,6 +25,10 @@ const translations = {
     'header.adminPanel': 'Админ панел',
     'header.hello': 'Здравейте',
     'header.administrator': 'Администратор',
+
+    // Navigation
+    'navigation.categories': 'Категории',
+    'navigation.products': 'Продукти',
 
     // Hero Section
     'hero.title': 'AIPHARM+',
@@ -49,6 +54,8 @@ const translations = {
     'categories.children': 'Детски продукти',
 
     // Products
+    'products.featuredTitle': 'Акцентирани продукти',
+    'products.featuredSubtitle': 'Показваме селекция от най-търсените ни предложения.',
     'products.resultsFor': 'Резултати за',
     'products.category': 'Категория',
     'products.unknown': 'Неизвестна',
@@ -57,6 +64,7 @@ const translations = {
     'products.noProducts': 'Няма намерени продукти',
     'products.tryDifferent': 'Опитайте с различни ключови думи или разгледайте нашите категории',
     'products.viewAll': 'Разгледайте всички продукти',
+    'products.showLess': 'Покажи по-малко',
     'products.prescription': 'Рецепта',
     'products.activeIngredient': 'Активна съставка',
     'products.dosage': 'Дозировка',
@@ -319,6 +327,7 @@ const translations = {
   en: {
     // Header
     'header.title': 'AIPHARM+',
+    'header.subtitle': 'AI pharmacy & assistant',
     'header.search': 'Search medicines, vitamins, cosmetics...',
     'header.phone': '+359 2 123 4567',
     'header.freeDelivery': 'Free delivery over €25',
@@ -331,6 +340,10 @@ const translations = {
     'header.adminPanel': 'Admin Panel',
     'header.hello': 'Hello',
     'header.administrator': 'Administrator',
+
+    // Navigation
+    'navigation.categories': 'Categories',
+    'navigation.products': 'Products',
 
     // Hero Section
     'hero.title': 'AIPHARM+',
@@ -356,6 +369,8 @@ const translations = {
     'categories.children': 'Children Products',
 
     // Products
+    'products.featuredTitle': 'Featured products',
+    'products.featuredSubtitle': 'A quick look at some of our most popular picks.',
     'products.resultsFor': 'Results for',
     'products.category': 'Category',
     'products.unknown': 'Unknown',
@@ -364,6 +379,7 @@ const translations = {
     'products.noProducts': 'No products found',
     'products.tryDifferent': 'Try different keywords or browse our categories',
     'products.viewAll': 'View all products',
+    'products.showLess': 'Show less',
     'products.prescription': 'Prescription',
     'products.activeIngredient': 'Active Ingredient',
     'products.dosage': 'Dosage',

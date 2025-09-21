@@ -12,9 +12,16 @@ import AdminPanel from './admin/AdminPanel';
 interface HeaderProps {
   onSearch: (term: string) => void;
   searchTerm: string;
+  onNavigateToCategories: () => void;
+  onNavigateToProducts: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
+const Header: React.FC<HeaderProps> = ({
+  onSearch,
+  searchTerm,
+  onNavigateToCategories,
+  onNavigateToProducts,
+}) => {
   const { state, dispatch } = useCart();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { t } = useLanguage();
@@ -39,6 +46,24 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
   const openAdminPanel = () => {
     setShowUserMenu(false);
     setShowAdminPanel(true);
+  };
+
+  const navigationItems = [
+    {
+      key: 'categories',
+      label: t('navigation.categories'),
+      onClick: onNavigateToCategories,
+    },
+    {
+      key: 'products',
+      label: t('navigation.products'),
+      onClick: onNavigateToProducts,
+    },
+  ];
+
+  const handleNavigationClick = (callback: () => void) => {
+    callback();
+    setIsMenuOpen(false);
   };
 
   return (
@@ -183,6 +208,20 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
           </div>
         </div>
 
+        {/* Desktop navigation */}
+        <nav className="hidden md:flex items-center space-x-2 border-t border-gray-100 py-3 text-sm font-medium text-gray-600">
+          {navigationItems.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => handleNavigationClick(item.onClick)}
+              className="relative rounded-full px-4 py-2 transition-colors duration-200 hover:bg-emerald-50 hover:text-emerald-700"
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
         {/* Mobile search */}
         <div className="md:hidden pb-4">
           <div className="relative">
@@ -201,9 +240,18 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 py-4 px-4 space-y-3">
-          <button className="block w-full text-left py-2 text-gray-700 hover:text-emerald-600 transition-colors">
-            {t('categories.title')}
-          </button>
+          <div className="space-y-2 pb-3 border-b border-gray-100">
+            {navigationItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleNavigationClick(item.onClick)}
+                className="block w-full rounded-lg px-3 py-2 text-left text-gray-700 transition-colors duration-200 hover:bg-emerald-50 hover:text-emerald-700"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           <button className="block w-full text-left py-2 text-gray-700 hover:text-emerald-600 transition-colors">
             {t('footer.promotions')}
           </button>
