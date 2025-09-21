@@ -16,6 +16,11 @@ namespace AIPharm.Infrastructure.Repositories
             _dbSet = context.Set<T>();
         }
 
+        public virtual IQueryable<T> Query()
+        {
+            return _dbSet.AsNoTracking();
+        }
+
         public virtual async Task<T?> GetByIdAsync(int id)
         {
             return await _dbSet.FindAsync(id);

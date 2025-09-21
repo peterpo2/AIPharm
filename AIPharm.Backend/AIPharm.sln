@@ -10,6 +10,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AIPharm.Domain", "AIPharm.D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AIPharm.Infrastructure", "AIPharm.Infrastructure\AIPharm.Infrastructure.csproj", "{4E7A4AD8-AD6C-4E82-BCFB-F1DD78C256F0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AIPharm.Core.Tests", "AIPharm.Core.Tests\AIPharm.Core.Tests.csproj", "{B7071E0D-017B-481E-925D-169BFF6A254C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{4E7A4AD8-AD6C-4E82-BCFB-F1DD78C256F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E7A4AD8-AD6C-4E82-BCFB-F1DD78C256F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E7A4AD8-AD6C-4E82-BCFB-F1DD78C256F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7071E0D-017B-481E-925D-169BFF6A254C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7071E0D-017B-481E-925D-169BFF6A254C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7071E0D-017B-481E-925D-169BFF6A254C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7071E0D-017B-481E-925D-169BFF6A254C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
