@@ -76,3 +76,36 @@ export interface AssistantResponse {
   timestamp: Date;
   disclaimer: string;
 }
+
+export type ToolStatus = 'active' | 'pending' | 'rejected' | 'disabled';
+
+export type ToolCategory =
+  | 'ai'
+  | 'automation'
+  | 'analytics'
+  | 'operations'
+  | 'compliance';
+
+export type ToolRole =
+  | 'admin'
+  | 'pharmacist'
+  | 'support'
+  | 'doctor'
+  | 'analyst'
+  | 'manager';
+
+export interface AdminTool {
+  id: string;
+  name: string;
+  description: string;
+  category: ToolCategory;
+  status: ToolStatus;
+  submittedBy: string;
+  submittedByRole: ToolRole;
+  createdAt: string;
+  lastUpdated: string;
+  tags: string[];
+  usageCount?: number;
+  impact?: 'high' | 'medium' | 'low';
+  reviewerNotes?: string;
+}
