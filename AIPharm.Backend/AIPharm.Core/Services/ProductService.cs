@@ -1,4 +1,8 @@
+using System.Collections.Concurrent;
+using System.Globalization;
+using System.Linq;
 using AutoMapper;
+using Microsoft.Extensions.Caching.Memory;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
 using AIPharm.Domain.Entities;
@@ -7,22 +11,38 @@ namespace AIPharm.Core.Services
 {
     public class ProductService : IProductService
     {
+        private const string CacheKeySeparator = "|";
+        private const string ProductListCachePrefix = "products:list";
+        private const string ProductCachePrefix = "products:item";
+        private const string ProductSearchCachePrefix = "products:search";
+
+        private static readonly ConcurrentDictionary<string, byte> _trackedCacheKeys = new();
+
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<Category> _categoryRepository;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _memoryCache;
 
         public ProductService(
             IRepository<Product> productRepository,
             IRepository<Category> categoryRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IMemoryCache memoryCache)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _mapper = mapper;
+            _memoryCache = memoryCache;
         }
 
         public async Task<PagedResultDto<ProductDto>> GetProductsAsync(ProductFilterDto filter)
         {
+            var cacheKey = BuildProductListCacheKey(filter);
+            if (_memoryCache.TryGetValue(cacheKey, out PagedResultDto<ProductDto>? cachedResult))
+            {
+                return cachedResult;
+            }
+
             var query = await _productRepository.GetAllAsync();
             var products = query.AsQueryable();
 
@@ -74,36 +94,67 @@ namespace AIPharm.Core.Services
                 product.CategoryName = categoryDict.GetValueOrDefault(product.CategoryId);
             }
 
-            return new PagedResultDto<ProductDto>
+            var result = new PagedResultDto<ProductDto>
             {
                 Items = productDtos,
                 TotalCount = totalCount,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize
             };
+
+            _memoryCache.Set(cacheKey, result, CreateCacheEntryOptions());
+            TrackCacheKey(cacheKey);
+
+            return result;
         }
 
         public async Task<ProductDto?> GetProductByIdAsync(int id)
         {
+            var cacheKey = BuildProductCacheKey(id);
+            if (_memoryCache.TryGetValue(cacheKey, out ProductDto? cachedProduct))
+            {
+                return cachedProduct;
+            }
+
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return null;
 
             var productDto = _mapper.Map<ProductDto>(product);
-            
+
             var category = await _categoryRepository.GetByIdAsync(product.CategoryId);
             productDto.CategoryName = category?.Name;
+
+            _memoryCache.Set(cacheKey, productDto, CreateCacheEntryOptions());
+            TrackCacheKey(cacheKey);
 
             return productDto;
         }
 
         public async Task<IEnumerable<ProductDto>> SearchProductsAsync(string searchTerm)
         {
-            var products = await _productRepository.FindAsync(p =>
-                p.Name.Contains(searchTerm) ||
-                (p.Description != null && p.Description.Contains(searchTerm)) ||
-                (p.ActiveIngredient != null && p.ActiveIngredient.Contains(searchTerm)));
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return Enumerable.Empty<ProductDto>();
+            }
 
-            return _mapper.Map<IEnumerable<ProductDto>>(products);
+            var cacheKey = BuildSearchCacheKey(searchTerm);
+            if (_memoryCache.TryGetValue(cacheKey, out IEnumerable<ProductDto>? cachedResults))
+            {
+                return cachedResults;
+            }
+
+            var normalizedSearch = searchTerm.Trim();
+            var products = await _productRepository.FindAsync(p =>
+                p.Name.Contains(normalizedSearch) ||
+                (p.Description != null && p.Description.Contains(normalizedSearch)) ||
+                (p.ActiveIngredient != null && p.ActiveIngredient.Contains(normalizedSearch)));
+
+            var mappedProducts = _mapper.Map<List<ProductDto>>(products);
+
+            _memoryCache.Set(cacheKey, mappedProducts, CreateCacheEntryOptions());
+            TrackCacheKey(cacheKey);
+
+            return mappedProducts;
         }
 
         public async Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto)
@@ -119,7 +170,15 @@ namespace AIPharm.Core.Services
             product.UpdatedAt = DateTime.UtcNow;
 
             var createdProduct = await _productRepository.AddAsync(product);
-            return _mapper.Map<ProductDto>(createdProduct);
+            var productDto = _mapper.Map<ProductDto>(createdProduct);
+            var createdCategory = await _categoryRepository.GetByIdAsync(productDto.CategoryId);
+            productDto.CategoryName = createdCategory?.Name;
+
+            // The newly created product may affect list/search caches.
+            InvalidateCollectionCaches();
+            CacheProduct(productDto);
+
+            return productDto;
         }
 
         public async Task<ProductDto> UpdateProductAsync(int id, UpdateProductDto updateProductDto)
@@ -143,7 +202,15 @@ namespace AIPharm.Core.Services
             product.UpdatedAt = DateTime.UtcNow;
 
             var updatedProduct = await _productRepository.UpdateAsync(product);
-            return _mapper.Map<ProductDto>(updatedProduct);
+            var productDto = _mapper.Map<ProductDto>(updatedProduct);
+            var category = await _categoryRepository.GetByIdAsync(productDto.CategoryId);
+            productDto.CategoryName = category?.Name;
+
+            InvalidateCollectionCaches();
+            InvalidateProductCache(id);
+            CacheProduct(productDto);
+
+            return productDto;
         }
 
         public async Task DeleteProductAsync(int id)
@@ -155,6 +222,73 @@ namespace AIPharm.Core.Services
             product.IsDeleted = true;
             product.UpdatedAt = DateTime.UtcNow;
             await _productRepository.UpdateAsync(product);
+
+            InvalidateCollectionCaches();
+            InvalidateProductCache(id);
+        }
+
+        private void CacheProduct(ProductDto productDto)
+        {
+            var cacheKey = BuildProductCacheKey(productDto.Id);
+            _memoryCache.Set(cacheKey, productDto, CreateCacheEntryOptions());
+            TrackCacheKey(cacheKey);
+        }
+
+        private static string BuildProductListCacheKey(ProductFilterDto filter)
+        {
+            return string.Join(CacheKeySeparator,
+                ProductListCachePrefix,
+                filter.PageNumber,
+                filter.PageSize,
+                filter.CategoryId?.ToString(CultureInfo.InvariantCulture) ?? "null",
+                filter.MinPrice?.ToString(CultureInfo.InvariantCulture) ?? "null",
+                filter.MaxPrice?.ToString(CultureInfo.InvariantCulture) ?? "null",
+                string.IsNullOrWhiteSpace(filter.SearchTerm)
+                    ? "null"
+                    : filter.SearchTerm.Trim().ToLowerInvariant(),
+                filter.RequiresPrescription.HasValue ? filter.RequiresPrescription.Value.ToString() : "null");
+        }
+
+        private static string BuildProductCacheKey(int id) => string.Join(CacheKeySeparator, ProductCachePrefix, id);
+
+        private static string BuildSearchCacheKey(string searchTerm) =>
+            string.Join(CacheKeySeparator, ProductSearchCachePrefix, searchTerm.Trim().ToLowerInvariant());
+
+        private MemoryCacheEntryOptions CreateCacheEntryOptions() => new()
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3),
+            SlidingExpiration = TimeSpan.FromMinutes(1)
+        };
+
+        private void TrackCacheKey(string key)
+        {
+            _trackedCacheKeys.TryAdd(key, 0);
+        }
+
+        private void InvalidateCollectionCaches()
+        {
+            RemoveCacheByPrefix(ProductListCachePrefix);
+            RemoveCacheByPrefix(ProductSearchCachePrefix);
+        }
+
+        private void InvalidateProductCache(int productId)
+        {
+            var key = BuildProductCacheKey(productId);
+            _memoryCache.Remove(key);
+            _trackedCacheKeys.TryRemove(key, out _);
+        }
+
+        private void RemoveCacheByPrefix(string prefix)
+        {
+            var keysToRemove = _trackedCacheKeys.Keys
+                .Where(k => k.StartsWith(prefix, StringComparison.Ordinal))
+                .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                _memoryCache.Remove(key);
+                _trackedCacheKeys.TryRemove(key, out _);
+            }
         }
 
         private static void ValidateCreateProductInput(CreateProductDto createProductDto)

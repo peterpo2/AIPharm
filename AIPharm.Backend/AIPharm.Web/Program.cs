@@ -16,6 +16,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// === Response caching ===
+builder.Services.AddResponseCaching(options =>
+{
+    options.MaximumBodySize = 1024 * 1024; // 1 MB per cached response
+    options.UseCaseSensitivePaths = false;
+});
+
+// === In-memory caching ===
+builder.Services.AddMemoryCache();
+
 // === JWT Authentication ===
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -89,6 +99,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFrontend");
+
+app.UseResponseCaching();
 
 app.UseAuthentication();
 app.UseAuthorization();

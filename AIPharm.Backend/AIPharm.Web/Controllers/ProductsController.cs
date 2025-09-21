@@ -16,6 +16,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet]
+        [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any, NoStore = false, VaryByQueryKeys = new[] { "*" })]
         public async Task<ActionResult<PagedResultDto<ProductDto>>> GetProducts([FromQuery] ProductFilterDto filter)
         {
             try
@@ -30,6 +31,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet("{id}")]
+        [ResponseCache(Duration = 120, Location = ResponseCacheLocation.Any, NoStore = false)]
         public async Task<ActionResult<ProductDto>> GetProduct(int id)
         {
             try
@@ -48,6 +50,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet("search")]
+        [ResponseCache(Duration = 45, Location = ResponseCacheLocation.Any, NoStore = false, VaryByQueryKeys = new[] { "searchTerm" })]
         public async Task<ActionResult<IEnumerable<ProductDto>>> SearchProducts([FromQuery] string searchTerm)
         {
             try
