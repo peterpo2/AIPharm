@@ -2,6 +2,7 @@ using AutoMapper;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
 using AIPharm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIPharm.Core.Services
 {
@@ -23,8 +24,7 @@ namespace AIPharm.Core.Services
 
         public async Task<PagedResultDto<ProductDto>> GetProductsAsync(ProductFilterDto filter)
         {
-            var query = await _productRepository.GetAllAsync();
-            var products = query.AsQueryable();
+            var products = _productRepository.Query();
 
             // Apply filters
             if (filter.CategoryId.HasValue)
@@ -56,11 +56,17 @@ namespace AIPharm.Core.Services
                 products = products.Where(p => p.RequiresPrescription == filter.RequiresPrescription.Value);
             }
 
-            var totalCount = products.Count();
-            var pagedProducts = products
-                .Skip((filter.PageNumber - 1) * filter.PageSize)
+            var totalCount = await products.CountAsync();
+            var skip = (filter.PageNumber - 1) * filter.PageSize;
+            if (skip < 0)
+            {
+                skip = 0;
+            }
+
+            var pagedProducts = await products
+                .Skip(skip)
                 .Take(filter.PageSize)
-                .ToList();
+                .ToListAsync();
 
             var productDtos = _mapper.Map<List<ProductDto>>(pagedProducts);
 

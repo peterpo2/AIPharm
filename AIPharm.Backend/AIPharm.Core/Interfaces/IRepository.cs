@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace AIPharm.Core.Interfaces
@@ -9,6 +10,7 @@ namespace AIPharm.Core.Interfaces
         Task<IEnumerable<T>> GetAllAsync();
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
         Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
+        IQueryable<T> Query();
         Task<T> AddAsync(T entity);
         Task<T> UpdateAsync(T entity);
         Task DeleteAsync(T entity);
