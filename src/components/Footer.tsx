@@ -1,7 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Facebook, Instagram, Stethoscope, Shield, Award } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import AIPharmLogo from './Logo';
+import { quickLinks } from '../data/navigation';
 
 const Footer: React.FC = () => {
   const { t } = useLanguage();
@@ -63,19 +65,15 @@ const Footer: React.FC = () => {
               {t('footer.quickLinks')}
             </h4>
             <ul className="space-y-4">
-              {[
-                { key: 'footer.aboutUs', text: t('footer.aboutUs') },
-                { key: 'footer.products', text: t('footer.products') },
-                { key: 'footer.services', text: t('footer.services') },
-                { key: 'footer.contacts', text: t('footer.contacts') },
-                { key: 'footer.promotions', text: t('footer.promotions') },
-                { key: 'footer.faq', text: t('footer.faq') }
-              ].map((link) => (
+              {quickLinks.map((link) => (
                 <li key={link.key}>
-                  <button className="text-gray-300 hover:text-white hover:translate-x-2 transition-all duration-300 flex items-center space-x-2 group">
+                  <Link
+                    to={link.path}
+                    className="text-gray-300 hover:text-white hover:translate-x-2 transition-all duration-300 flex items-center space-x-2 group"
+                  >
                     <div className="w-1 h-1 bg-primary-400 rounded-full group-hover:w-2 group-hover:h-2 transition-all duration-300"></div>
-                    <span>{link.text}</span>
-                  </button>
+                    <span>{t(link.key)}</span>
+                  </Link>
                 </li>
               ))}
             </ul>

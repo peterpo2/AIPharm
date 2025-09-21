@@ -1,22 +1,28 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
-import HeroSection from './components/HeroSection';
-import CategoryFilter from './components/CategoryFilter';
-import ProductGrid from './components/ProductGrid';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import ChatBot from './components/ChatBot';
 import { CartProvider } from './context/CartContext';
 import { ChatProvider } from './context/ChatContext';
 import { AuthProvider } from './context/AuthContext';
-import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { categories, products, searchProducts, getProductsByCategory } from './data/mockData';
 import { Product } from './types';
+import HomePage from './components/pages/HomePage';
+import ProductsPage from './components/pages/ProductsPage';
+import Services from './components/pages/Services';
+import AboutUs from './components/pages/AboutUs';
+import Contacts from './components/pages/Contacts';
+import Promotions from './components/pages/Promotions';
+import FAQ from './components/pages/FAQ';
 
 function AppContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Filter products based on search and category
   const filteredProducts = useMemo(() => {
@@ -36,7 +42,12 @@ function AppContent() {
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    if (term.trim() === '') {
+    if (term.trim()) {
+      setSelectedCategory(null);
+      if (location.pathname !== '/' && location.pathname !== '/products') {
+        navigate('/products');
+      }
+    } else {
       setSelectedCategory(null);
     }
   };
@@ -44,44 +55,50 @@ function AppContent() {
   const handleCategoryChange = (categoryId: number | null) => {
     setSelectedCategory(categoryId);
     setSearchTerm('');
+    if (categoryId && location.pathname !== '/products') {
+      navigate('/products');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header onSearch={handleSearch} searchTerm={searchTerm} />
-
-      {showHero && <HeroSection />}
-
-      <main className="container mx-auto px-4 py-8 bg-white min-h-screen">
-        <CategoryFilter
-          selectedCategory={selectedCategory}
-          onCategoryChange={handleCategoryChange}
-          categories={categories}
-        />
-
-        {/* Results header */}
-        {(searchTerm || selectedCategory) && (
-          <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {searchTerm
-                ? `${t('products.resultsFor')} "${searchTerm}"`
-                : selectedCategory
-                ? `${t('products.category')}: ${
-                    categories.find((c) => c.id === selectedCategory)?.name ||
-                    t('products.unknown')
-                  }`
-                : t('products.allProducts')}
-            </h2>
-            <p className="text-gray-600 flex items-center">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
-                {filteredProducts.length} {t('products.products')}
-              </span>
-            </p>
-          </div>
-        )}
-
-        <ProductGrid products={filteredProducts} isLoading={false} />
-      </main>
+      <div className="flex-1">
+        <Routes>
+          <Route
+            path="/"
+            element={(
+              <HomePage
+                searchTerm={searchTerm}
+                selectedCategory={selectedCategory}
+                onCategoryChange={handleCategoryChange}
+                filteredProducts={filteredProducts}
+                categories={categories}
+                showHero={showHero}
+              />
+            )}
+          />
+          <Route
+            path="/products"
+            element={(
+              <ProductsPage
+                searchTerm={searchTerm}
+                selectedCategory={selectedCategory}
+                onCategoryChange={handleCategoryChange}
+                filteredProducts={filteredProducts}
+                categories={categories}
+                allProducts={products}
+              />
+            )}
+          />
+          <Route path="/services" element={<Services />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/contacts" element={<Contacts />} />
+          <Route path="/promotions" element={<Promotions />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
 
       <Footer />
       <CartDrawer />

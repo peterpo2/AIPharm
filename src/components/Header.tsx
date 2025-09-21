@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, X, Phone, LogOut, Settings, Shield } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +9,7 @@ import LoginModal from './auth/LoginModal';
 import RegisterModal from './auth/RegisterModal';
 import AIPharmLogo from './Logo';
 import AdminPanel from './admin/AdminPanel';
+import { quickLinks } from '../data/navigation';
 
 interface HeaderProps {
   onSearch: (term: string) => void;
@@ -18,6 +20,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
   const { state, dispatch } = useCart();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { t } = useLanguage();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -83,9 +86,9 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
         {/* Main header */}
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3">
             <AIPharmLogo className="h-12" />
-          </div>
+          </Link>
 
           {/* Search bar */}
           <div className="hidden md:flex flex-1 max-w-2xl mx-8">
@@ -201,18 +204,20 @@ const Header: React.FC<HeaderProps> = ({ onSearch, searchTerm }) => {
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 py-4 px-4 space-y-3">
-          <button className="block w-full text-left py-2 text-gray-700 hover:text-emerald-600 transition-colors">
-            {t('categories.title')}
-          </button>
-          <button className="block w-full text-left py-2 text-gray-700 hover:text-emerald-600 transition-colors">
-            {t('footer.promotions')}
-          </button>
-          <button className="block w-full text-left py-2 text-gray-700 hover:text-emerald-600 transition-colors">
-            {t('footer.aboutUs')}
-          </button>
-          <button className="block w-full text-left py-2 text-gray-700 hover:text-emerald-600 transition-colors">
-            {t('footer.contacts')}
-          </button>
+          {[{ key: 'categories.title', path: '/' }, ...quickLinks].map((link) => (
+            <Link
+              key={link.key}
+              to={link.path}
+              onClick={() => setIsMenuOpen(false)}
+              className={`block w-full text-left py-2 transition-colors ${
+                location.pathname === link.path
+                  ? 'text-emerald-600 font-semibold'
+                  : 'text-gray-700 hover:text-emerald-600'
+              }`}
+            >
+              {t(link.key)}
+            </Link>
+          ))}
           {!isAuthenticated && (
             <>
               <button 
