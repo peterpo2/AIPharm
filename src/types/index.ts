@@ -109,3 +109,32 @@ export interface AdminTool {
   impact?: 'high' | 'medium' | 'low';
   reviewerNotes?: string;
 }
+
+export interface MonthlySalesRecord {
+  month: string;
+  value: number;
+}
+
+export type UserActivityAction = 'login' | 'logout';
+
+export interface UserLoginActivity {
+  timestamp: string;
+  action: UserActivityAction;
+  location: string;
+  device: string;
+}
+
+export interface AdminUser {
+  id: string;
+  fullName: string;
+  email: string;
+  role: ToolRole;
+  isActive: boolean;
+  totalSales: number;
+  monthlyTarget: number;
+  monthlySales: MonthlySalesRecord[];
+  conversionRate: number;
+  customersServed: number;
+  lastLogin: string;
+  loginHistory: UserLoginActivity[];
+}
