@@ -108,8 +108,9 @@ app.MapGet("/", () =>
 app.MapHealthChecks("/health");
 
 // === Auto-migrate & seed database ===
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var ctx = scope.ServiceProvider.GetRequiredService<AIPharmDbContext>();
     try
     {
@@ -134,3 +135,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+public partial class Program
+{
+}

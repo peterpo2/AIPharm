@@ -108,6 +108,9 @@ namespace AIPharm.Core.Services
 
         public async Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto)
         {
+            ArgumentNullException.ThrowIfNull(createProductDto);
+            ValidateCreateProductInput(createProductDto);
+
             var product = _mapper.Map<Product>(createProductDto);
             product.CreatedAt = DateTime.UtcNow;
             product.UpdatedAt = DateTime.UtcNow;
@@ -118,9 +121,13 @@ namespace AIPharm.Core.Services
 
         public async Task<ProductDto> UpdateProductAsync(int id, UpdateProductDto updateProductDto)
         {
+            ArgumentNullException.ThrowIfNull(updateProductDto);
+
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null)
                 throw new ArgumentException($"Product with ID {id} not found");
+
+            ValidateUpdateProductInput(updateProductDto);
 
             _mapper.Map(updateProductDto, product);
             product.UpdatedAt = DateTime.UtcNow;
@@ -138,6 +145,52 @@ namespace AIPharm.Core.Services
             product.IsDeleted = true;
             product.UpdatedAt = DateTime.UtcNow;
             await _productRepository.UpdateAsync(product);
+        }
+
+        private static void ValidateCreateProductInput(CreateProductDto createProductDto)
+        {
+            if (string.IsNullOrWhiteSpace(createProductDto.Name))
+            {
+                throw new ArgumentException("Product name is required.", nameof(CreateProductDto.Name));
+            }
+
+            if (createProductDto.Price <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(CreateProductDto.Price), "Price must be greater than zero.");
+            }
+
+            if (createProductDto.StockQuantity < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(CreateProductDto.StockQuantity), "Stock quantity cannot be negative.");
+            }
+
+            if (createProductDto.CategoryId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(CreateProductDto.CategoryId), "CategoryId must be greater than zero.");
+            }
+        }
+
+        private static void ValidateUpdateProductInput(UpdateProductDto updateProductDto)
+        {
+            if (updateProductDto.Name != null && string.IsNullOrWhiteSpace(updateProductDto.Name))
+            {
+                throw new ArgumentException("Product name cannot be empty when provided.", nameof(UpdateProductDto.Name));
+            }
+
+            if (updateProductDto.Price.HasValue && updateProductDto.Price.Value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(UpdateProductDto.Price), "Price must be greater than zero.");
+            }
+
+            if (updateProductDto.StockQuantity.HasValue && updateProductDto.StockQuantity.Value < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(UpdateProductDto.StockQuantity), "Stock quantity cannot be negative.");
+            }
+
+            if (updateProductDto.CategoryId.HasValue && updateProductDto.CategoryId.Value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(UpdateProductDto.CategoryId), "CategoryId must be greater than zero.");
+            }
         }
     }
 }
