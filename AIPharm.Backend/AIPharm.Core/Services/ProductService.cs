@@ -108,8 +108,11 @@ namespace AIPharm.Core.Services
 
         public async Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto)
         {
-            ArgumentNullException.ThrowIfNull(createProductDto);
-            ValidateCreateProductInput(createProductDto);
+            var category = await _categoryRepository.GetByIdAsync(createProductDto.CategoryId);
+            if (category == null)
+            {
+                throw new ArgumentException($"Category with ID {createProductDto.CategoryId} not found");
+            }
 
             var product = _mapper.Map<Product>(createProductDto);
             product.CreatedAt = DateTime.UtcNow;
@@ -125,9 +128,16 @@ namespace AIPharm.Core.Services
 
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null)
-                throw new ArgumentException($"Product with ID {id} not found");
+                throw new KeyNotFoundException($"Product with ID {id} not found");
 
-            ValidateUpdateProductInput(updateProductDto);
+            if (updateProductDto.CategoryId.HasValue)
+            {
+                var category = await _categoryRepository.GetByIdAsync(updateProductDto.CategoryId.Value);
+                if (category == null)
+                {
+                    throw new ArgumentException($"Category with ID {updateProductDto.CategoryId.Value} not found");
+                }
+            }
 
             _mapper.Map(updateProductDto, product);
             product.UpdatedAt = DateTime.UtcNow;
@@ -140,7 +150,7 @@ namespace AIPharm.Core.Services
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null)
-                throw new ArgumentException($"Product with ID {id} not found");
+                throw new KeyNotFoundException($"Product with ID {id} not found");
 
             product.IsDeleted = true;
             product.UpdatedAt = DateTime.UtcNow;
