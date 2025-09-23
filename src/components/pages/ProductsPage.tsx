@@ -134,7 +134,11 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
             </div>
           )}
 
-          <ProductGrid products={filteredProducts} isLoading={false} />
+          <ProductGrid
+            products={filteredProducts}
+            isLoading={false}
+            onEmptyAction={() => onCategoryChange(null)}
+          />
         </section>
       </div>
     </div>

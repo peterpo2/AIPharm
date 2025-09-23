@@ -1,15 +1,16 @@
 import React from 'react';
+import { Package } from 'lucide-react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
-import { Package } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface ProductGridProps {
   products: Product[];
   isLoading?: boolean;
+  onEmptyAction?: () => void;
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading = false }) => {
+const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading = false, onEmptyAction }) => {
   const { t } = useLanguage();
 
   if (isLoading) {
@@ -42,9 +43,15 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading = false }
         <p className="text-gray-600 mb-6">
           {t('products.tryDifferent')}
         </p>
-        <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105">
-          {t('products.viewAll')}
-        </button>
+        {onEmptyAction && (
+          <button
+            type="button"
+            onClick={onEmptyAction}
+            className="rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-emerald-700"
+          >
+            {t('products.viewAll')}
+          </button>
+        )}
       </div>
     );
   }

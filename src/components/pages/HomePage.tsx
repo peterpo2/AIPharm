@@ -114,7 +114,11 @@ const HomePage: React.FC<HomePageProps> = ({
                   {t('products.viewAll')}
                 </button>
               </div>
-              <ProductGrid products={previewProducts} isLoading={false} />
+              <ProductGrid
+                products={previewProducts}
+                isLoading={false}
+                onEmptyAction={handleViewAllProducts}
+              />
             </section>
           </>
         ) : (
@@ -138,7 +142,11 @@ const HomePage: React.FC<HomePageProps> = ({
               </div>
             )}
 
-            <ProductGrid products={filteredProducts} isLoading={false} />
+            <ProductGrid
+              products={filteredProducts}
+              isLoading={false}
+              onEmptyAction={handleViewAllProducts}
+            />
           </>
         )}
       </main>
