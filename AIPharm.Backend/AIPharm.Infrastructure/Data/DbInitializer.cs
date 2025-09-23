@@ -210,7 +210,7 @@ namespace AIPharm.Infrastructure.Data
                     IsAdmin = true,
                     PasswordHash = PasswordHasher.Hash("Admin123!"),
                     PhoneNumber = "+359 88 999 0000",
-                    Address = "София, бул. „Витоша" 25",
+                    Address = "София, бул. Витоша 25",
                     CreatedAt = DateTime.UtcNow.AddMonths(-6)
                 },
                 new()
@@ -219,7 +219,7 @@ namespace AIPharm.Infrastructure.Data
                     FullName = "AIPharm Demo",
                     PasswordHash = PasswordHasher.Hash("Demo123!"),
                     PhoneNumber = "+359 87 222 3344",
-                    Address = "Варна, ул. „Цар Освободител" 15",
+                    Address = "Варна, ул. Цар Освободител 15",
                     CreatedAt = DateTime.UtcNow.AddMonths(-3)
                 },
                 new()
@@ -228,7 +228,7 @@ namespace AIPharm.Infrastructure.Data
                     FullName = "Иван Петров",
                     PasswordHash = PasswordHasher.Hash("User123!"),
                     PhoneNumber = "+359 88 123 4567",
-                    Address = "Пловдив, ул. „Цар Асен" 10",
+                    Address = "Пловдив, ул. Цар Асен 10",
                     CreatedAt = DateTime.UtcNow.AddDays(-90)
                 },
                 new()
@@ -237,7 +237,7 @@ namespace AIPharm.Infrastructure.Data
                     FullName = "Елена Русева",
                     PasswordHash = PasswordHasher.Hash("User123!"),
                     PhoneNumber = "+359 89 765 4321",
-                    Address = "София, кв. „Лозенец", ул. „Златовръх" 8",
+                    Address = "София, кв. Лозенец, ул. Златовръх 8",
                     CreatedAt = DateTime.UtcNow.AddDays(-60)
                 },
                 new()
@@ -246,7 +246,7 @@ namespace AIPharm.Infrastructure.Data
                     FullName = "Георги Симеонов",
                     PasswordHash = PasswordHasher.Hash("User123!"),
                     PhoneNumber = "+359 88 445 6677",
-                    Address = "Русе, ул. „Княжеска" 2",
+                    Address = "Русе, ул. Княжеска 2",
                     CreatedAt = DateTime.UtcNow.AddDays(-45)
                 },
                 new()
@@ -255,7 +255,7 @@ namespace AIPharm.Infrastructure.Data
                     FullName = "Даниела Христова",
                     PasswordHash = PasswordHasher.Hash("User123!"),
                     PhoneNumber = "+359 87 556 7788",
-                    Address = "Бургас, ул. „Александровска" 96",
+                    Address = "Бургас, ул. Александровска 96",
                     CreatedAt = DateTime.UtcNow.AddDays(-30)
                 }
             };
