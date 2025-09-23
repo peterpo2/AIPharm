@@ -115,55 +115,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen || !isAdmin) {
-      return;
-    }
-
-    void fetchUsers();
-  }, [fetchUsers, isAdmin, isOpen]);
-
-  const filteredUsers = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    return users
-      .filter((item) => {
-        if (!term) return true;
-        const values = [item.email, item.fullName ?? '', item.phoneNumber ?? '', item.address ?? ''];
-        return values.some((value) => value.toLowerCase().includes(term));
-      })
-      .sort((a, b) => {
-        if (a.isDeleted === b.isDeleted) return a.email.localeCompare(b.email);
-        return a.isDeleted ? 1 : -1;
-      });
-  }, [users, searchTerm]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    if (!filteredUsers.length) {
-      setSelectedUserId(null);
-      setEditData(null);
-      return;
-    }
-
-    if (!selectedUserId || !filteredUsers.some((item) => item.id === selectedUserId)) {
-      const firstUser = filteredUsers[0];
-      setSelectedUserId(firstUser.id);
-      setEditData(mapToEditable(firstUser));
-    }
-  }, [filteredUsers, isOpen, selectedUserId]);
-
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    onClose();
-  };
-
-  const handleContentClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-  };
-
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -213,7 +164,54 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       setIsLoading(false);
     }
   }, [t]);
+useEffect(() => {
+    if (!isOpen || !isAdmin) {
+      return;
+    }
 
+    void fetchUsers();
+  }, [fetchUsers, isAdmin, isOpen]);
+
+  const filteredUsers = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return users
+      .filter((item) => {
+        if (!term) return true;
+        const values = [item.email, item.fullName ?? '', item.phoneNumber ?? '', item.address ?? ''];
+        return values.some((value) => value.toLowerCase().includes(term));
+      })
+      .sort((a, b) => {
+        if (a.isDeleted === b.isDeleted) return a.email.localeCompare(b.email);
+        return a.isDeleted ? 1 : -1;
+      });
+  }, [users, searchTerm]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    if (!filteredUsers.length) {
+      setSelectedUserId(null);
+      setEditData(null);
+      return;
+    }
+
+    if (!selectedUserId || !filteredUsers.some((item) => item.id === selectedUserId)) {
+      const firstUser = filteredUsers[0];
+      setSelectedUserId(firstUser.id);
+      setEditData(mapToEditable(firstUser));
+    }
+  }, [filteredUsers, isOpen, selectedUserId]);
+
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    onClose();
+  };
+
+  const handleContentClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+  };
   const handleSelectUser = (userItem: ManagedUser) => {
     setSelectedUserId(userItem.id);
     setEditData(mapToEditable(userItem));
@@ -315,7 +313,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         throw new Error(body?.message || t('admin.users.errors.saveFailed'));
       }
 
-      const updated: ManagedUser = body.user;
+      const updated = body.user;
+      if (!updated) {
+        throw new Error(body.message || t('admin.users.errors.saveFailed'));
+      }
       setUsers((prev) =>
         prev.map((item) => (item.id === updated.id ? updated : item))
       );
