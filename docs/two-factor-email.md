@@ -16,24 +16,22 @@ The service uses the `Email` section in `appsettings*.json`:
 
 ```json
 "Email": {
-  "FromAddress": "peterpo2@abv.bg",
-  "FromName": "AIPharm Security",
-  "OverrideToAddress": "peterpo2@abv.bg",
-  "PickupDirectory": "./App_Data/Emails",
-  "SmtpHost": "smtp.abv.bg",
-  "SmtpPort": 465,
+  "FromAddress": "aipharm@outlook.com",
+  "FromName": "AIPharm",
+  "SmtpHost": "smtp.office365.com",
+  "SmtpPort": 587,
   "EnableSsl": true,
-  "Username": "peterpo2@abv.bg",
-  "Password": ""
+  "Username": "aipharm@outlook.com",
+  "Password": "Sklad123!@"
 }
 ```
 
-- **Override recipient:** `OverrideToAddress` forces every outgoing 2FA email to be delivered to the specified inbox. This keeps local testing simple even if demo accounts use other addresses.
-- **Pickup directory:** By default emails are saved as `.eml` files under `AIPharm.Backend/AIPharm.Web/App_Data/Emails`. Clear this setting to send through the configured SMTP server instead. Relative paths resolve against `AIPharm.Backend/AIPharm.Web`.
-- **SMTP host:** Replace `smtp.abv.bg`, port, SSL, username, and password with valid credentials for your mail provider. For ABV you typically need an application password.
-- **Secrets:** Never commit your mailbox password. For local development use [ASP.NET Core user-secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) or environment variables (`Email__Password`).
+- **Sender account:** The project ships with the dedicated Outlook mailbox `aipharm@outlook.com` (password `Sklad123!@`) for local notifications. Update these values if you rotate the password or prefer another provider.
+- **Override recipient:** `OverrideToAddress` remains available for testing, but when left blank messages go directly to the account's real email address.
+- **SMTP host:** Outlook/Office 365 uses `smtp.office365.com` on port `587` with STARTTLS (`EnableSsl: true`). Adjust the settings if you switch providers.
+- **Secrets:** For production scenarios store credentials securely (environment variables, user-secrets, Key Vault, etc.).
 
-## Example sequence (local pickup mode)
+## Example sequence (Outlook delivery)
 
 ```bash
 # 1) Login with credentials
@@ -48,7 +46,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 #   "codeExpiresAt": "2024-09-18T11:22:33.123Z"
 # }
 
-# 2) Retrieve the code from App_Data/Emails/xxx.eml
+# 2) Retrieve the code from your inbox (look for a message from aipharm@outlook.com)
 
 # 3) Submit the code + token to finish authentication
 curl -X POST http://localhost:8080/api/auth/verify-2fa \

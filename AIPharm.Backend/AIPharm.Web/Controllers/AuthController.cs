@@ -8,6 +8,7 @@ using AIPharm.Core.Interfaces;
 using AIPharm.Domain.Entities;
 using AIPharm.Core.Security;
 using AIPharm.Core.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AIPharm.Web.Controllers
@@ -20,19 +21,23 @@ namespace AIPharm.Web.Controllers
         private readonly IConfiguration _configuration;
         private readonly IEmailSender _emailSender;
         private readonly EmailSettings _emailSettings;
+        private readonly ILogger<AuthController> _logger;
 
         private const string TwoFactorEmailSubject = "AIPharm login verification code";
+        private const string RegistrationEmailSubject = "Welcome to AIPharm";
 
         public AuthController(
             IRepository<User> userRepository,
             IConfiguration configuration,
             IEmailSender emailSender,
-            IOptions<EmailSettings> emailOptions)
+            IOptions<EmailSettings> emailOptions,
+            ILogger<AuthController> logger)
         {
             _userRepository = userRepository;
             _configuration = configuration;
             _emailSender = emailSender;
             _emailSettings = emailOptions.Value;
+            _logger = logger;
         }
 
         [HttpPost("login")]
@@ -253,7 +258,19 @@ namespace AIPharm.Web.Controllers
 
                 await _userRepository.AddAsync(user);
 
-                return Ok(new { success = true, message = "Registration successful! You can now log in." });
+                var emailSent = await TrySendRegistrationEmailAsync(user, HttpContext.RequestAborted);
+
+                var message = emailSent
+                    ? $"Registration successful! A confirmation email has been sent to {user.Email}."
+                    : "Registration successful! Please log in to continue.";
+
+                return Ok(new
+                {
+                    success = true,
+                    message,
+                    emailSent,
+                    destinationEmail = user.Email
+                });
             }
             catch (Exception ex)
             {
@@ -363,6 +380,27 @@ namespace AIPharm.Web.Controllers
             user.TwoFactorLastSentAt = null;
             user.TwoFactorLoginToken = null;
             user.TwoFactorLoginTokenExpiry = null;
+        }
+
+        private async Task<bool> TrySendRegistrationEmailAsync(User user, CancellationToken cancellationToken)
+        {
+            var greetingName = string.IsNullOrWhiteSpace(user.FullName) ? "there" : user.FullName;
+            var body =
+                $"Hi {greetingName},\n\n" +
+                "Thanks for registering with AIPharm! Your account has been created successfully and two-factor authentication is enabled by default to keep your data secure.\n\n" +
+                "You can now sign in using your email and password. When you log in, we'll email you a verification code to confirm it's really you.\n\n" +
+                "If you didn't create this account, please contact our support team immediately.";
+
+            try
+            {
+                await _emailSender.SendEmailAsync(user.Email, RegistrationEmailSubject, body, cancellationToken);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send registration confirmation email to {Email}", user.Email);
+                return false;
+            }
         }
 
         private string BuildTwoFactorEmailBody(string code)

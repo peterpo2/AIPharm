@@ -263,6 +263,16 @@ Content-Type: application/json
 }
 ```
 
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Registration successful! A confirmation email has been sent to newuser@example.com.",
+  "emailSent": true,
+  "destinationEmail": "newuser@example.com"
+}
+```
+
 ### Get Current User
 ```http
 GET /api/auth/me

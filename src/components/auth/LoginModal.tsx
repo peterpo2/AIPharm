@@ -449,9 +449,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
                       <strong>{t('auth.admin')}:</strong> peterpo2@abv.bg / Admin123!
                     </p>
                     <p className="text-xs text-blue-600">
-                      Two-factor verification codes are saved as .eml files inside{' '}
-                      <code>App_Data/Emails</code> when running locally. Use the register tab to add
-                      additional accounts.
+                      Two-factor verification codes are emailed from{' '}
+                      <strong>aipharm@outlook.com</strong> to the address on the account. Check your
+                      inbox (and spam folder) after logging in or registering new accounts.
                     </p>
                   </div>
                 </div>

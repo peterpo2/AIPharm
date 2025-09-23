@@ -106,7 +106,9 @@ namespace AIPharm.Infrastructure.Services
 
             var client = new SmtpClient(_settings.SmtpHost, _settings.SmtpPort)
             {
-                EnableSsl = _settings.EnableSsl
+                EnableSsl = _settings.EnableSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
             };
 
             if (!string.IsNullOrEmpty(_settings.Username))

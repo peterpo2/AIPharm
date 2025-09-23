@@ -199,7 +199,7 @@ npm run dev -- --force
 ### **Sample Users:**
 - **Admin:** peterpo2@abv.bg / Admin123!
 
-Two-factor codes are delivered to `peterpo2@abv.bg`. The backend also drops `.eml` files under `AIPharm.Backend/AIPharm.Web/App_Data/Emails` so you can open them locally (Docker mounts the same folder from the container).
+Registration confirmations and two-factor emails are sent from `aipharm@outlook.com` using Outlook's SMTP servers. The messages go straight to the email address you register with, so keep the configured credentials up to date.
 
 ### **Sample Products:**
 - Парацетамол 500мг - €2.30

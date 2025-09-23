@@ -121,7 +121,7 @@ docker exec -it aipharm-database /opt/mssql-tools/bin/sqlcmd -S localhost -U sa 
 ### Login Credentials
 - **Admin**: peterpo2@abv.bg / Admin123!
 
-2FA emails are written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` on the host machine (mounted from the backend container).
+Registration confirmations and 2FA emails are dispatched via the Outlook mailbox `aipharm@outlook.com`. Ensure the configured credentials are valid so containers can reach `smtp.office365.com`.
 
 ## 🐛 Troubleshooting
 

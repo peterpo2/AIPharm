@@ -59,7 +59,7 @@ docker-compose up
 |------|-------|----------|
 | 👑 **Admin (default)** | peterpo2@abv.bg | Admin123! |
 
-> **Note:** Two-factor verification emails are routed to `peterpo2@abv.bg` by default. The backend saves each message as an `.eml` file under `AIPharm.Backend/AIPharm.Web/App_Data/Emails` for local review (the Docker setup mounts the same folder from the container).
+> **Note:** Registration confirmations and two-factor verification emails are delivered from `aipharm@outlook.com` to the address you register with. Make sure the Outlook SMTP credentials remain valid so the app can dispatch messages successfully.
 
 ---
 
@@ -503,7 +503,7 @@ copies or substantial portions of the Software.
 - 📖 **Documentation**: Check our [Wiki](https://github.com/yourusername/aipharm-plus/wiki)
 - 🐛 **Issues**: [Report bugs](https://github.com/yourusername/aipharm-plus/issues)
 - 💬 **Discussions**: [Join conversations](https://github.com/yourusername/aipharm-plus/discussions)
-- 📧 **Email**: peterpo2@abv.bg
+- 📧 **Email**: aipharm@outlook.com
 
 ### **FAQ**
 <details>
