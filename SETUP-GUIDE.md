@@ -199,7 +199,7 @@ npm run dev -- --force
 ### **Sample Users:**
 - **Admin:** peterpo2@abv.bg / Admin123!
 
-Registration confirmations and two-factor emails are sent from `aipharm@outlook.com` using Outlook's SMTP servers. The messages go straight to the email address you register with, so keep the configured credentials up to date.
+Registration confirmations and two-factor emails are sent from `aipharmPlus@outlook.com` using Outlook's SMTP servers. The messages go straight to the email address you register with, so keep the configured credentials up to date.
 
 ### **Sample Products:**
 - Парацетамол 500мг - €2.30

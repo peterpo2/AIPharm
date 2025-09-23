@@ -59,7 +59,7 @@ docker-compose up
 |------|-------|----------|
 | 👑 **Admin (default)** | peterpo2@abv.bg | Admin123! |
 
-> **Note:** Registration confirmations and two-factor verification emails are delivered from `aipharm@outlook.com` to the address you register with. Make sure the Outlook SMTP credentials remain valid so the app can dispatch messages successfully.
+> **Note:** Registration confirmations and two-factor verification emails are delivered from `aipharmPlus@outlook.com` to the address you register with. Make sure the Outlook SMTP credentials remain valid so the app can dispatch messages successfully.
 
 ---
 
@@ -503,7 +503,7 @@ copies or substantial portions of the Software.
 - 📖 **Documentation**: Check our [Wiki](https://github.com/yourusername/aipharm-plus/wiki)
 - 🐛 **Issues**: [Report bugs](https://github.com/yourusername/aipharm-plus/issues)
 - 💬 **Discussions**: [Join conversations](https://github.com/yourusername/aipharm-plus/discussions)
-- 📧 **Email**: aipharm@outlook.com
+- 📧 **Email**: aipharmPlus@outlook.com
 
 ### **FAQ**
 <details>

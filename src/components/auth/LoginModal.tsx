@@ -450,7 +450,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
                     </p>
                     <p className="text-xs text-blue-600">
                       Two-factor verification codes are emailed from{' '}
-                      <strong>aipharm@outlook.com</strong> to the address on the account. Check your
+                      <strong>aipharmPlus@outlook.com</strong> to the address on the account. Check your
                       inbox (and spam folder) after logging in or registering new accounts.
                     </p>
                   </div>
