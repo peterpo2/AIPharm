@@ -11,6 +11,30 @@ interface User {
   isDeleted: boolean;
 }
 
+interface RegisterData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  fullName?: string;
+  phoneNumber?: string;
+  address?: string;
+}
+
+interface ProfileUpdateData {
+  email?: string;
+  fullName?: string;
+  phoneNumber?: string;
+  address?: string;
+  isAdmin?: boolean;
+  isDeleted?: boolean;
+}
+
+interface UpdateProfileResponse {
+  success?: boolean;
+  message?: string;
+  user?: User;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -26,17 +50,8 @@ interface AuthContextType {
   ) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   updateProfile: (
-    data: Partial<RegisterData>
+    data: ProfileUpdateData
   ) => Promise<{ success: boolean; message?: string }>;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  fullName?: string;
-  phoneNumber?: string;
-  address?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -172,18 +187,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const updateProfile = async (data: Partial<RegisterData>) => {
-    if (!user) return { success: false, message: "Не сте влезли в системата" };
+  const updateProfile = async (data: ProfileUpdateData) => {
+    if (!user) {
+      return { success: false, message: "Не сте влезли в системата" };
+    }
+
+    const token =
+      localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+
+    if (!token) {
+      return { success: false, message: "Липсва валидна сесия" };
+    }
 
     try {
-      await fetch(buildUrl(`auth/users/${user.id}`), {
+      const response = await fetch(buildUrl(`users/${user.id}`), {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(data),
       });
 
-      return { success: true, message: "Успешно обновяване" };
-    } catch {
+      let result: UpdateProfileResponse | null = null;
+      try {
+        result = (await response.json()) as UpdateProfileResponse;
+      } catch {
+        result = null;
+      }
+
+      if (!response.ok || !result?.success) {
+        return {
+          success: false,
+          message: result?.message || "Грешка при обновяване на профила",
+        };
+      }
+
+      if (result.user) {
+        setUser(result.user);
+      }
+
+      return {
+        success: true,
+        message: result.message || "Успешно обновяване",
+      };
+    } catch (error) {
+      console.warn("⚠️ Profile update failed:", error);
       return { success: false, message: "Мрежова грешка" };
     }
   };

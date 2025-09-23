@@ -9,6 +9,7 @@ import LoginModal from './auth/LoginModal';
 import RegisterModal from './auth/RegisterModal';
 import AIPharmLogo from './Logo';
 import AdminPanel from './admin/AdminPanel';
+import ProfileSettingsModal from './profile/ProfileSettingsModal';
 import { quickLinks } from '../data/navigation';
 
 interface HeaderProps {
@@ -33,6 +34,7 @@ const Header: React.FC<HeaderProps> = ({
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -44,11 +46,17 @@ const Header: React.FC<HeaderProps> = ({
     await logout();
     setShowUserMenu(false);
     setShowAdminPanel(false);
+    setShowProfileModal(false);
   };
 
   const openAdminPanel = () => {
     setShowUserMenu(false);
     setShowAdminPanel(true);
+  };
+
+  const openProfileModal = () => {
+    setShowUserMenu(false);
+    setShowProfileModal(true);
   };
 
   const navigationItems = [
@@ -176,7 +184,10 @@ const Header: React.FC<HeaderProps> = ({
                     )}
                   </div>
                   <div className="py-1">
-                    <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                    <button
+                      onClick={openProfileModal}
+                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                    >
                       <Settings className="w-4 h-4" />
                       <span>{t('header.settings')}</span>
                     </button>
@@ -294,6 +305,7 @@ const Header: React.FC<HeaderProps> = ({
         }}
       />
       <AdminPanel isOpen={isAdmin && showAdminPanel} onClose={() => setShowAdminPanel(false)} />
+      <ProfileSettingsModal isOpen={showProfileModal && isAuthenticated} onClose={() => setShowProfileModal(false)} />
     </header>
   );
 };

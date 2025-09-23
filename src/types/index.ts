@@ -47,8 +47,11 @@ export interface User {
   id: string;
   email: string;
   fullName?: string;
-  phone?: string;
+  phoneNumber?: string;
   address?: string;
+  isAdmin?: boolean;
+  isDeleted?: boolean;
+  createdAt?: string;
 }
 
 export interface ProductFilter {
@@ -75,66 +78,4 @@ export interface AssistantResponse {
   productId?: number;
   timestamp: Date;
   disclaimer: string;
-}
-
-export type ToolStatus = 'active' | 'pending' | 'rejected' | 'disabled';
-
-export type ToolCategory =
-  | 'ai'
-  | 'automation'
-  | 'analytics'
-  | 'operations'
-  | 'compliance';
-
-export type ToolRole =
-  | 'admin'
-  | 'pharmacist'
-  | 'support'
-  | 'doctor'
-  | 'analyst'
-  | 'manager';
-
-export interface AdminTool {
-  id: string;
-  name: string;
-  description: string;
-  category: ToolCategory;
-  status: ToolStatus;
-  submittedBy: string;
-  submittedByRole: ToolRole;
-  createdAt: string;
-  lastUpdated: string;
-  tags: string[];
-  usageCount?: number;
-  impact?: 'high' | 'medium' | 'low';
-  reviewerNotes?: string;
-}
-
-export interface MonthlySalesRecord {
-  month: string;
-  value: number;
-}
-
-export type UserActivityAction = 'login' | 'logout';
-
-export interface UserLoginActivity {
-  timestamp: string;
-  action: UserActivityAction;
-  location: string;
-  device: string;
-}
-
-export interface AdminUser {
-  id: string;
-  fullName: string;
-  email: string;
-  role: ToolRole;
-  isActive: boolean;
-  totalSales: number;
-  monthlyTarget: number;
-  monthlySales: MonthlySalesRecord[];
-  conversionRate: number;
-  customersServed: number;
-  lastLogin: string;
-  loginHistory: UserLoginActivity[];
 }
