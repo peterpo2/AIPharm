@@ -197,8 +197,9 @@ npm run dev -- --force
 ## 🎯 Default Data
 
 ### **Sample Users:**
-- **Admin:** admin@aipharm.bg / Admin123!
-- **Demo User:** demo@aipharm.bg / Demo123!
+- **Admin:** peterpo2@abv.bg / Admin123!
+
+Two-factor codes are delivered to `peterpo2@abv.bg`. When using Docker, check `AIPharm.Backend/AIPharm.Web/App_Data/Emails` on the host for the `.eml` files.
 
 ### **Sample Products:**
 - Парацетамол 500мг - €2.30

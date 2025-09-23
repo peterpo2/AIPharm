@@ -422,7 +422,7 @@ namespace AIPharm.Infrastructure.Data
                 new User
                 {
                     Id = "admin-user-id",
-                    Email = "admin@aipharm.bg",
+                    Email = "peterpo2@abv.bg",
                     FullName = "РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ",
                     IsAdmin = true,
                     CreatedAt = DateTime.UtcNow
@@ -430,7 +430,7 @@ namespace AIPharm.Infrastructure.Data
                 new User
                 {
                     Id = "demo-user-id",
-                    Email = "demo@aipharm.bg",
+                    Email = "peterpo2@abv.bg",
                     FullName = "Р”РµРјРѕ РџРѕС‚СЂРµР±РёС‚РµР»",
                     IsAdmin = false,
                     CreatedAt = DateTime.UtcNow

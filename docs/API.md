@@ -19,7 +19,7 @@ POST /api/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@aipharm.bg",
+  "email": "peterpo2@abv.bg",
   "password": "Admin123!",
   "rememberMe": true
 }
@@ -226,7 +226,7 @@ POST /api/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@aipharm.bg",
+  "email": "peterpo2@abv.bg",
   "password": "Admin123!",
   "rememberMe": true
 }
@@ -240,7 +240,7 @@ Content-Type: application/json
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": "admin-user-id",
-    "email": "admin@aipharm.bg",
+    "email": "peterpo2@abv.bg",
     "fullName": "Администратор",
     "isAdmin": true,
     "createdAt": "2024-01-01T00:00:00Z"

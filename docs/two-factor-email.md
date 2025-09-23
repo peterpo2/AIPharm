@@ -16,19 +16,22 @@ The service uses the `Email` section in `appsettings*.json`:
 
 ```json
 "Email": {
-  "FromAddress": "no-reply@aipharm.local",
+  "FromAddress": "peterpo2@abv.bg",
   "FromName": "AIPharm Security",
-  "PickupDirectory": "./App_Data/Emails",
-  "SmtpHost": "localhost",
-  "SmtpPort": 2525,
-  "EnableSsl": false,
-  "Username": "",
+  "OverrideToAddress": "peterpo2@abv.bg",
+  "PickupDirectory": "",
+  "SmtpHost": "smtp.abv.bg",
+  "SmtpPort": 465,
+  "EnableSsl": true,
+  "Username": "peterpo2@abv.bg",
   "Password": ""
 }
 ```
 
-- **Pickup directory (default for local runs):** When `PickupDirectory` is set, the system writes `.eml` files to that folder instead of using a live SMTP server. Relative paths are resolved against the backend content root, so the example above ends up under `AIPharm.Backend/AIPharm.Web/App_Data/Emails`. You can open the files with any mail client to inspect the codes.
-- **SMTP mode:** Remove `PickupDirectory` (or set it to `null`) and provide real SMTP details to relay emails to an inbox. SSL and credentials are optional.
+- **Override recipient:** `OverrideToAddress` forces every outgoing 2FA email to be delivered to the specified inbox. This keeps local testing simple even if demo accounts use other addresses.
+- **Pickup directory:** When `PickupDirectory` is blank or `null`, the app sends through the configured SMTP server. Set it to a relative or absolute folder to drop `.eml` files instead (helpful if you prefer offline inspection). Relative paths resolve against `AIPharm.Backend/AIPharm.Web`.
+- **SMTP host:** Replace `smtp.abv.bg`, port, SSL, username, and password with valid credentials for your mail provider. For ABV you typically need an application password.
+- **Secrets:** Never commit your mailbox password. For local development use [ASP.NET Core user-secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) or environment variables (`Email__Password`).
 
 ## Example sequence (local pickup mode)
 
@@ -36,7 +39,7 @@ The service uses the `Email` section in `appsettings*.json`:
 # 1) Login with credentials
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"demo@aipharm.bg","password":"Demo123!"}'
+  -d '{"email":"peterpo2@abv.bg","password":"Admin123!"}'
 
 # Response excerpt
 # {
@@ -51,7 +54,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 curl -X POST http://localhost:8080/api/auth/verify-2fa \
   -H "Content-Type: application/json" \
   -d '{
-  "email":"demo@aipharm.bg",
+  "email":"peterpo2@abv.bg",
   "twoFactorToken":"<token-from-step-1>",
   "code":"123456"
 }'

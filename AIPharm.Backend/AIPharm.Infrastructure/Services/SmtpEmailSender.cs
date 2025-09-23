@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Mail;
@@ -32,6 +33,10 @@ namespace AIPharm.Infrastructure.Services
                 throw new ArgumentException("Recipient email is required", nameof(toEmail));
             }
 
+            var destinationEmail = string.IsNullOrWhiteSpace(_settings.OverrideToAddress)
+                ? toEmail
+                : _settings.OverrideToAddress.Trim();
+
             using var message = new MailMessage
             {
                 From = new MailAddress(_settings.FromAddress, _settings.FromName),
@@ -40,7 +45,22 @@ namespace AIPharm.Infrastructure.Services
                 IsBodyHtml = false
             };
 
-            message.To.Add(toEmail);
+            if (string.IsNullOrWhiteSpace(destinationEmail))
+            {
+                throw new InvalidOperationException("Resolved destination email address is empty.");
+            }
+
+            message.To.Add(destinationEmail);
+
+            if (!string.Equals(destinationEmail, toEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                message.Headers.Add("X-Original-Recipient", toEmail);
+                message.ReplyToList.Add(new MailAddress(toEmail));
+                _logger.LogInformation(
+                    "Overriding destination email from {OriginalEmail} to {OverrideEmail}",
+                    toEmail,
+                    destinationEmail);
+            }
 
             try
             {
@@ -48,6 +68,22 @@ namespace AIPharm.Infrastructure.Services
 
                 cancellationToken.ThrowIfCancellationRequested();
                 await client.SendMailAsync(message);
+
+                if (!string.IsNullOrWhiteSpace(_pickupDirectory))
+                {
+                    _logger.LogInformation(
+                        "Email for {Recipient} saved to pickup directory {Directory}",
+                        destinationEmail,
+                        _pickupDirectory);
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "Email for {Recipient} sent via SMTP server {Host}:{Port}",
+                        destinationEmail,
+                        _settings.SmtpHost,
+                        _settings.SmtpPort);
+                }
             }
             catch (Exception ex)
             {

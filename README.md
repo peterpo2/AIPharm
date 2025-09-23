@@ -54,11 +54,12 @@ docker-compose up
 - 📚 **Swagger Documentation**: http://localhost:8080/swagger
 - 🗄️ **Database**: localhost:1433 (sa/YOURPASSWORD)
 
-### **Demo Accounts**
+### **Default Account**
 | Role | Email | Password |
 |------|-------|----------|
-| 👑 **Admin** | admin@aipharm.bg | Admin123! |
-| 👤 **User** | demo@aipharm.bg | Demo123! |
+| 👑 **Admin (default)** | peterpo2@abv.bg | Admin123! |
+
+> **Note:** Two-factor verification emails are routed to `peterpo2@abv.bg` by default. When running via Docker the `.eml` files are also mirrored to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` on the host for easy inspection.
 
 ---
 
@@ -174,7 +175,7 @@ Users (Authentication & Profiles)
 ### **Sample Data**
 - 📦 **12+ Products** with real pharmaceutical data
 - 🏷️ **6 Categories** (Painkillers, Vitamins, Cold & Flu, etc.)
-- 👥 **2 Demo Users** (Admin and Regular User)
+- 👤 **Default Admin Account** with email 2FA enabled
 - 🛒 **Shopping Cart** functionality
 - 📋 **Order Management** system
 
@@ -502,7 +503,7 @@ copies or substantial portions of the Software.
 - 📖 **Documentation**: Check our [Wiki](https://github.com/yourusername/aipharm-plus/wiki)
 - 🐛 **Issues**: [Report bugs](https://github.com/yourusername/aipharm-plus/issues)
 - 💬 **Discussions**: [Join conversations](https://github.com/yourusername/aipharm-plus/discussions)
-- 📧 **Email**: support@aipharm.bg
+- 📧 **Email**: peterpo2@abv.bg
 
 ### **FAQ**
 <details>
@@ -517,7 +518,7 @@ docker-compose up
 <details>
 <summary>❓ How do I add new products?</summary>
 
-1. Login as admin (admin@aipharm.bg / Admin123!)
+1. Login as admin (peterpo2@abv.bg / Admin123!)
 2. Use the Swagger UI at http://localhost:8080/swagger
 3. Use the POST /api/products endpoint
 </details>

@@ -51,7 +51,7 @@ namespace AIPharm.Web.Controllers
                 {
                     var challenge = await PrepareTwoFactorChallengeAsync(user, ignoreCooldown: true, HttpContext.RequestAborted);
                     var message = challenge.EmailSent
-                        ? "Two-factor verification required. A code has been sent to your email address."
+                        ? $"Two-factor verification required. A code has been sent to {challenge.DestinationEmail}."
                         : "Two-factor verification required. Please use the most recent code sent to your email.";
 
                     return Ok(new
@@ -60,6 +60,7 @@ namespace AIPharm.Web.Controllers
                         requiresTwoFactor = true,
                         message,
                         twoFactorToken = challenge.TwoFactorToken,
+                        destinationEmail = challenge.DestinationEmail,
                         codeExpiresAt = challenge.CodeExpiresAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         emailSent = challenge.EmailSent,
                         cooldownSeconds = Math.Max(0, (int)Math.Ceiling(challenge.CooldownRemaining.TotalSeconds))
@@ -206,9 +207,10 @@ namespace AIPharm.Web.Controllers
                     success = true,
                     requiresTwoFactor = true,
                     emailSent = challenge.EmailSent,
+                    destinationEmail = challenge.DestinationEmail,
                     message = challenge.EmailSent
-                        ? "A new verification code has been sent to your email address."
-                        : "Please wait before requesting another verification code.",
+                        ? $"A new verification code has been sent to {challenge.DestinationEmail}."
+                        : $"Please wait before requesting another verification code. The last email was sent to {challenge.DestinationEmail}.",
                     twoFactorToken = challenge.TwoFactorToken,
                     codeExpiresAt = challenge.CodeExpiresAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                     cooldownSeconds = Math.Max(0, (int)Math.Ceiling(challenge.CooldownRemaining.TotalSeconds))
@@ -306,6 +308,11 @@ namespace AIPharm.Web.Controllers
 
             var shouldSendEmail = ignoreCooldown || cooldownRemaining == TimeSpan.Zero;
             string? verificationCode = null;
+            var destinationEmail = string.IsNullOrWhiteSpace(_emailSettings.OverrideToAddress)
+                ? user.Email
+                : _emailSettings.OverrideToAddress;
+
+            destinationEmail ??= user.Email;
 
             if (shouldSendEmail)
             {
@@ -332,10 +339,20 @@ namespace AIPharm.Web.Controllers
                     throw;
                 }
 
-                return new TwoFactorChallengeResult(user.TwoFactorLoginToken!, user.TwoFactorEmailCodeExpiry!, TimeSpan.Zero, true);
+                return new TwoFactorChallengeResult(
+                    user.TwoFactorLoginToken!,
+                    destinationEmail,
+                    user.TwoFactorEmailCodeExpiry!,
+                    TimeSpan.Zero,
+                    true);
             }
 
-            return new TwoFactorChallengeResult(user.TwoFactorLoginToken!, user.TwoFactorEmailCodeExpiry, cooldownRemaining, false);
+            return new TwoFactorChallengeResult(
+                user.TwoFactorLoginToken!,
+                destinationEmail,
+                user.TwoFactorEmailCodeExpiry,
+                cooldownRemaining,
+                false);
         }
 
         private static void ClearTwoFactorState(User user)
@@ -381,7 +398,12 @@ namespace AIPharm.Web.Controllers
 
         private bool VerifyPassword(User user, string password) => PasswordHasher.Verify(password, user.PasswordHash);
 
-        private sealed record TwoFactorChallengeResult(string TwoFactorToken, DateTime? CodeExpiresAt, TimeSpan CooldownRemaining, bool EmailSent);
+        private sealed record TwoFactorChallengeResult(
+            string TwoFactorToken,
+            string DestinationEmail,
+            DateTime? CodeExpiresAt,
+            TimeSpan CooldownRemaining,
+            bool EmailSent);
     }
 
     public class LoginRequest

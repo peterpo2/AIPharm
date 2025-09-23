@@ -221,8 +221,7 @@ namespace AIPharm.Web.Controllers
                 }
 
                 // Demo password check - in production use proper password verification
-                var isValidPassword = (request.Email == "admin@aipharm.bg" && request.Password == "Admin123!") ||
-                                    (request.Email == "demo@aipharm.bg" && request.Password == "Demo123!");
+                var isValidPassword = (request.Email == "peterpo2@abv.bg" && request.Password == "Admin123!");
 
                 if (!isValidPassword)
                 {

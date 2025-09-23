@@ -116,11 +116,12 @@ docker-compose up backend
 docker exec -it aipharm-database /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YOURPASSWORD
 ```
 
-## 🎯 Demo Accounts
+## 🎯 Default Account
 
 ### Login Credentials
-- **Admin**: admin@aipharm.bg / Admin123!
-- **Demo User**: demo@aipharm.bg / Demo123!
+- **Admin**: peterpo2@abv.bg / Admin123!
+
+2FA emails are written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` on the host machine (mounted from the backend container).
 
 ## 🐛 Troubleshooting
 

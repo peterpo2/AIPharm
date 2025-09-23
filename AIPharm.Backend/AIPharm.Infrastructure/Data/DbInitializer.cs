@@ -205,63 +205,13 @@ namespace AIPharm.Infrastructure.Data
             {
                 new()
                 {
-                    Email = "admin@aipharm.bg",
+                    Email = "peterpo2@abv.bg",
                     FullName = "AIPharm Admin",
                     IsAdmin = true,
                     PasswordHash = PasswordHasher.Hash("Admin123!"),
                     PhoneNumber = "+359 88 999 0000",
                     Address = "София, бул. Витоша 25",
                     CreatedAt = DateTime.UtcNow.AddMonths(-6),
-                    TwoFactorEnabled = true
-                },
-                new()
-                {
-                    Email = "demo@aipharm.bg",
-                    FullName = "AIPharm Demo",
-                    PasswordHash = PasswordHasher.Hash("Demo123!"),
-                    PhoneNumber = "+359 87 222 3344",
-                    Address = "Варна, ул. Цар Освободител 15",
-                    CreatedAt = DateTime.UtcNow.AddMonths(-3),
-                    TwoFactorEnabled = true
-                },
-                new()
-                {
-                    Email = "ivan.petrov@aipharm.bg",
-                    FullName = "Иван Петров",
-                    PasswordHash = PasswordHasher.Hash("User123!"),
-                    PhoneNumber = "+359 88 123 4567",
-                    Address = "Пловдив, ул. Цар Асен 10",
-                    CreatedAt = DateTime.UtcNow.AddDays(-90),
-                    TwoFactorEnabled = true
-                },
-                new()
-                {
-                    Email = "elena.ruseva@aipharm.bg",
-                    FullName = "Елена Русева",
-                    PasswordHash = PasswordHasher.Hash("User123!"),
-                    PhoneNumber = "+359 89 765 4321",
-                    Address = "София, кв. Лозенец, ул. Златовръх 8",
-                    CreatedAt = DateTime.UtcNow.AddDays(-60),
-                    TwoFactorEnabled = true
-                },
-                new()
-                {
-                    Email = "georgi.simeonov@aipharm.bg",
-                    FullName = "Георги Симеонов",
-                    PasswordHash = PasswordHasher.Hash("User123!"),
-                    PhoneNumber = "+359 88 445 6677",
-                    Address = "Русе, ул. Княжеска 2",
-                    CreatedAt = DateTime.UtcNow.AddDays(-45),
-                    TwoFactorEnabled = true
-                },
-                new()
-                {
-                    Email = "daniela.hristova@aipharm.bg",
-                    FullName = "Даниела Христова",
-                    PasswordHash = PasswordHasher.Hash("User123!"),
-                    PhoneNumber = "+359 87 556 7788",
-                    Address = "Бургас, ул. Александровска 96",
-                    CreatedAt = DateTime.UtcNow.AddDays(-30),
                     TwoFactorEnabled = true
                 }
             };
@@ -270,7 +220,7 @@ namespace AIPharm.Infrastructure.Data
 
             await context.SaveChangesAsync(ct);
 
-            Console.WriteLine("✅ Database seeded with categories, products, and demo users.");
+            Console.WriteLine("✅ Database seeded with categories, products, and default admin user.");
         }
     }
 }

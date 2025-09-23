@@ -159,12 +159,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
               </button>
             </form>
 
-            {/* Demo Accounts */}
+            {/* Default Account */}
             <div className="mt-6 p-4 bg-blue-50 rounded-xl">
               <h4 className="font-medium text-blue-900 mb-2">{t('auth.demoAccounts')}</h4>
               <div className="text-sm text-blue-700 space-y-1">
-                <p><strong>{t('auth.admin')}:</strong> admin@aipharm.bg / Admin123!</p>
-                <p><strong>{t('auth.user')}:</strong> demo@aipharm.bg / Demo123!</p>
+                <p><strong>{t('auth.admin')}:</strong> peterpo2@abv.bg / Admin123!</p>
+                <p className="text-xs text-blue-600">
+                  Two-factor verification emails are currently routed to peterpo2@abv.bg for local testing.{' '}
+                  Use the register tab to add additional accounts.
+                </p>
               </div>
             </div>
 

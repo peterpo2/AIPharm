@@ -18,6 +18,8 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     container_name: aipharm-backend
+    volumes:
+      - ./AIPharm.Backend/AIPharm.Web/App_Data:/app/App_Data
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
