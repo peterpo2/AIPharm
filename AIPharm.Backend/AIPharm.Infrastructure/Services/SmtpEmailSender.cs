@@ -112,8 +112,7 @@ public class SmtpEmailSender : IEmailSender
         {
             _logger.LogError(
                 ex,
-                "SMTP command {Command} failed with status {StatusCode} when sending email to {Email}. Response: {Response}",
-                ex.Command,
+                "SMTP command failed with status {StatusCode} when sending email to {Email}. Response: {Response}",
                 ex.StatusCode,
                 destinationEmail,
                 ex.Message);
