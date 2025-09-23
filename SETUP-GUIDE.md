@@ -199,7 +199,7 @@ npm run dev -- --force
 ### **Sample Users:**
 - **Admin:** aipharmplus@outlook.com / Admin123!
 
-Registration confirmations and two-factor emails are sent from `aipharmplus@outlook.com` using Outlook's SMTP servers. If you prefer to capture `.eml` files locally set `Email:UsePickupDirectory` to `true`; otherwise messages go directly to the recipient inbox specified during registration.
+Registration confirmations and two-factor emails are sent from `aipharmplus@outlook.com` using Outlook's SMTP servers. If you prefer to capture `.eml` files locally set `Email:UsePickupDirectory` to `true`; otherwise messages go directly to the recipient inbox specified during registration. When using Outlook delivery, enable *Authenticated SMTP* for the mailbox and double-check the stored password before starting the backend.
 
 ### **Sample Products:**
 - Парацетамол 500мг - €2.30

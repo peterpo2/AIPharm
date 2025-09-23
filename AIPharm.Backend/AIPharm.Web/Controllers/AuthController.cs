@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AIPharm.Core.Exceptions;
 using AIPharm.Core.Interfaces;
 using AIPharm.Domain.Entities;
 using AIPharm.Core.Security;
@@ -92,8 +93,19 @@ namespace AIPharm.Web.Controllers
                     }
                 });
             }
+            catch (EmailDeliveryException ex)
+            {
+                _logger.LogError(ex, "Email delivery failed during login for {Email}", request.Email);
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Failed to send verification email. Please verify the Outlook SMTP credentials and security settings.",
+                    error = ex.Message
+                });
+            }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected server error during login for {Email}", request.Email);
                 return StatusCode(500, new { success = false, message = "Server error", error = ex.Message });
             }
         }
@@ -177,6 +189,7 @@ namespace AIPharm.Web.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected server error during 2FA verification for {Email}", request.Email);
                 return StatusCode(500, new { success = false, message = "Server error", error = ex.Message });
             }
         }
@@ -221,8 +234,19 @@ namespace AIPharm.Web.Controllers
                     cooldownSeconds = Math.Max(0, (int)Math.Ceiling(challenge.CooldownRemaining.TotalSeconds))
                 });
             }
+            catch (EmailDeliveryException ex)
+            {
+                _logger.LogError(ex, "Email delivery failed during 2FA resend for {Email}", request.Email);
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Failed to send verification email. Please verify the Outlook SMTP credentials and security settings.",
+                    error = ex.Message
+                });
+            }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected server error during 2FA resend for {Email}", request.Email);
                 return StatusCode(500, new { success = false, message = "Server error", error = ex.Message });
             }
         }

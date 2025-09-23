@@ -34,6 +34,15 @@ The service uses the `Email` section in `appsettings*.json`:
 - **SMTP host:** Outlook/Office 365 uses `smtp.office365.com` on port `587` with STARTTLS (`EnableSsl: true`). Adjust the settings if you switch providers.
 - **Secrets:** For production scenarios store credentials securely (environment variables, user-secrets, Key Vault, etc.).
 
+### Outlook SMTP checklist
+
+If no email arrives in your inbox:
+
+- **Confirm SMTP access is enabled** – Sign in to [Outlook security settings](https://account.live.com/security) and ensure *Authenticated SMTP* is allowed for the `aipharmplus@outlook.com` mailbox. Accounts with two-step verification may require an app password.
+- **Verify credentials** – The `Username` and `Password` in `appsettings*.json` must match the Outlook mailbox exactly. Rebuild the backend container after updating these secrets.
+- **Keep pickup disabled** – Set `UsePickupDirectory` to `false` when you expect real emails. When enabled, messages are saved as `.eml` files under `AIPharm.Backend/AIPharm.Web/App_Data/Emails` and no outbound SMTP attempt is made.
+- **Check backend logs** – `docker-compose logs backend` should contain `Email for <recipient> sent via SMTP server smtp.office365.com:587`. Any `Failed to send email` entries include the raw SMTP error for troubleshooting.
+
 ## Example sequence (Outlook delivery)
 
 ```bash
