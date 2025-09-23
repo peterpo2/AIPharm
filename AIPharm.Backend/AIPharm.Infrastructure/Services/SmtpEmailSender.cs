@@ -1,7 +1,9 @@
+using System.IO;
 using System.Net;
 using System.Net.Mail;
 using AIPharm.Core.Interfaces;
 using AIPharm.Core.Options;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -11,11 +13,16 @@ namespace AIPharm.Infrastructure.Services
     {
         private readonly EmailSettings _settings;
         private readonly ILogger<SmtpEmailSender> _logger;
+        private readonly string? _pickupDirectory;
 
-        public SmtpEmailSender(IOptions<EmailSettings> settings, ILogger<SmtpEmailSender> logger)
+        public SmtpEmailSender(
+            IOptions<EmailSettings> settings,
+            ILogger<SmtpEmailSender> logger,
+            IHostEnvironment hostEnvironment)
         {
             _settings = settings.Value;
             _logger = logger;
+            _pickupDirectory = ResolvePickupDirectory(_settings.PickupDirectory, hostEnvironment.ContentRootPath);
         }
 
         public async Task SendEmailAsync(string toEmail, string subject, string plainTextBody, CancellationToken cancellationToken = default)
@@ -51,13 +58,13 @@ namespace AIPharm.Infrastructure.Services
 
         private SmtpClient CreateClient()
         {
-            if (!string.IsNullOrWhiteSpace(_settings.PickupDirectory))
+            if (!string.IsNullOrWhiteSpace(_pickupDirectory))
             {
-                Directory.CreateDirectory(_settings.PickupDirectory);
+                Directory.CreateDirectory(_pickupDirectory);
                 return new SmtpClient
                 {
                     DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory,
-                    PickupDirectoryLocation = _settings.PickupDirectory
+                    PickupDirectoryLocation = _pickupDirectory
                 };
             }
 
@@ -72,6 +79,23 @@ namespace AIPharm.Infrastructure.Services
             }
 
             return client;
+        }
+
+        private static string? ResolvePickupDirectory(string? configuredDirectory, string contentRoot)
+        {
+            if (string.IsNullOrWhiteSpace(configuredDirectory))
+            {
+                return null;
+            }
+
+            var trimmed = configuredDirectory.Trim();
+
+            if (Path.IsPathRooted(trimmed))
+            {
+                return trimmed;
+            }
+
+            return Path.GetFullPath(Path.Combine(contentRoot, trimmed));
         }
     }
 }

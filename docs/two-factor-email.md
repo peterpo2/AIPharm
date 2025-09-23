@@ -27,7 +27,7 @@ The service uses the `Email` section in `appsettings*.json`:
 }
 ```
 
-- **Pickup directory (default for local runs):** When `PickupDirectory` is set, the system writes `.eml` files to that folder instead of using a live SMTP server. You can open the files with any mail client to inspect the codes.
+- **Pickup directory (default for local runs):** When `PickupDirectory` is set, the system writes `.eml` files to that folder instead of using a live SMTP server. Relative paths are resolved against the backend content root, so the example above ends up under `AIPharm.Backend/AIPharm.Web/App_Data/Emails`. You can open the files with any mail client to inspect the codes.
 - **SMTP mode:** Remove `PickupDirectory` (or set it to `null`) and provide real SMTP details to relay emails to an inbox. SSL and credentials are optional.
 
 ## Example sequence (local pickup mode)
