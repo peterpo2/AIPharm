@@ -197,9 +197,9 @@ npm run dev -- --force
 ## 🎯 Default Data
 
 ### **Sample Users:**
-- **Admin:** peterpo2@abv.bg / Admin123!
+- **Admin:** aipharmplus@outlook.com / Admin123!
 
-Registration confirmations and two-factor emails are sent from `aipharm@outlook.com` using Outlook's SMTP servers. In the default development profile each email is also written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` and delivered to `peterpo2@abv.bg`. Update the credentials or override recipient in `appsettings.Development.json` to suit your environment.
+Registration confirmations and two-factor emails are sent from `aipharmplus@outlook.com` using Outlook's SMTP servers. In the default development profile each message is also written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`, allowing you to retrieve verification codes locally even if the account email is only for testing.
 
 ### **Sample Products:**
 - Парацетамол 500мг - €2.30

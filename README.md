@@ -57,9 +57,12 @@ docker-compose up
 ### **Default Account**
 | Role | Email | Password |
 |------|-------|----------|
-| 👑 **Admin (default)** | peterpo2@abv.bg | Admin123! |
+| 👑 **Admin (default)** | aipharmplus@outlook.com | Admin123! |
+| 🛍️ **Customer** | maria.ivanova@example.com | Customer123! |
+| 🛍️ **Customer** | georgi.petrov@example.com | Customer456! |
+| 🛍️ **Customer** | iva.stoyanova@example.com | Customer789! |
 
-> **Note:** Registration confirmations and two-factor verification emails are sent from `aipharm@outlook.com`. The Docker/Development profile also saves each message under `AIPharm.Backend/AIPharm.Web/App_Data/Emails` and routes notifications to `peterpo2@abv.bg` by default. Adjust the Outlook credentials or override recipient in `appsettings.Development.json` if you need a different mailbox.
+> **Note:** Registration confirmations and two-factor verification emails are sent from `aipharmplus@outlook.com`. When running locally every message is also written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` so you can retrieve one-time codes even if the recipient mailbox is fictional.
 
 ---
 
@@ -503,7 +506,7 @@ copies or substantial portions of the Software.
 - 📖 **Documentation**: Check our [Wiki](https://github.com/yourusername/aipharm-plus/wiki)
 - 🐛 **Issues**: [Report bugs](https://github.com/yourusername/aipharm-plus/issues)
 - 💬 **Discussions**: [Join conversations](https://github.com/yourusername/aipharm-plus/discussions)
-- 📧 **Email**: peterpo2@abv.bg (default admin inbox for local testing)
+- 📧 **Email**: aipharmplus@outlook.com (two-factor sender & admin inbox)
 
 ### **FAQ**
 <details>
@@ -518,7 +521,7 @@ docker-compose up
 <details>
 <summary>❓ How do I add new products?</summary>
 
-1. Login as admin (peterpo2@abv.bg / Admin123!)
+1. Login as admin (aipharmplus@outlook.com / Admin123!)
 2. Use the Swagger UI at http://localhost:8080/swagger
 3. Use the POST /api/products endpoint
 </details>

@@ -446,13 +446,27 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
                   <h4 className="font-medium text-blue-900 mb-2">{t('auth.demoAccounts')}</h4>
                   <div className="text-sm text-blue-700 space-y-1">
                     <p>
-                      <strong>{t('auth.admin')}:</strong> peterpo2@abv.bg / Admin123!
+                      <strong>{t('auth.admin')}:</strong> aipharmplus@outlook.com / Admin123!
+                    </p>
+                    <p>
+                      <strong>{t('auth.customers')}:</strong>{' '}
+                      <span className="block sm:inline">
+                        maria.ivanova@example.com / Customer123!
+                      </span>
+                      <br className="hidden sm:block" />
+                      <span className="block sm:inline">
+                        georgi.petrov@example.com / Customer456!
+                      </span>
+                      <br className="hidden sm:block" />
+                      <span className="block sm:inline">
+                        iva.stoyanova@example.com / Customer789!
+                      </span>
                     </p>
                     <p className="text-xs text-blue-600">
                       Two-factor verification codes are emailed from{' '}
-                      <strong>aipharm@outlook.com</strong>. When running locally a copy of each
-                      message is stored in <code>App_Data/Emails</code> and, by default, also sent to
-                      <strong> peterpo2@abv.bg</strong>.
+                      <strong>aipharmplus@outlook.com</strong>. When running locally a copy of each
+                      message is stored in <code>App_Data/Emails</code> so you can open the <code>.eml</code>
+                      files for any demo account.
                     </p>
                   </div>
                 </div>

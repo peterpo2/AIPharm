@@ -201,17 +201,51 @@ namespace AIPharm.Infrastructure.Data
             await context.Products.AddRangeAsync(products, ct);
 
             // --- Users ---
+            var now = DateTime.UtcNow;
             var users = new List<User>
             {
                 new()
                 {
-                    Email = "peterpo2@abv.bg",
-                    FullName = "AIPharm Admin",
+                    Email = "aipharmplus@outlook.com",
+                    FullName = "AIPharm Administrator",
                     IsAdmin = true,
                     PasswordHash = PasswordHasher.Hash("Admin123!"),
                     PhoneNumber = "+359 88 999 0000",
                     Address = "София, бул. Витоша 25",
-                    CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                    CreatedAt = now.AddMonths(-6),
+                    TwoFactorEnabled = true
+                },
+                new()
+                {
+                    Email = "maria.ivanova@example.com",
+                    FullName = "Мария Иванова",
+                    IsAdmin = false,
+                    PasswordHash = PasswordHasher.Hash("Customer123!"),
+                    PhoneNumber = "+359 88 555 1212",
+                    Address = "Пловдив, ул. Капитан Райчо 7",
+                    CreatedAt = now.AddMonths(-3),
+                    TwoFactorEnabled = true
+                },
+                new()
+                {
+                    Email = "georgi.petrov@example.com",
+                    FullName = "Георги Петров",
+                    IsAdmin = false,
+                    PasswordHash = PasswordHasher.Hash("Customer456!"),
+                    PhoneNumber = "+359 89 444 2323",
+                    Address = "Варна, бул. Сливница 102",
+                    CreatedAt = now.AddMonths(-2),
+                    TwoFactorEnabled = true
+                },
+                new()
+                {
+                    Email = "iva.stoyanova@example.com",
+                    FullName = "Ива Стоянова",
+                    IsAdmin = false,
+                    PasswordHash = PasswordHasher.Hash("Customer789!"),
+                    PhoneNumber = "+359 87 333 3434",
+                    Address = "Бургас, ул. Александровска 54",
+                    CreatedAt = now.AddMonths(-1),
                     TwoFactorEnabled = true
                 }
             };
@@ -220,7 +254,7 @@ namespace AIPharm.Infrastructure.Data
 
             await context.SaveChangesAsync(ct);
 
-            Console.WriteLine("✅ Database seeded with categories, products, and default admin user.");
+            Console.WriteLine("✅ Database seeded with categories, products, and demo users.");
         }
     }
 }

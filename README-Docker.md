@@ -119,9 +119,9 @@ docker exec -it aipharm-database /opt/mssql-tools/bin/sqlcmd -S localhost -U sa 
 ## 🎯 Default Account
 
 ### Login Credentials
-- **Admin**: peterpo2@abv.bg / Admin123!
+- **Admin**: aipharmplus@outlook.com / Admin123!
 
-Registration confirmations and 2FA emails are dispatched via the Outlook mailbox `aipharm@outlook.com`. In the Docker development profile each message is also written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` and, by default, delivered to `peterpo2@abv.bg`. Update the credentials or override recipient in `appsettings.Development.json` if you need different behaviour.
+Registration confirmations and 2FA emails are dispatched via the Outlook mailbox `aipharmplus@outlook.com`. In the Docker development profile each message is also written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`, so you can open the `.eml` files locally to view one-time codes for any seeded account.
 
 ## 🐛 Troubleshooting
 
