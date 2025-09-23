@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -12,6 +12,7 @@ import { categories, products, searchProducts, getProductsByCategory } from './d
 import { Product } from './types';
 import HomePage from './components/pages/HomePage';
 import ProductsPage from './components/pages/ProductsPage';
+import CategoriesPage from './components/pages/CategoriesPage';
 import Services from './components/pages/Services';
 import AboutUs from './components/pages/AboutUs';
 import Contacts from './components/pages/Contacts';
@@ -23,6 +24,17 @@ function AppContent() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    if (location.pathname === '/categories') {
+      setSearchTerm('');
+      setSelectedCategory(null);
+    }
+  }, [location.pathname]);
 
   // Filter products based on search and category
   const filteredProducts = useMemo(() => {
@@ -46,17 +58,8 @@ function AppContent() {
     setSearchTerm('');
     setSelectedCategory(null);
 
-    if (location.pathname !== '/') {
-      navigate('/');
-    }
-
-    if (typeof window !== 'undefined') {
-      const categoriesSection = document.getElementById('category-filter');
-      if (categoriesSection) {
-        categoriesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+    if (location.pathname !== '/categories') {
+      navigate('/categories');
     }
   };
 
@@ -109,6 +112,17 @@ function AppContent() {
                 filteredProducts={filteredProducts}
                 categories={categories}
                 showHero={showHero}
+                allProducts={products}
+              />
+            )}
+          />
+          <Route
+            path="/categories"
+            element={(
+              <CategoriesPage
+                categories={categories}
+                products={products}
+                onCategorySelect={handleCategoryChange}
               />
             )}
           />

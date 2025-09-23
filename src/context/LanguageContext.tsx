@@ -45,6 +45,10 @@ const translations = {
 
     // Categories
     'categories.title': 'Категории',
+    'categories.subtitle': 'Разгледайте нашите основни категории и открийте подходящите продукти.',
+    'categories.previewSubtitle': 'Бърз поглед към някои от най-популярните ни категории.',
+    'categories.viewAll': 'Виж всички категории',
+    'categories.viewProducts': 'Виж продуктите',
     'categories.all': 'Всички',
     'categories.painkillers': 'Обезболяващи',
     'categories.vitamins': 'Витамини',
@@ -384,6 +388,10 @@ const translations = {
 
     // Categories
     'categories.title': 'Categories',
+    'categories.subtitle': 'Explore our main categories and find the right treatments.',
+    'categories.previewSubtitle': 'Take a quick look at some of our most popular categories.',
+    'categories.viewAll': 'View all categories',
+    'categories.viewProducts': 'View products',
     'categories.all': 'All',
     'categories.painkillers': 'Painkillers',
     'categories.vitamins': 'Vitamins',
