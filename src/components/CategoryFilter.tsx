@@ -1,15 +1,9 @@
 import React from "react";
+import { Heart, Grid3X3 } from "lucide-react";
+
 import { Category } from "../types";
-import {
-  Pill,
-  Heart,
-  Thermometer,
-  Car,
-  Droplet,
-  Baby,
-  Grid3X3,
-} from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { getCategoryDisplayName, getCategoryIcon } from "../utils/categories";
 
 interface CategoryFilterProps {
   selectedCategory: number | null;
@@ -17,36 +11,12 @@ interface CategoryFilterProps {
   categories: Category[];
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  pill: Pill,
-  heart: Heart,
-  thermometer: Thermometer,
-  stomach: Car,
-  droplet: Droplet,
-  baby: Baby,
-};
-
 const CategoryFilter: React.FC<CategoryFilterProps> = ({
   selectedCategory,
   onCategoryChange,
   categories,
 }) => {
   const { t, language } = useLanguage();
-
-  const getCategoryName = (category: Category) => {
-    if (language === "en") {
-      const categoryMap: Record<string, string> = {
-        Обезболяващи: "Painkillers",
-        Витамини: "Vitamins",
-        "Простуда и грип": "Cold & Flu",
-        "Стомашно-чревни": "Digestive",
-        "Кожа и коса": "Skin & Hair",
-        "Детски продукти": "Children",
-      };
-      return categoryMap[category.name] || category.name;
-    }
-    return category.name;
-  };
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
@@ -90,7 +60,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
 
         {/* Category Buttons */}
         {categories.map((category) => {
-          const IconComponent = iconMap[category.icon] || Heart;
+          const IconComponent = getCategoryIcon(category.icon);
           return (
             <button
               key={category.id}
@@ -117,7 +87,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
                 />
               </div>
               <span className="text-sm font-semibold leading-tight">
-                {getCategoryName(category)}
+                {getCategoryDisplayName(category, language)}
               </span>
             </button>
           );

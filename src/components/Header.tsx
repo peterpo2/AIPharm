@@ -53,13 +53,13 @@ const Header: React.FC<HeaderProps> = ({
 
   const navigationItems = [
     {
-      key: 'categories',
-      label: t('navigation.categories'),
+      key: 'navigation.categories',
+      path: '/categories',
       onClick: onNavigateToCategories,
     },
     {
-      key: 'products',
-      label: t('navigation.products'),
+      key: 'navigation.products',
+      path: '/products',
       onClick: onNavigateToProducts,
     },
   ];
@@ -213,16 +213,26 @@ const Header: React.FC<HeaderProps> = ({
 
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center space-x-2 border-t border-gray-100 py-3 text-sm font-medium text-gray-600">
-          {navigationItems.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => handleNavigationClick(item.onClick)}
-              className="relative rounded-full px-4 py-2 transition-colors duration-200 hover:bg-emerald-50 hover:text-emerald-700"
-            >
-              {item.label}
-            </button>
-          ))}
+          {navigationItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== '/' && location.pathname.startsWith(`${item.path}/`));
+
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleNavigationClick(item.onClick)}
+                className={`relative rounded-full px-4 py-2 transition-colors duration-200 ${
+                  isActive
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'hover:bg-emerald-50 hover:text-emerald-700'
+                }`}
+              >
+                {t(item.key)}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Mobile search */}
@@ -243,7 +253,25 @@ const Header: React.FC<HeaderProps> = ({
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 py-4 px-4 space-y-3">
-          {[{ key: 'categories.title', path: '/' }, ...quickLinks].map((link) => (
+          {navigationItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== '/' && location.pathname.startsWith(`${item.path}/`));
+
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleNavigationClick(item.onClick)}
+                className={`block w-full text-left py-2 text-base font-semibold transition-colors ${
+                  isActive ? 'text-emerald-600' : 'text-gray-700 hover:text-emerald-600'
+                }`}
+              >
+                {t(item.key)}
+              </button>
+            );
+          })}
+          {quickLinks.map((link) => (
             <Link
               key={link.key}
               to={link.path}
