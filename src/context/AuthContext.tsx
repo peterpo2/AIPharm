@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { buildApiUrl, logResolvedApiBase } from "../utils/apiBase";
 
 interface User {
   id: string;
@@ -56,16 +57,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 🔑 Environment-based API base (normalized)
-const RAW_API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_URL_DOCKER ||
-  "http://localhost:8080/api";
+// Ensure we log the resolved API base once on import for easier diagnostics
+logResolvedApiBase();
 
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
-
-const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, "")}`;
+const buildUrl = (path: string) => buildApiUrl(path);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
