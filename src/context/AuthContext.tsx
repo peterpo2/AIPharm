@@ -35,6 +35,21 @@ interface UpdateProfileResponse {
   user?: User;
 }
 
+interface TwoFactorChallenge {
+  twoFactorToken: string;
+  destinationEmail?: string;
+  codeExpiresAt?: string;
+  emailSent?: boolean;
+  cooldownSeconds?: number;
+}
+
+interface AuthActionResult {
+  success: boolean;
+  message?: string;
+  requiresTwoFactor?: boolean;
+  twoFactor?: TwoFactorChallenge;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -44,7 +59,17 @@ interface AuthContextType {
     email: string,
     password: string,
     rememberMe?: boolean
-  ) => Promise<{ success: boolean; message?: string }>;
+  ) => Promise<AuthActionResult>;
+  verifyTwoFactor: (
+    email: string,
+    twoFactorToken: string,
+    code: string,
+    rememberMe?: boolean
+  ) => Promise<AuthActionResult>;
+  resendTwoFactor: (
+    email: string,
+    twoFactorToken: string
+  ) => Promise<AuthActionResult>;
   register: (
     data: RegisterData
   ) => Promise<{ success: boolean; message?: string }>;
@@ -66,6 +91,51 @@ const RAW_API_BASE =
 const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
 
 const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, "")}`;
+
+type JsonObject = Record<string, unknown>;
+
+const toJsonObject = (value: unknown): JsonObject | null =>
+  typeof value === "object" && value !== null ? (value as JsonObject) : null;
+
+const safeJson = async (response: Response): Promise<JsonObject | null> => {
+  try {
+    const parsed = await response.json();
+    return toJsonObject(parsed);
+  } catch {
+    return null;
+  }
+};
+
+const mapTwoFactorChallenge = (
+  data: JsonObject | null
+): TwoFactorChallenge | undefined => {
+  if (!data) {
+    return undefined;
+  }
+
+  const token = data["twoFactorToken"];
+  if (typeof token !== "string") {
+    return undefined;
+  }
+
+  const destination = data["destinationEmail"];
+  const codeExpiresAt = data["codeExpiresAt"];
+  const emailSent = data["emailSent"];
+  const cooldown = data["cooldownSeconds"];
+
+  return {
+    twoFactorToken: token,
+    destinationEmail:
+      typeof destination === "string" ? destination : undefined,
+    codeExpiresAt:
+      typeof codeExpiresAt === "string" ? codeExpiresAt : undefined,
+    emailSent: typeof emailSent === "boolean" ? emailSent : undefined,
+    cooldownSeconds:
+      typeof cooldown === "number"
+        ? Math.max(0, Math.floor(cooldown))
+        : undefined,
+  };
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -116,7 +186,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     email: string,
     password: string,
     rememberMe: boolean = false
-  ) => {
+  ): Promise<AuthActionResult> => {
     try {
       const response = await fetch(buildUrl("auth/login"), {
         method: "POST",
@@ -124,24 +194,143 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         body: JSON.stringify({ email, password, rememberMe }),
       });
 
-      const data = await response.json();
+      const data = await safeJson(response);
+      const message =
+        typeof data?.["message"] === "string"
+          ? (data["message"] as string)
+          : undefined;
 
-      if (data.success && data.user && data.token) {
-        setUser(data.user);
-
-        if (rememberMe) {
-          localStorage.setItem("authToken", data.token);
-        } else {
-          sessionStorage.setItem("authToken", data.token);
-        }
-
-        return { success: true, message: data.message };
-      } else {
+      if (!response.ok) {
         return {
           success: false,
-          message: data.message || "Грешка при вход",
+          message: message || "Грешка при вход",
         };
       }
+
+      const twoFactor = mapTwoFactorChallenge(data);
+      if (twoFactor) {
+        return {
+          success: false,
+          requiresTwoFactor: true,
+          message,
+          twoFactor,
+        };
+      }
+
+      const success = data?.["success"] === true;
+      const user = (data?.["user"] as User | undefined) ?? undefined;
+      const token =
+        typeof data?.["token"] === "string"
+          ? (data["token"] as string)
+          : undefined;
+
+      if (success && user && token) {
+        setUser(user);
+
+        if (rememberMe) {
+          localStorage.setItem("authToken", token);
+        } else {
+          sessionStorage.setItem("authToken", token);
+        }
+
+        return { success: true, message };
+      }
+
+      return {
+        success: false,
+        message: message || "Грешка при вход",
+      };
+    } catch {
+      return { success: false, message: "Мрежова грешка" };
+    }
+  };
+
+  const verifyTwoFactor = async (
+    email: string,
+    twoFactorToken: string,
+    code: string,
+    rememberMe: boolean = false
+  ): Promise<AuthActionResult> => {
+    try {
+      const response = await fetch(buildUrl("auth/verify-2fa"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, twoFactorToken, code }),
+      });
+
+      const data = await safeJson(response);
+      const message =
+        typeof data?.["message"] === "string"
+          ? (data["message"] as string)
+          : undefined;
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: message || "Невалиден код",
+          requiresTwoFactor: data?.["requiresTwoFactor"] === true,
+          twoFactor: mapTwoFactorChallenge(data),
+        };
+      }
+
+      const success = data?.["success"] === true;
+      const user = (data?.["user"] as User | undefined) ?? undefined;
+      const token =
+        typeof data?.["token"] === "string"
+          ? (data["token"] as string)
+          : undefined;
+
+      if (success && user && token) {
+        setUser(user);
+
+        if (rememberMe) {
+          localStorage.setItem("authToken", token);
+        } else {
+          sessionStorage.setItem("authToken", token);
+        }
+
+        return { success: true, message };
+      }
+
+      return {
+        success: false,
+        message: message || "Невалиден код",
+      };
+    } catch {
+      return { success: false, message: "Мрежова грешка" };
+    }
+  };
+
+  const resendTwoFactor = async (
+    email: string,
+    twoFactorToken: string
+  ): Promise<AuthActionResult> => {
+    try {
+      const response = await fetch(buildUrl("auth/resend-2fa"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, twoFactorToken }),
+      });
+
+      const data = await safeJson(response);
+      const message =
+        typeof data?.["message"] === "string"
+          ? (data["message"] as string)
+          : undefined;
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: message || "Грешка при изпращане на кода",
+        };
+      }
+
+      return {
+        success: true,
+        message,
+        requiresTwoFactor: true,
+        twoFactor: mapTwoFactorChallenge(data),
+      };
     } catch {
       return { success: false, message: "Мрежова грешка" };
     }
@@ -245,6 +434,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         isAdmin,
         isLoading,
         login,
+        verifyTwoFactor,
+        resendTwoFactor,
         register,
         logout,
         updateProfile,

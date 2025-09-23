@@ -199,7 +199,7 @@ npm run dev -- --force
 ### **Sample Users:**
 - **Admin:** peterpo2@abv.bg / Admin123!
 
-Two-factor codes are delivered to `peterpo2@abv.bg`. When using Docker, check `AIPharm.Backend/AIPharm.Web/App_Data/Emails` on the host for the `.eml` files.
+Two-factor codes are delivered to `peterpo2@abv.bg`. The backend also drops `.eml` files under `AIPharm.Backend/AIPharm.Web/App_Data/Emails` so you can open them locally (Docker mounts the same folder from the container).
 
 ### **Sample Products:**
 - Парацетамол 500мг - €2.30

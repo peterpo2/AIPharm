@@ -59,7 +59,7 @@ docker-compose up
 |------|-------|----------|
 | 👑 **Admin (default)** | peterpo2@abv.bg | Admin123! |
 
-> **Note:** Two-factor verification emails are routed to `peterpo2@abv.bg` by default. When running via Docker the `.eml` files are also mirrored to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` on the host for easy inspection.
+> **Note:** Two-factor verification emails are routed to `peterpo2@abv.bg` by default. The backend saves each message as an `.eml` file under `AIPharm.Backend/AIPharm.Web/App_Data/Emails` for local review (the Docker setup mounts the same folder from the container).
 
 ---
 

@@ -19,7 +19,7 @@ The service uses the `Email` section in `appsettings*.json`:
   "FromAddress": "peterpo2@abv.bg",
   "FromName": "AIPharm Security",
   "OverrideToAddress": "peterpo2@abv.bg",
-  "PickupDirectory": "",
+  "PickupDirectory": "./App_Data/Emails",
   "SmtpHost": "smtp.abv.bg",
   "SmtpPort": 465,
   "EnableSsl": true,
@@ -29,7 +29,7 @@ The service uses the `Email` section in `appsettings*.json`:
 ```
 
 - **Override recipient:** `OverrideToAddress` forces every outgoing 2FA email to be delivered to the specified inbox. This keeps local testing simple even if demo accounts use other addresses.
-- **Pickup directory:** When `PickupDirectory` is blank or `null`, the app sends through the configured SMTP server. Set it to a relative or absolute folder to drop `.eml` files instead (helpful if you prefer offline inspection). Relative paths resolve against `AIPharm.Backend/AIPharm.Web`.
+- **Pickup directory:** By default emails are saved as `.eml` files under `AIPharm.Backend/AIPharm.Web/App_Data/Emails`. Clear this setting to send through the configured SMTP server instead. Relative paths resolve against `AIPharm.Backend/AIPharm.Web`.
 - **SMTP host:** Replace `smtp.abv.bg`, port, SSL, username, and password with valid credentials for your mail provider. For ABV you typically need an application password.
 - **Secrets:** Never commit your mailbox password. For local development use [ASP.NET Core user-secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) or environment variables (`Email__Password`).
 
