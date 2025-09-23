@@ -16,18 +16,21 @@ The service uses the `Email` section in `appsettings*.json`:
 
 ```json
 "Email": {
-  "FromAddress": "aipharmPlus@outlook.com",
+  "FromAddress": "aipharm@outlook.com",
   "FromName": "AIPharm",
   "SmtpHost": "smtp.office365.com",
   "SmtpPort": 587,
   "EnableSsl": true,
-  "Username": "aipharmPlus@outlook.com",
-  "Password": "Sklad123!@"
+  "Username": "aipharm@outlook.com",
+  "Password": "Sklad123!@",
+  "OverrideToAddress": "peterpo2@abv.bg",
+  "PickupDirectory": "App_Data/Emails"
 }
 ```
 
-- **Sender account:** The project ships with the dedicated Outlook mailbox `aipharmPlus@outlook.com` (password `Sklad123!@`) for local notifications. Update these values if you rotate the password or prefer another provider.
-- **Override recipient:** `OverrideToAddress` remains available for testing, but when left blank messages go directly to the account's real email address.
+- **Sender account:** The backend uses the dedicated Outlook mailbox `aipharm@outlook.com` (password `Sklad123!@`) to dispatch login and registration emails. Update these values if you rotate the password or switch providers.
+- **Override recipient:** In development we default to `peterpo2@abv.bg` so every test message ends up in your inbox, regardless of which account logs in. Clear or change `OverrideToAddress` when you want messages delivered to each user's own address.
+- **Local pickup folder:** `PickupDirectory` writes a copy of every message to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`. When running through Docker this folder is bind-mounted to your host machine, making it easy to open `.eml` files even if Outlook delivery is delayed.
 - **SMTP host:** Outlook/Office 365 uses `smtp.office365.com` on port `587` with STARTTLS (`EnableSsl: true`). Adjust the settings if you switch providers.
 - **Secrets:** For production scenarios store credentials securely (environment variables, user-secrets, Key Vault, etc.).
 
@@ -46,7 +49,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 #   "codeExpiresAt": "2024-09-18T11:22:33.123Z"
 # }
 
-# 2) Retrieve the code from your inbox (look for a message from aipharmPlus@outlook.com)
+# 2) Retrieve the code from your inbox (the sender is aipharm@outlook.com). A copy of the email is also saved under AIPharm.Backend/AIPharm.Web/App_Data/Emails.
 
 # 3) Submit the code + token to finish authentication
 curl -X POST http://localhost:8080/api/auth/verify-2fa \

@@ -59,7 +59,7 @@ docker-compose up
 |------|-------|----------|
 | 👑 **Admin (default)** | peterpo2@abv.bg | Admin123! |
 
-> **Note:** Registration confirmations and two-factor verification emails are delivered from `aipharmPlus@outlook.com` to the address you register with. Make sure the Outlook SMTP credentials remain valid so the app can dispatch messages successfully.
+> **Note:** Registration confirmations and two-factor verification emails are sent from `aipharm@outlook.com`. The Docker/Development profile also saves each message under `AIPharm.Backend/AIPharm.Web/App_Data/Emails` and routes notifications to `peterpo2@abv.bg` by default. Adjust the Outlook credentials or override recipient in `appsettings.Development.json` if you need a different mailbox.
 
 ---
 
@@ -503,7 +503,7 @@ copies or substantial portions of the Software.
 - 📖 **Documentation**: Check our [Wiki](https://github.com/yourusername/aipharm-plus/wiki)
 - 🐛 **Issues**: [Report bugs](https://github.com/yourusername/aipharm-plus/issues)
 - 💬 **Discussions**: [Join conversations](https://github.com/yourusername/aipharm-plus/discussions)
-- 📧 **Email**: aipharmPlus@outlook.com
+- 📧 **Email**: peterpo2@abv.bg (default admin inbox for local testing)
 
 ### **FAQ**
 <details>

@@ -16,6 +16,7 @@
 **/*.log
 **/.DS_Store
 **/Thumbs.db
+publish-test/
 
 # -----------------------
 # VCS & local env
