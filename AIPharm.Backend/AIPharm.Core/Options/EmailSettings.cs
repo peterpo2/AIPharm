@@ -11,6 +11,7 @@ namespace AIPharm.Core.Options
         public string? Username { get; set; } = "aipharmplus@outlook.com";
         public string? Password { get; set; }
         public string? PickupDirectory { get; set; }
+        public bool UsePickupDirectory { get; set; }
         public int CodeLength { get; set; } = 6;
         public int CodeLifetimeMinutes { get; set; } = 10;
         public int ResendCooldownSeconds { get; set; } = 60;

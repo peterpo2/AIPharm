@@ -464,9 +464,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
                     </p>
                     <p className="text-xs text-blue-600">
                       Two-factor verification codes are emailed from{' '}
-                      <strong>aipharmplus@outlook.com</strong>. When running locally a copy of each
-                      message is stored in <code>App_Data/Emails</code> so you can open the <code>.eml</code>
-                      files for any demo account.
+                      <strong>aipharmplus@outlook.com</strong>. Enable the optional pickup folder
+                      (<code>Email:UsePickupDirectory = true</code>) if you want copies saved under{' '}
+                      <code>App_Data/Emails</code>; otherwise check the recipient inbox for the code.
                     </p>
                   </div>
                 </div>

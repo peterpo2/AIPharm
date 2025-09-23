@@ -15,6 +15,7 @@ namespace AIPharm.Infrastructure.Services
         private readonly EmailSettings _settings;
         private readonly ILogger<SmtpEmailSender> _logger;
         private readonly string? _pickupDirectory;
+        private readonly bool _usePickupDirectory;
 
         public SmtpEmailSender(
             IOptions<EmailSettings> settings,
@@ -23,7 +24,17 @@ namespace AIPharm.Infrastructure.Services
         {
             _settings = settings.Value;
             _logger = logger;
-            _pickupDirectory = ResolvePickupDirectory(_settings.PickupDirectory, hostEnvironment.ContentRootPath);
+
+            var hasPickupPath = !string.IsNullOrWhiteSpace(_settings.PickupDirectory);
+            _usePickupDirectory = _settings.UsePickupDirectory && hasPickupPath;
+
+            if (_settings.UsePickupDirectory && !hasPickupPath)
+            {
+                _logger.LogWarning("Email pickup directory usage was enabled but no directory path was provided.");
+            }
+            _pickupDirectory = _usePickupDirectory
+                ? ResolvePickupDirectory(_settings.PickupDirectory, hostEnvironment.ContentRootPath)
+                : null;
         }
 
         public async Task SendEmailAsync(string toEmail, string subject, string plainTextBody, CancellationToken cancellationToken = default)
@@ -69,7 +80,7 @@ namespace AIPharm.Infrastructure.Services
                 cancellationToken.ThrowIfCancellationRequested();
                 await client.SendMailAsync(message);
 
-                if (!string.IsNullOrWhiteSpace(_pickupDirectory))
+                if (_usePickupDirectory && !string.IsNullOrWhiteSpace(_pickupDirectory))
                 {
                     _logger.LogInformation(
                         "Email for {Recipient} saved to pickup directory {Directory}",
@@ -94,7 +105,7 @@ namespace AIPharm.Infrastructure.Services
 
         private SmtpClient CreateClient()
         {
-            if (!string.IsNullOrWhiteSpace(_pickupDirectory))
+            if (_usePickupDirectory && !string.IsNullOrWhiteSpace(_pickupDirectory))
             {
                 Directory.CreateDirectory(_pickupDirectory);
                 return new SmtpClient

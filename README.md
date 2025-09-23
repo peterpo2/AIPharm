@@ -62,7 +62,7 @@ docker-compose up
 | 🛍️ **Customer** | georgi.petrov@example.com | Customer456! |
 | 🛍️ **Customer** | iva.stoyanova@example.com | Customer789! |
 
-> **Note:** Registration confirmations and two-factor verification emails are sent from `aipharmplus@outlook.com`. When running locally every message is also written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` so you can retrieve one-time codes even if the recipient mailbox is fictional.
+> **Note:** Registration confirmations and two-factor verification emails are sent from `aipharmplus@outlook.com`. If you enable the optional pickup folder (`Email:UsePickupDirectory = true`) the messages are written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`; otherwise they are delivered straight to each recipient's inbox.
 
 ---
 

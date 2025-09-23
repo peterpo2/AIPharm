@@ -23,13 +23,14 @@ The service uses the `Email` section in `appsettings*.json`:
   "EnableSsl": true,
   "Username": "aipharmplus@outlook.com",
   "Password": "Sklad123!@",
-  "PickupDirectory": "App_Data/Emails"
+  "PickupDirectory": "App_Data/Emails",
+  "UsePickupDirectory": false
 }
 ```
 
 - **Sender account:** The backend uses the dedicated Outlook mailbox `aipharmplus@outlook.com` (password `Sklad123!@`) to dispatch login and registration emails. Update these values if you rotate the password or switch providers.
-- **Per-user delivery:** Leave `OverrideToAddress` unset so verification codes are sent to each account's email address. When running locally you can still inspect every message in the pickup directory, even if the recipient mailbox is fictional.
-- **Local pickup folder:** `PickupDirectory` writes a copy of every message to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`. When running through Docker this folder is bind-mounted to your host machine, making it easy to open `.eml` files even if Outlook delivery is delayed.
+- **Per-user delivery:** Leave `OverrideToAddress` unset so verification codes are sent to each account's email address.
+- **Local pickup folder (optional):** Set `UsePickupDirectory` to `true` if you want `.eml` files written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` instead of dispatching through Outlook. This is helpful when testing with fictional mailboxes because the messages never leave your machine.
 - **SMTP host:** Outlook/Office 365 uses `smtp.office365.com` on port `587` with STARTTLS (`EnableSsl: true`). Adjust the settings if you switch providers.
 - **Secrets:** For production scenarios store credentials securely (environment variables, user-secrets, Key Vault, etc.).
 
@@ -48,7 +49,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 #   "codeExpiresAt": "2024-09-18T11:22:33.123Z"
 # }
 
-# 2) Retrieve the code from your inbox (the sender is aipharmplus@outlook.com). A copy of the email is also saved under AIPharm.Backend/AIPharm.Web/App_Data/Emails.
+# 2) Retrieve the code from your inbox (the sender is aipharmplus@outlook.com). If you enabled the pickup directory, the `.eml` file is stored under AIPharm.Backend/AIPharm.Web/App_Data/Emails instead of being sent.
 
 # 3) Submit the code + token to finish authentication
 curl -X POST http://localhost:8080/api/auth/verify-2fa \

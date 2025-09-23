@@ -199,7 +199,7 @@ npm run dev -- --force
 ### **Sample Users:**
 - **Admin:** aipharmplus@outlook.com / Admin123!
 
-Registration confirmations and two-factor emails are sent from `aipharmplus@outlook.com` using Outlook's SMTP servers. In the default development profile each message is also written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`, allowing you to retrieve verification codes locally even if the account email is only for testing.
+Registration confirmations and two-factor emails are sent from `aipharmplus@outlook.com` using Outlook's SMTP servers. If you prefer to capture `.eml` files locally set `Email:UsePickupDirectory` to `true`; otherwise messages go directly to the recipient inbox specified during registration.
 
 ### **Sample Products:**
 - Парацетамол 500мг - €2.30
