@@ -10,6 +10,11 @@ namespace AIPharm.Core.Options
         public bool EnableSsl { get; set; } = true;
         public string? Username { get; set; } = "aipharmplus@outlook.com";
         public string? Password { get; set; }
+        public bool UseOAuth { get; set; }
+        public string OAuthScope { get; set; } = "https://outlook.office365.com/.default";
+        public string? OAuthTenantId { get; set; }
+        public string? OAuthClientId { get; set; }
+        public string? OAuthClientSecret { get; set; }
         public string? PickupDirectory { get; set; }
         public bool UsePickupDirectory { get; set; }
         public int CodeLength { get; set; } = 6;

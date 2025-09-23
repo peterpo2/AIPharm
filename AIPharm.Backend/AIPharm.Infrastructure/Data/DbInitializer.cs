@@ -17,6 +17,8 @@ namespace AIPharm.Infrastructure.Data
 
             await context.Database.MigrateAsync(ct);
 
+            await EnsureAdminTwoFactorDisabledAsync(context, ct);
+
             // If we already have data → skip
             if (await context.Categories.AnyAsync(ct))
                 return;
@@ -213,7 +215,7 @@ namespace AIPharm.Infrastructure.Data
                     PhoneNumber = "+359 88 999 0000",
                     Address = "София, бул. Витоша 25",
                     CreatedAt = now.AddMonths(-6),
-                    TwoFactorEnabled = true
+                    TwoFactorEnabled = false
                 },
                 new()
                 {
@@ -255,6 +257,33 @@ namespace AIPharm.Infrastructure.Data
             await context.SaveChangesAsync(ct);
 
             Console.WriteLine("✅ Database seeded with categories, products, and demo users.");
+        }
+
+        private static async Task EnsureAdminTwoFactorDisabledAsync(AIPharmDbContext context, CancellationToken ct)
+        {
+            var adminUsers = await context.Users
+                .Where(u => u.IsAdmin && u.TwoFactorEnabled)
+                .ToListAsync(ct);
+
+            if (adminUsers.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var admin in adminUsers)
+            {
+                admin.TwoFactorEnabled = false;
+                admin.TwoFactorEmailCodeHash = null;
+                admin.TwoFactorEmailCodeExpiry = null;
+                admin.TwoFactorEmailCodeAttempts = 0;
+                admin.TwoFactorLastSentAt = null;
+                admin.TwoFactorLoginToken = null;
+                admin.TwoFactorLoginTokenExpiry = null;
+            }
+
+            await context.SaveChangesAsync(ct);
+
+            Console.WriteLine($"✅ Disabled two-factor authentication for {adminUsers.Count} admin account(s).");
         }
     }
 }

@@ -10,6 +10,7 @@ using MailKit.Security;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Identity.Client;
 using MimeKit;
 using MimeKit.Text;
 
@@ -17,10 +18,16 @@ namespace AIPharm.Infrastructure.Services;
 
 public class SmtpEmailSender : IEmailSender
 {
+    private const string DefaultOAuthScope = "https://outlook.office365.com/.default";
+
     private readonly EmailSettings _settings;
     private readonly ILogger<SmtpEmailSender> _logger;
     private readonly string? _pickupDirectory;
     private readonly bool _usePickupDirectory;
+    private readonly bool _useOAuth;
+    private readonly Lazy<IConfidentialClientApplication>? _confidentialClient;
+    private readonly string _oauthScope;
+    private readonly string? _oauthUser;
 
     public SmtpEmailSender(
         IOptions<EmailSettings> settings,
@@ -29,6 +36,45 @@ public class SmtpEmailSender : IEmailSender
     {
         _settings = settings.Value;
         _logger = logger;
+
+        _useOAuth = _settings.UseOAuth;
+        _oauthScope = string.IsNullOrWhiteSpace(_settings.OAuthScope)
+            ? DefaultOAuthScope
+            : _settings.OAuthScope.Trim();
+
+        if (_useOAuth)
+        {
+            _oauthUser = !string.IsNullOrWhiteSpace(_settings.Username)
+                ? _settings.Username!.Trim()
+                : _settings.FromAddress?.Trim();
+
+            var tenantId = _settings.OAuthTenantId?.Trim();
+            var clientId = _settings.OAuthClientId?.Trim();
+            var clientSecret = _settings.OAuthClientSecret;
+
+            if (string.IsNullOrWhiteSpace(_oauthUser))
+            {
+                _logger.LogWarning("SMTP OAuth is enabled but no mailbox username or from address is configured.");
+            }
+
+            if (string.IsNullOrWhiteSpace(tenantId) || string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
+            {
+                _logger.LogWarning("SMTP OAuth is enabled but Azure AD application credentials are incomplete.");
+            }
+            else
+            {
+                _confidentialClient = new Lazy<IConfidentialClientApplication>(() =>
+                    ConfidentialClientApplicationBuilder
+                        .Create(clientId)
+                        .WithClientSecret(clientSecret)
+                        .WithAuthority(new Uri($"https://login.microsoftonline.com/{tenantId}/"))
+                        .Build());
+            }
+        }
+        else
+        {
+            _oauthUser = null;
+        }
 
         var hasPickupPath = !string.IsNullOrWhiteSpace(_settings.PickupDirectory);
         _usePickupDirectory = _settings.UsePickupDirectory && hasPickupPath;
@@ -50,11 +96,18 @@ public class SmtpEmailSender : IEmailSender
         }
         else
         {
+            var authMode = _useOAuth
+                ? "OAuth 2.0 client credentials"
+                : string.IsNullOrWhiteSpace(_settings.Username)
+                    ? "no authentication"
+                    : "username/password";
+
             _logger.LogInformation(
-                "Email sender configured for SMTP delivery via {Host}:{Port} (SSL: {EnableSsl})",
+                "Email sender configured for SMTP delivery via {Host}:{Port} (SSL: {EnableSsl}, Auth: {AuthMode})",
                 _settings.SmtpHost,
                 _settings.SmtpPort,
-                _settings.EnableSsl);
+                _settings.EnableSsl,
+                authMode);
         }
 
         if (!string.IsNullOrWhiteSpace(_settings.OverrideToAddress))
@@ -129,6 +182,10 @@ public class SmtpEmailSender : IEmailSender
                 ex.Message);
             throw new EmailDeliveryException("SMTP protocol error during email send.", ex);
         }
+        catch (EmailDeliveryException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send email to {Email}", destinationEmail);
@@ -158,22 +215,41 @@ public class SmtpEmailSender : IEmailSender
                 socketOptions,
                 cancellationToken);
 
-            client.AuthenticationMechanisms.Remove("XOAUTH2");
-
-            if (!string.IsNullOrWhiteSpace(_settings.Username))
+            if (_useOAuth)
             {
-                if (string.IsNullOrWhiteSpace(_settings.Password))
+                if (_confidentialClient is null)
                 {
-                    _logger.LogWarning(
-                        "SMTP username {Username} configured without a password. Attempting to send without authentication.",
-                        _settings.Username);
+                    throw new EmailDeliveryException("SMTP OAuth is enabled but the Azure AD credentials are not configured.");
                 }
-                else
+
+                if (string.IsNullOrWhiteSpace(_oauthUser))
                 {
-                    await client.AuthenticateAsync(
-                        _settings.Username,
-                        _settings.Password,
-                        cancellationToken);
+                    throw new EmailDeliveryException("SMTP OAuth requires a username or from address to authenticate.");
+                }
+
+                var accessToken = await AcquireOAuthTokenAsync(cancellationToken);
+                var oauth2 = new SaslMechanismOAuth2(_oauthUser, accessToken);
+                await client.AuthenticateAsync(oauth2, cancellationToken);
+            }
+            else
+            {
+                client.AuthenticationMechanisms.Remove("XOAUTH2");
+
+                if (!string.IsNullOrWhiteSpace(_settings.Username))
+                {
+                    if (string.IsNullOrWhiteSpace(_settings.Password))
+                    {
+                        _logger.LogWarning(
+                            "SMTP username {Username} configured without a password. Attempting to send without authentication.",
+                            _settings.Username);
+                    }
+                    else
+                    {
+                        await client.AuthenticateAsync(
+                            _settings.Username,
+                            _settings.Password,
+                            cancellationToken);
+                    }
                 }
             }
 
@@ -199,6 +275,38 @@ public class SmtpEmailSender : IEmailSender
                     // Ignore cleanup failures
                 }
             }
+        }
+    }
+
+    private async Task<string> AcquireOAuthTokenAsync(CancellationToken cancellationToken)
+    {
+        if (_confidentialClient is null)
+        {
+            throw new EmailDeliveryException("SMTP OAuth is enabled but the Azure AD credentials are not configured.");
+        }
+
+        try
+        {
+            var result = await _confidentialClient.Value
+                .AcquireTokenForClient(new[] { _oauthScope })
+                .ExecuteAsync(cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(result.AccessToken))
+            {
+                throw new EmailDeliveryException("Azure AD returned an empty access token for SMTP authentication.");
+            }
+
+            return result.AccessToken;
+        }
+        catch (MsalException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to acquire OAuth token for SMTP mailbox {Mailbox}",
+                _oauthUser ?? _settings.Username ?? _settings.FromAddress ?? "(unknown)");
+            throw new EmailDeliveryException(
+                "Failed to authenticate with Outlook using OAuth. Verify the Azure AD application credentials and permissions.",
+                ex);
         }
     }
 

@@ -53,7 +53,7 @@ namespace AIPharm.Web.Controllers
                     return Unauthorized(new { success = false, message = "Invalid email or password" });
                 }
 
-                if (user.TwoFactorEnabled)
+                if (RequiresTwoFactor(user))
                 {
                     var challenge = await PrepareTwoFactorChallengeAsync(user, ignoreCooldown: true, HttpContext.RequestAborted);
                     var message = challenge.EmailSent
@@ -71,6 +71,12 @@ namespace AIPharm.Web.Controllers
                         emailSent = challenge.EmailSent,
                         cooldownSeconds = Math.Max(0, (int)Math.Ceiling(challenge.CooldownRemaining.TotalSeconds))
                     });
+                }
+
+                if (!RequiresTwoFactor(user) && HasPendingTwoFactorState(user))
+                {
+                    ClearTwoFactorState(user);
+                    await _userRepository.UpdateAsync(user);
                 }
 
                 var token = GenerateJwtToken(user);
@@ -116,7 +122,7 @@ namespace AIPharm.Web.Controllers
             try
             {
                 var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == request.Email);
-                if (user == null || !user.TwoFactorEnabled)
+                if (user == null || !RequiresTwoFactor(user))
                 {
                     return Unauthorized(new { success = false, message = "Invalid verification request" });
                 }
@@ -200,7 +206,7 @@ namespace AIPharm.Web.Controllers
             try
             {
                 var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == request.Email);
-                if (user == null || !user.TwoFactorEnabled)
+                if (user == null || !RequiresTwoFactor(user))
                 {
                     return Unauthorized(new { success = false, message = "Invalid verification request" });
                 }
@@ -405,6 +411,17 @@ namespace AIPharm.Web.Controllers
             user.TwoFactorLoginToken = null;
             user.TwoFactorLoginTokenExpiry = null;
         }
+
+        private static bool HasPendingTwoFactorState(User user) =>
+            !string.IsNullOrEmpty(user.TwoFactorEmailCodeHash) ||
+            user.TwoFactorEmailCodeExpiry.HasValue ||
+            user.TwoFactorEmailCodeAttempts > 0 ||
+            user.TwoFactorLastSentAt.HasValue ||
+            !string.IsNullOrEmpty(user.TwoFactorLoginToken) ||
+            user.TwoFactorLoginTokenExpiry.HasValue;
+
+        private static bool RequiresTwoFactor(User user) =>
+            user.TwoFactorEnabled && !user.IsAdmin;
 
         private async Task<bool> TrySendRegistrationEmailAsync(User user, CancellationToken cancellationToken)
         {
