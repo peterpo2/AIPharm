@@ -5,9 +5,11 @@ using System.Text;
 
 using AIPharm.Infrastructure.Data;
 using AIPharm.Infrastructure.Repositories;
+using AIPharm.Infrastructure.Services;
 using AIPharm.Core.Interfaces;
 using AIPharm.Core.Services;
 using AIPharm.Core.Mapping;
+using AIPharm.Core.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +52,8 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IAssistantService, AssistantService>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
 // === Health checks ===
 builder.Services.AddHealthChecks().AddDbContextCheck<AIPharmDbContext>("db");

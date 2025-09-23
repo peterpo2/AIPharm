@@ -7,6 +7,8 @@ using System.Text;
 using AIPharm.Core.Interfaces;
 using AIPharm.Domain.Entities;
 using AIPharm.Core.Security;
+using AIPharm.Core.Options;
+using Microsoft.Extensions.Options;
 
 namespace AIPharm.Web.Controllers
 {
@@ -16,11 +18,21 @@ namespace AIPharm.Web.Controllers
     {
         private readonly IRepository<User> _userRepository;
         private readonly IConfiguration _configuration;
+        private readonly IEmailSender _emailSender;
+        private readonly EmailSettings _emailSettings;
 
-        public AuthController(IRepository<User> userRepository, IConfiguration configuration)
+        private const string TwoFactorEmailSubject = "AIPharm login verification code";
+
+        public AuthController(
+            IRepository<User> userRepository,
+            IConfiguration configuration,
+            IEmailSender emailSender,
+            IOptions<EmailSettings> emailOptions)
         {
             _userRepository = userRepository;
             _configuration = configuration;
+            _emailSender = emailSender;
+            _emailSettings = emailOptions.Value;
         }
 
         [HttpPost("login")]
@@ -33,6 +45,25 @@ namespace AIPharm.Web.Controllers
                 if (user == null || !VerifyPassword(user, request.Password))
                 {
                     return Unauthorized(new { success = false, message = "Invalid email or password" });
+                }
+
+                if (user.TwoFactorEnabled)
+                {
+                    var challenge = await PrepareTwoFactorChallengeAsync(user, ignoreCooldown: true, HttpContext.RequestAborted);
+                    var message = challenge.EmailSent
+                        ? "Two-factor verification required. A code has been sent to your email address."
+                        : "Two-factor verification required. Please use the most recent code sent to your email.";
+
+                    return Ok(new
+                    {
+                        success = true,
+                        requiresTwoFactor = true,
+                        message,
+                        twoFactorToken = challenge.TwoFactorToken,
+                        codeExpiresAt = challenge.CodeExpiresAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        emailSent = challenge.EmailSent,
+                        cooldownSeconds = Math.Max(0, (int)Math.Ceiling(challenge.CooldownRemaining.TotalSeconds))
+                    });
                 }
 
                 var token = GenerateJwtToken(user);
@@ -61,6 +92,134 @@ namespace AIPharm.Web.Controllers
             }
         }
 
+        [HttpPost("verify-2fa")]
+        public async Task<IActionResult> VerifyTwoFactor([FromBody] VerifyTwoFactorRequest request)
+        {
+            try
+            {
+                var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == request.Email);
+                if (user == null || !user.TwoFactorEnabled)
+                {
+                    return Unauthorized(new { success = false, message = "Invalid verification request" });
+                }
+
+                var now = DateTime.UtcNow;
+
+                if (string.IsNullOrEmpty(user.TwoFactorLoginToken) || !user.TwoFactorLoginTokenExpiry.HasValue || user.TwoFactorLoginTokenExpiry <= now)
+                {
+                    ClearTwoFactorState(user);
+                    await _userRepository.UpdateAsync(user);
+                    return Unauthorized(new { success = false, message = "Verification session expired. Please login again." });
+                }
+
+                if (!string.Equals(user.TwoFactorLoginToken, request.TwoFactorToken, StringComparison.Ordinal))
+                {
+                    return Unauthorized(new { success = false, message = "Invalid verification session" });
+                }
+
+                if (string.IsNullOrEmpty(user.TwoFactorEmailCodeHash) || !user.TwoFactorEmailCodeExpiry.HasValue || user.TwoFactorEmailCodeExpiry <= now)
+                {
+                    ClearTwoFactorState(user);
+                    await _userRepository.UpdateAsync(user);
+                    return Unauthorized(new { success = false, message = "Verification code expired. Please request a new code." });
+                }
+
+                if (!PasswordHasher.Verify(request.Code, user.TwoFactorEmailCodeHash))
+                {
+                    user.TwoFactorEmailCodeAttempts += 1;
+
+                    if (user.TwoFactorEmailCodeAttempts >= _emailSettings.MaxVerificationAttempts)
+                    {
+                        ClearTwoFactorState(user);
+                        await _userRepository.UpdateAsync(user);
+                        return Unauthorized(new { success = false, message = "Too many invalid attempts. Please login again." });
+                    }
+
+                    await _userRepository.UpdateAsync(user);
+                    var attemptsLeft = _emailSettings.MaxVerificationAttempts - user.TwoFactorEmailCodeAttempts;
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        message = attemptsLeft > 0
+                            ? $"Invalid verification code. {attemptsLeft} attempt(s) remaining."
+                            : "Invalid verification code."
+                    });
+                }
+
+                ClearTwoFactorState(user);
+                await _userRepository.UpdateAsync(user);
+
+                var token = GenerateJwtToken(user);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Login successful",
+                    token,
+                    user = new
+                    {
+                        id = user.Id,
+                        email = user.Email,
+                        fullName = user.FullName,
+                        phoneNumber = user.PhoneNumber,
+                        address = user.Address,
+                        isAdmin = user.IsAdmin,
+                        createdAt = user.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                        isDeleted = user.IsDeleted
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Server error", error = ex.Message });
+            }
+        }
+
+        [HttpPost("resend-2fa")]
+        public async Task<IActionResult> ResendTwoFactor([FromBody] ResendTwoFactorRequest request)
+        {
+            try
+            {
+                var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == request.Email);
+                if (user == null || !user.TwoFactorEnabled)
+                {
+                    return Unauthorized(new { success = false, message = "Invalid verification request" });
+                }
+
+                var now = DateTime.UtcNow;
+                if (string.IsNullOrEmpty(user.TwoFactorLoginToken) || !user.TwoFactorLoginTokenExpiry.HasValue || user.TwoFactorLoginTokenExpiry <= now)
+                {
+                    ClearTwoFactorState(user);
+                    await _userRepository.UpdateAsync(user);
+                    return Unauthorized(new { success = false, message = "Verification session expired. Please login again." });
+                }
+
+                if (!string.Equals(user.TwoFactorLoginToken, request.TwoFactorToken, StringComparison.Ordinal))
+                {
+                    return Unauthorized(new { success = false, message = "Invalid verification session" });
+                }
+
+                var challenge = await PrepareTwoFactorChallengeAsync(user, ignoreCooldown: false, HttpContext.RequestAborted);
+
+                return Ok(new
+                {
+                    success = true,
+                    requiresTwoFactor = true,
+                    emailSent = challenge.EmailSent,
+                    message = challenge.EmailSent
+                        ? "A new verification code has been sent to your email address."
+                        : "Please wait before requesting another verification code.",
+                    twoFactorToken = challenge.TwoFactorToken,
+                    codeExpiresAt = challenge.CodeExpiresAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                    cooldownSeconds = Math.Max(0, (int)Math.Ceiling(challenge.CooldownRemaining.TotalSeconds))
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Server error", error = ex.Message });
+            }
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
@@ -79,7 +238,6 @@ namespace AIPharm.Web.Controllers
 
                 var user = new User
                 {
-                    // If your User.Id is int (autogenerated by EF), DO NOT set it here.
                     Email = request.Email,
                     FullName = request.FullName,
                     PhoneNumber = request.PhoneNumber,
@@ -87,7 +245,8 @@ namespace AIPharm.Web.Controllers
                     PasswordHash = HashPassword(request.Password),
                     IsAdmin = false,
                     CreatedAt = DateTime.UtcNow,
-                    IsDeleted = false
+                    IsDeleted = false,
+                    TwoFactorEnabled = true
                 };
 
                 await _userRepository.AddAsync(user);
@@ -125,6 +284,76 @@ namespace AIPharm.Web.Controllers
             });
         }
 
+        private async Task<TwoFactorChallengeResult> PrepareTwoFactorChallengeAsync(User user, bool ignoreCooldown, CancellationToken cancellationToken)
+        {
+            var now = DateTime.UtcNow;
+
+            if (string.IsNullOrEmpty(user.TwoFactorLoginToken) || !user.TwoFactorLoginTokenExpiry.HasValue || user.TwoFactorLoginTokenExpiry <= now)
+            {
+                user.TwoFactorLoginToken = OneTimePasswordGenerator.GenerateLoginToken();
+                user.TwoFactorLoginTokenExpiry = now.AddMinutes(_emailSettings.CodeLifetimeMinutes);
+            }
+
+            var cooldownRemaining = TimeSpan.Zero;
+            if (!ignoreCooldown && user.TwoFactorLastSentAt.HasValue)
+            {
+                var nextAllowed = user.TwoFactorLastSentAt.Value.AddSeconds(_emailSettings.ResendCooldownSeconds);
+                if (nextAllowed > now)
+                {
+                    cooldownRemaining = nextAllowed - now;
+                }
+            }
+
+            var shouldSendEmail = ignoreCooldown || cooldownRemaining == TimeSpan.Zero;
+            string? verificationCode = null;
+
+            if (shouldSendEmail)
+            {
+                verificationCode = OneTimePasswordGenerator.GenerateNumericCode(_emailSettings.CodeLength);
+                user.TwoFactorEmailCodeHash = PasswordHasher.Hash(verificationCode);
+                user.TwoFactorEmailCodeExpiry = now.AddMinutes(_emailSettings.CodeLifetimeMinutes);
+                user.TwoFactorEmailCodeAttempts = 0;
+                user.TwoFactorLastSentAt = now;
+            }
+
+            await _userRepository.UpdateAsync(user);
+
+            if (shouldSendEmail && verificationCode != null)
+            {
+                var body = BuildTwoFactorEmailBody(verificationCode);
+                try
+                {
+                    await _emailSender.SendEmailAsync(user.Email, TwoFactorEmailSubject, body, cancellationToken);
+                }
+                catch
+                {
+                    ClearTwoFactorState(user);
+                    await _userRepository.UpdateAsync(user);
+                    throw;
+                }
+
+                return new TwoFactorChallengeResult(user.TwoFactorLoginToken!, user.TwoFactorEmailCodeExpiry!, TimeSpan.Zero, true);
+            }
+
+            return new TwoFactorChallengeResult(user.TwoFactorLoginToken!, user.TwoFactorEmailCodeExpiry, cooldownRemaining, false);
+        }
+
+        private static void ClearTwoFactorState(User user)
+        {
+            user.TwoFactorEmailCodeHash = null;
+            user.TwoFactorEmailCodeExpiry = null;
+            user.TwoFactorEmailCodeAttempts = 0;
+            user.TwoFactorLastSentAt = null;
+            user.TwoFactorLoginToken = null;
+            user.TwoFactorLoginTokenExpiry = null;
+        }
+
+        private string BuildTwoFactorEmailBody(string code)
+        {
+            return $"Your AIPharm verification code is {code}. It expires in {_emailSettings.CodeLifetimeMinutes} minute(s). " +
+                   "If you did not request this code, please ignore this email.";
+        }
+
         private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -148,15 +377,30 @@ namespace AIPharm.Web.Controllers
             return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
         }
 
-        // Use shared password hashing utility
         private string HashPassword(string password) => PasswordHasher.Hash(password);
-        
+
         private bool VerifyPassword(User user, string password) => PasswordHasher.Verify(password, user.PasswordHash);
+
+        private sealed record TwoFactorChallengeResult(string TwoFactorToken, DateTime? CodeExpiresAt, TimeSpan CooldownRemaining, bool EmailSent);
     }
+
     public class LoginRequest
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+    }
+
+    public class VerifyTwoFactorRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string TwoFactorToken { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
+    }
+
+    public class ResendTwoFactorRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string TwoFactorToken { get; set; } = string.Empty;
     }
 
     public class RegisterRequest

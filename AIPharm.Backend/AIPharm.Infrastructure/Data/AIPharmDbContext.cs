@@ -40,6 +40,8 @@ namespace AIPharm.Infrastructure.Data
 
                         entity.HasIndex(e => e.Email).IsUnique();
                         entity.Property(e => e.Email).IsRequired();
+                        entity.Property(e => e.TwoFactorEnabled).HasDefaultValue(true);
+                        entity.Property(e => e.TwoFactorEmailCodeAttempts).HasDefaultValue(0);
                   });
 
                   // ===== CATEGORIES =====

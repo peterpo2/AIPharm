@@ -21,6 +21,14 @@ namespace AIPharm.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsDeleted { get; set; } = false;
 
+        public bool TwoFactorEnabled { get; set; } = true;
+        public string? TwoFactorEmailCodeHash { get; set; }
+        public DateTime? TwoFactorEmailCodeExpiry { get; set; }
+        public int TwoFactorEmailCodeAttempts { get; set; }
+        public DateTime? TwoFactorLastSentAt { get; set; }
+        public string? TwoFactorLoginToken { get; set; }
+        public DateTime? TwoFactorLoginTokenExpiry { get; set; }
+
         // Navigation properties
         public virtual ICollection<ShoppingCart> ShoppingCarts { get; set; } = new List<ShoppingCart>();
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
