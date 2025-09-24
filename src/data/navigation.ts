@@ -8,6 +8,7 @@ export const quickLinks: NavigationLink[] = [
   { key: 'footer.products', path: '/products' },
   { key: 'footer.services', path: '/services' },
   { key: 'footer.contacts', path: '/contacts' },
+  { key: 'footer.news', path: '/news' },
   { key: 'footer.promotions', path: '/promotions' },
   { key: 'footer.faq', path: '/faq' }
 ];

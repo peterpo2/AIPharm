@@ -30,6 +30,8 @@ const translations = {
     // Navigation
     'navigation.categories': 'Категории',
     'navigation.products': 'Продукти',
+    'navigation.promotions': 'Промоции',
+    'navigation.news': 'Новини',
 
     // Hero Section
     'hero.title': 'AIPHARM+',
@@ -48,6 +50,10 @@ const translations = {
     'home.dateTime.title': 'Текуща дата и час',
     'home.dateTime.localDate': 'Дата',
     'home.dateTime.localTime': 'Час',
+    'home.promotionsTitle': 'Актуални промоции',
+    'home.promotionsSubtitle': 'Специални предложения с ограничена валидност за вашето здраве.',
+    'home.promotionsViewAll': 'Виж всички промоции',
+    'home.promotionsEmpty': 'В момента няма активни промоции. Проверете отново скоро.',
 
     // Categories
     'categories.title': 'Категории',
@@ -99,6 +105,8 @@ const translations = {
     'cart.total': 'Общо',
     'cart.freeDelivery': '✓ Безплатна доставка',
     'cart.loginRequired': 'Влезте в профила си, за да завършите поръчката.',
+    'cart.regularPrice': 'Стандартна цена',
+    'cart.promoPrice': 'Промо цена',
     'cart.addForFreeDelivery': 'Добавете продукти за €{amount} за безплатна доставка',
     'cart.checkout': 'Финализиране на поръчка',
 
@@ -305,6 +313,7 @@ const translations = {
     'footer.services': 'Услуги',
     'footer.contacts': 'Контакти',
     'footer.promotions': 'Промоции',
+    'footer.news': 'Новини',
     'footer.faq': 'Често задавани въпроси',
     'footer.contactsTitle': 'Контакти',
     'footer.workingHours': 'Работно време',
@@ -404,6 +413,13 @@ const translations = {
 
     // Promotions
     'promotions.description': 'Открийте нашите актуални промоции и спестете при покупката на лекарства и здравни продукти.',
+    'promotions.currentCount': '{count} активни оферти',
+    'promotions.activeOffers': 'Активни оферти',
+    'promotions.averageDiscount': 'Средна отстъпка',
+    'promotions.highestDiscount': 'Най-висока отстъпка: {value}%',
+    'promotions.estimatedSavings': 'Потенциални спестявания',
+    'promotions.limitedStock': 'Офертите са валидни до изчерпване на количествата',
+    'promotions.noActive': 'В момента няма активни промоции.',
     'promotions.freeDelivery': 'Безплатна доставка',
     'promotions.freeDeliveryDesc': 'Безплатна доставка за всички поръчки над €25 в цялата страна.',
     'promotions.vitamins20': '20% отстъпка на витамини',
@@ -425,6 +441,16 @@ const translations = {
     'promotions.step2Desc': 'Въведете промо кода при финализиране.',
     'promotions.step3': 'Спестете пари',
     'promotions.step3Desc': 'Получете отстъпката и завършете поръчката.',
+
+    // News
+    'news.title': 'Новини и полезни съвети',
+    'news.subtitle': 'Последни тенденции, препоръки и анализи от нашите фармацевти и специалисти.',
+    'news.latest': 'Последни публикации',
+    'news.readMore': 'Прочетете повече',
+    'news.showLess': 'Покажи по-малко',
+    'news.readTime': '{minutes} мин четене',
+    'news.published': 'Публикувано на',
+    'news.authorBy': 'Автор:',
 
     // FAQ
     'faq.description': 'Намерете отговори на най-често задаваните въпроси за нашите услуги.',
@@ -473,6 +499,8 @@ const translations = {
     // Navigation
     'navigation.categories': 'Categories',
     'navigation.products': 'Products',
+    'navigation.promotions': 'Promotions',
+    'navigation.news': 'News',
 
     // Hero Section
     'hero.title': 'AIPHARM+',
@@ -491,6 +519,10 @@ const translations = {
     'home.dateTime.title': 'Current date & time',
     'home.dateTime.localDate': 'Date',
     'home.dateTime.localTime': 'Time',
+    'home.promotionsTitle': 'Current promotions',
+    'home.promotionsSubtitle': 'Special limited-time offers selected for your wellbeing.',
+    'home.promotionsViewAll': 'View all promotions',
+    'home.promotionsEmpty': 'There are no active promotions right now. Check back soon.',
 
     // Categories
     'categories.title': 'Categories',
@@ -542,6 +574,8 @@ const translations = {
     'cart.total': 'Total',
     'cart.freeDelivery': '✓ Free delivery',
     'cart.loginRequired': 'Log in to complete your order.',
+    'cart.regularPrice': 'Regular price',
+    'cart.promoPrice': 'Promo price',
     'cart.addForFreeDelivery': 'Add products for €{amount} for free delivery',
     'cart.checkout': 'Checkout',
 
@@ -748,6 +782,7 @@ const translations = {
     'footer.services': 'Services',
     'footer.contacts': 'Contacts',
     'footer.promotions': 'Promotions',
+    'footer.news': 'News',
     'footer.faq': 'FAQ',
     'footer.contactsTitle': 'Contact Info',
     'footer.workingHours': 'Working Hours',
@@ -847,6 +882,13 @@ const translations = {
 
     // Promotions
     'promotions.description': 'Discover our current promotions and save on medicines and health products.',
+    'promotions.currentCount': '{count} active offers',
+    'promotions.activeOffers': 'Active offers',
+    'promotions.averageDiscount': 'Average discount',
+    'promotions.highestDiscount': 'Highest discount: {value}%',
+    'promotions.estimatedSavings': 'Potential savings',
+    'promotions.limitedStock': 'Offers are valid while stocks last',
+    'promotions.noActive': 'There are no active promotions at the moment.',
     'promotions.freeDelivery': 'Free Delivery',
     'promotions.freeDeliveryDesc': 'Free delivery for all orders over €25 nationwide.',
     'promotions.vitamins20': '20% off Vitamins',
@@ -868,6 +910,16 @@ const translations = {
     'promotions.step2Desc': 'Enter promo code at checkout.',
     'promotions.step3': 'Save money',
     'promotions.step3Desc': 'Get the discount and complete your order.',
+
+    // News
+    'news.title': 'News & helpful insights',
+    'news.subtitle': 'Latest trends, recommendations and analysis from our pharmacists and specialists.',
+    'news.latest': 'Latest posts',
+    'news.readMore': 'Read more',
+    'news.showLess': 'Show less',
+    'news.readTime': '{minutes} min read',
+    'news.published': 'Published on',
+    'news.authorBy': 'Author:',
 
     // FAQ
     'faq.description': 'Find answers to the most frequently asked questions about our services.',

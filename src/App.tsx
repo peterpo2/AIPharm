@@ -17,6 +17,7 @@ import Services from './components/pages/Services';
 import AboutUs from './components/pages/AboutUs';
 import Contacts from './components/pages/Contacts';
 import Promotions from './components/pages/Promotions';
+import News from './components/pages/News';
 import FAQ from './components/pages/FAQ';
 
 function AppContent() {
@@ -72,6 +73,24 @@ function AppContent() {
     }
   };
 
+  const handleNavigateToPromotions = () => {
+    setSelectedCategory(null);
+    setSearchTerm('');
+
+    if (location.pathname !== '/promotions') {
+      navigate('/promotions');
+    }
+  };
+
+  const handleNavigateToNews = () => {
+    setSelectedCategory(null);
+    setSearchTerm('');
+
+    if (location.pathname !== '/news') {
+      navigate('/news');
+    }
+  };
+
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term.trim()) {
@@ -99,6 +118,8 @@ function AppContent() {
         searchTerm={searchTerm}
         onNavigateToCategories={handleNavigateToCategories}
         onNavigateToProducts={handleNavigateToProducts}
+        onNavigateToPromotions={handleNavigateToPromotions}
+        onNavigateToNews={handleNavigateToNews}
       />
       <div className="flex-1">
         <Routes>
@@ -143,6 +164,7 @@ function AppContent() {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/promotions" element={<Promotions />} />
+          <Route path="/news" element={<News />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

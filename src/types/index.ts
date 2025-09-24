@@ -5,6 +5,18 @@ export interface Category {
   icon: string;
 }
 
+export interface ProductPromotion {
+  id: string;
+  title: string;
+  titleEn: string;
+  description: string;
+  descriptionEn: string;
+  promoPrice: number;
+  discountPercentage?: number;
+  validUntil?: string;
+  badgeColor?: 'emerald' | 'blue' | 'purple' | 'orange' | 'pink';
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -25,6 +37,7 @@ export interface Product {
   manufacturerEn?: string;
   rating?: number;
   reviewCount?: number;
+  promotion?: ProductPromotion;
 }
 
 export interface CartItem {
@@ -122,4 +135,20 @@ export interface AssistantResponse {
   productId?: number;
   timestamp: Date;
   disclaimer: string;
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  titleEn: string;
+  excerpt: string;
+  excerptEn: string;
+  content: string;
+  contentEn: string;
+  category: string;
+  categoryEn: string;
+  author: string;
+  imageUrl: string;
+  publishedAt: string;
+  readTimeMinutes: number;
 }

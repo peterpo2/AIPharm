@@ -29,6 +29,8 @@ interface HeaderProps {
   searchTerm: string;
   onNavigateToCategories: () => void;
   onNavigateToProducts: () => void;
+  onNavigateToPromotions: () => void;
+  onNavigateToNews: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -36,6 +38,8 @@ const Header: React.FC<HeaderProps> = ({
   searchTerm,
   onNavigateToCategories,
   onNavigateToProducts,
+  onNavigateToPromotions,
+  onNavigateToNews,
 }) => {
   const { state, dispatch } = useCart();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
@@ -88,6 +92,16 @@ const Header: React.FC<HeaderProps> = ({
       key: 'navigation.products',
       path: '/products',
       onClick: onNavigateToProducts,
+    },
+    {
+      key: 'navigation.promotions',
+      path: '/promotions',
+      onClick: onNavigateToPromotions,
+    },
+    {
+      key: 'navigation.news',
+      path: '/news',
+      onClick: onNavigateToNews,
     },
   ];
 

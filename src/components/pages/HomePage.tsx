@@ -57,6 +57,11 @@ const HomePage: React.FC<HomePageProps> = ({
     [currentDateTime, locale]
   );
 
+  const promotedProducts = useMemo(
+    () => allProducts.filter((product) => Boolean(product.promotion)),
+    [allProducts]
+  );
+
   const selectedCategoryEntity = selectedCategory
     ? categories.find((category) => category.id === selectedCategory)
     : undefined;
@@ -73,6 +78,7 @@ const HomePage: React.FC<HomePageProps> = ({
   const showPreview = showHero;
   const previewCategories = categories.slice(0, 4);
   const previewProducts = allProducts.slice(0, 4);
+  const previewPromotions = promotedProducts.slice(0, 4);
 
   const handleViewAllCategories = () => {
     navigate('/categories');
@@ -80,6 +86,10 @@ const HomePage: React.FC<HomePageProps> = ({
 
   const handleViewAllProducts = () => {
     navigate('/products');
+  };
+
+  const handleViewAllPromotions = () => {
+    navigate('/promotions');
   };
 
   return (
@@ -149,6 +159,32 @@ const HomePage: React.FC<HomePageProps> = ({
                   );
                 })}
               </div>
+            </section>
+
+            <section className="mb-12">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900">{t('home.promotionsTitle')}</h2>
+                  <p className="text-gray-600">{t('home.promotionsSubtitle')}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleViewAllPromotions}
+                  className="inline-flex items-center justify-center px-5 py-2 rounded-full border border-emerald-200 text-sm font-semibold text-emerald-700 hover:border-emerald-300 hover:text-emerald-800 transition-colors"
+                >
+                  {t('home.promotionsViewAll')}
+                </button>
+              </div>
+              {previewPromotions.length > 0 ? (
+                <ProductGrid
+                  products={previewPromotions}
+                  onEmptyAction={handleViewAllPromotions}
+                />
+              ) : (
+                <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-6 text-sm text-emerald-700">
+                  {t('home.promotionsEmpty')}
+                </div>
+              )}
             </section>
 
             <section>

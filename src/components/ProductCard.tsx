@@ -16,6 +16,48 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const rating = Math.min(5, Math.max(0, product.rating ?? 0));
   const reviewCount = product.reviewCount ?? 0;
+  const promotion = product.promotion;
+  const hasPromotion = Boolean(promotion);
+  const displayPrice = hasPromotion ? promotion!.promoPrice : product.price;
+  const computedDiscount =
+    hasPromotion && product.price > 0
+      ? Math.round(((product.price - promotion!.promoPrice) / product.price) * 100)
+      : 0;
+  const discountPercentage = promotion?.discountPercentage ?? computedDiscount;
+
+  const promotionTitle = hasPromotion
+    ? language === 'bg'
+      ? promotion!.title
+      : promotion!.titleEn
+    : '';
+  const promotionDescription = hasPromotion
+    ? language === 'bg'
+      ? promotion!.description
+      : promotion!.descriptionEn
+    : '';
+
+  const formatPromotionDate = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat(language === 'bg' ? 'bg-BG' : 'en-GB', {
+      dateStyle: 'medium',
+    }).format(date);
+  };
+
+  const getPromotionBadgeClasses = (color?: string) => {
+    const colors = {
+      emerald: 'bg-emerald-100 text-emerald-700',
+      blue: 'bg-blue-100 text-blue-700',
+      purple: 'bg-purple-100 text-purple-700',
+      orange: 'bg-orange-100 text-orange-700',
+      pink: 'bg-pink-100 text-pink-700',
+    } as const;
+
+    return colors[color as keyof typeof colors] ?? 'bg-emerald-100 text-emerald-700';
+  };
 
   const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -49,12 +91,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           alt={getProductName()}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        {product.requiresPrescription && (
-          <div className="absolute left-3 top-3 flex items-center space-x-1 rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-white">
-            <Shield className="h-3 w-3" />
-            <span>{t('products.prescription')}</span>
-          </div>
-        )}
+        <div className="absolute left-3 top-3 flex flex-col space-y-2">
+          {product.requiresPrescription && (
+            <div className="flex items-center space-x-1 rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-white">
+              <Shield className="h-3 w-3" />
+              <span>{t('products.prescription')}</span>
+            </div>
+          )}
+          {hasPromotion && (
+            <div
+              className={`rounded-full px-2 py-1 text-xs font-semibold shadow-sm ${getPromotionBadgeClasses(
+                promotion?.badgeColor,
+              )}`}
+            >
+              {discountPercentage && discountPercentage > 0
+                ? `-${discountPercentage}%`
+                : promotionTitle}
+            </div>
+          )}
+        </div>
         <button
           type="button"
           className="absolute right-3 top-3 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all duration-300 hover:scale-110 hover:bg-white group-hover:opacity-100"
@@ -130,10 +185,44 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Price */}
         <div className="mb-4">
-          <span className="text-2xl font-bold text-emerald-600">
-            €{product.price.toFixed(2)}
-          </span>
+          {hasPromotion ? (
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500 line-through">
+                  €{product.price.toFixed(2)}
+                </span>
+                {discountPercentage > 0 && (
+                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-600">
+                    -{discountPercentage}%
+                  </span>
+                )}
+              </div>
+              <span className="text-2xl font-bold text-emerald-600">
+                €{displayPrice.toFixed(2)}
+              </span>
+            </div>
+          ) : (
+            <span className="text-2xl font-bold text-emerald-600">
+              €{displayPrice.toFixed(2)}
+            </span>
+          )}
         </div>
+
+        {hasPromotion && (
+          <div className="mb-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">
+            <p className="font-semibold">{promotionTitle}</p>
+            {promotionDescription && (
+              <p className="mt-1 text-xs text-emerald-600 line-clamp-2">
+                {promotionDescription}
+              </p>
+            )}
+            {promotion?.validUntil && (
+              <p className="mt-2 text-xs font-medium text-emerald-500">
+                {t('promotions.validUntil')}: {formatPromotionDate(promotion.validUntil)}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex space-x-2">

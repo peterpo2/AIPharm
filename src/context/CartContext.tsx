@@ -54,7 +54,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           id: Date.now(),
           product: action.payload,
           quantity: 1,
-          unitPrice: action.payload.price,
+          unitPrice: action.payload.promotion?.promoPrice ?? action.payload.price,
         };
         newItems = [...state.items, newItem];
       }

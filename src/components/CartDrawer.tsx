@@ -151,10 +151,20 @@ const CartDrawer: React.FC = () => {
                                 <Plus className="h-4 w-4" />
                               </button>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right space-y-1">
                               <p className="font-semibold text-gray-900">
                                 €{(item.unitPrice * item.quantity).toFixed(2)}
                               </p>
+                              {item.product.promotion && (
+                                <div className="text-xs text-gray-500">
+                                  <p className="line-through">
+                                    {t('cart.regularPrice')}: €{item.product.price.toFixed(2)}
+                                  </p>
+                                  <p className="font-semibold text-emerald-600">
+                                    {t('cart.promoPrice')}: €{item.unitPrice.toFixed(2)}
+                                  </p>
+                                </div>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => removeItem(item.id)}
