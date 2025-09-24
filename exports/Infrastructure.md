@@ -422,7 +422,7 @@ namespace AIPharm.Infrastructure.Data
                 new User
                 {
                     Id = "admin-user-id",
-                    Email = "aipharmplus@outlook.com",
+                    Email = "aipharmproject@gmail.com",
                     FullName = "РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ",
                     IsAdmin = true,
                     CreatedAt = DateTime.UtcNow

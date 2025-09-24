@@ -57,12 +57,12 @@ docker-compose up
 ### **Default Account**
 | Role | Email | Password |
 |------|-------|----------|
-| 👑 **Admin (default)** | aipharmplus@outlook.com | Admin123! |
+| 👑 **Admin (default)** | aipharmproject@gmail.com | Admin123! |
 | 🛍️ **Customer** | maria.ivanova@example.com | Customer123! |
 | 🛍️ **Customer** | georgi.petrov@example.com | Customer456! |
 | 🛍️ **Customer** | iva.stoyanova@example.com | Customer789! |
 
-> **Note:** Registration confirmations and two-factor verification emails are sent from `aipharmplus@outlook.com`. If you enable the optional pickup folder (`Email:UsePickupDirectory = true`) the messages are written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`; otherwise they are delivered straight to each recipient's inbox. When relying on real delivery, make sure *Authenticated SMTP* is enabled for the Outlook mailbox and that the credentials in `appsettings*.json` match the account before rebuilding the backend container.
+> **Note:** Registration confirmations and two-factor verification emails are sent from `aipharmproject@gmail.com`. If you enable the optional pickup folder (`Email:UsePickupDirectory = true`) the messages are written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`; otherwise they are delivered straight to each recipient's inbox. For Gmail delivery ensure 2-Step Verification is enabled, the app password `vdzotamtdvlirmpt` is current, and the credentials in `appsettings*.json` match the mailbox before rebuilding the backend container.
 
 ---
 
@@ -506,7 +506,7 @@ copies or substantial portions of the Software.
 - 📖 **Documentation**: Check our [Wiki](https://github.com/yourusername/aipharm-plus/wiki)
 - 🐛 **Issues**: [Report bugs](https://github.com/yourusername/aipharm-plus/issues)
 - 💬 **Discussions**: [Join conversations](https://github.com/yourusername/aipharm-plus/discussions)
-- 📧 **Email**: aipharmplus@outlook.com (two-factor sender & admin inbox)
+- 📧 **Email**: aipharmproject@gmail.com (two-factor sender & admin inbox)
 
 ### **FAQ**
 <details>
@@ -521,7 +521,7 @@ docker-compose up
 <details>
 <summary>❓ How do I add new products?</summary>
 
-1. Login as admin (aipharmplus@outlook.com / Admin123!)
+1. Login as admin (aipharmproject@gmail.com / Admin123!)
 2. Use the Swagger UI at http://localhost:8080/swagger
 3. Use the POST /api/products endpoint
 </details>

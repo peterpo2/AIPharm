@@ -208,7 +208,7 @@ namespace AIPharm.Infrastructure.Data
             {
                 new()
                 {
-                    Email = "aipharmplus@outlook.com",
+                    Email = "aipharmproject@gmail.com",
                     FullName = "AIPharm Administrator",
                     IsAdmin = true,
                     PasswordHash = PasswordHasher.Hash("Admin123!"),

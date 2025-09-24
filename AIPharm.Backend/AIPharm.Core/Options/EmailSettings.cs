@@ -2,16 +2,16 @@ namespace AIPharm.Core.Options
 {
     public class EmailSettings
     {
-        public string FromAddress { get; set; } = "aipharmplus@outlook.com";
+        public string FromAddress { get; set; } = "aipharmproject@gmail.com";
         public string FromName { get; set; } = "AIPharm";
         public string? OverrideToAddress { get; set; }
-        public string SmtpHost { get; set; } = "smtp.office365.com";
+        public string SmtpHost { get; set; } = "smtp.gmail.com";
         public int SmtpPort { get; set; } = 587;
         public bool EnableSsl { get; set; } = true;
-        public string? Username { get; set; } = "aipharmplus@outlook.com";
+        public string? Username { get; set; } = "aipharmproject@gmail.com";
         public string? Password { get; set; }
         public bool UseOAuth { get; set; }
-        public string OAuthScope { get; set; } = "https://outlook.office365.com/.default";
+        public string OAuthScope { get; set; } = "https://mail.google.com/";
         public string? OAuthTenantId { get; set; }
         public string? OAuthClientId { get; set; }
         public string? OAuthClientSecret { get; set; }

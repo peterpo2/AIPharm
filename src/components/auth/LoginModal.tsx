@@ -446,7 +446,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
                   <h4 className="font-medium text-blue-900 mb-2">{t('auth.demoAccounts')}</h4>
                   <div className="text-sm text-blue-700 space-y-1">
                     <p>
-                      <strong>{t('auth.admin')}:</strong> aipharmplus@outlook.com / Admin123!
+                      <strong>{t('auth.admin')}:</strong> aipharmproject@gmail.com / Admin123!
                     </p>
                     <p>
                       <strong>{t('auth.customers')}:</strong>{' '}
@@ -464,7 +464,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
                     </p>
                     <p className="text-xs text-blue-600">
                       Two-factor verification codes are emailed from{' '}
-                      <strong>aipharmplus@outlook.com</strong>. Enable the optional pickup folder
+                      <strong>aipharmproject@gmail.com</strong>. Enable the optional pickup folder
                       (<code>Email:UsePickupDirectory = true</code>) if you want copies saved under{' '}
                       <code>App_Data/Emails</code>; otherwise check the recipient inbox for the code.
                     </p>

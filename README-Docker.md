@@ -119,9 +119,9 @@ docker exec -it aipharm-database /opt/mssql-tools/bin/sqlcmd -S localhost -U sa 
 ## 🎯 Default Account
 
 ### Login Credentials
-- **Admin**: aipharmplus@outlook.com / Admin123!
+- **Admin**: aipharmproject@gmail.com / Admin123!
 
-Registration confirmations and 2FA emails are dispatched via the Outlook mailbox `aipharmplus@outlook.com`. Enable the optional pickup folder by setting `Email:UsePickupDirectory=true` if you want `.eml` copies written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`; otherwise the messages are sent directly to each recipient's inbox. When using SMTP delivery, confirm that *Authenticated SMTP* is enabled for the Outlook account and rebuild the backend container after updating the username/password in `appsettings.Docker.json`.
+Registration confirmations and 2FA emails are dispatched via the Gmail mailbox `aipharmproject@gmail.com`. Enable the optional pickup folder by setting `Email:UsePickupDirectory=true` if you want `.eml` copies written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`; otherwise the messages are sent directly to each recipient's inbox. When using Gmail SMTP delivery, ensure 2-Step Verification is enabled, the app password `vdzotamtdvlirmpt` is up to date, and rebuild the backend container after updating the credentials in `appsettings.Docker.json`.
 
 ## 🐛 Troubleshooting
 

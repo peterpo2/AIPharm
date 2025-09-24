@@ -18,7 +18,7 @@ namespace AIPharm.Infrastructure.Services;
 
 public class SmtpEmailSender : IEmailSender
 {
-    private const string DefaultOAuthScope = "https://outlook.office365.com/.default";
+    private const string DefaultOAuthScope = "https://mail.google.com/";
 
     private readonly EmailSettings _settings;
     private readonly ILogger<SmtpEmailSender> _logger;

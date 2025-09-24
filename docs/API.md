@@ -18,8 +18,8 @@ Authorization: Bearer <your-jwt-token>
 POST /api/auth/login
 Content-Type: application/json
 
-{
-  "email": "aipharmplus@outlook.com",
+{ 
+  "email": "aipharmproject@gmail.com",
   "password": "Admin123!",
   "rememberMe": true
 }
@@ -225,8 +225,8 @@ X-User-Id: demo-user
 POST /api/auth/login
 Content-Type: application/json
 
-{
-  "email": "aipharmplus@outlook.com",
+{ 
+  "email": "aipharmproject@gmail.com",
   "password": "Admin123!",
   "rememberMe": true
 }
@@ -240,7 +240,7 @@ Content-Type: application/json
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": "admin-user-id",
-    "email": "aipharmplus@outlook.com",
+    "email": "aipharmproject@gmail.com",
     "fullName": "AIPharm Administrator",
     "isAdmin": true,
     "createdAt": "2024-01-01T00:00:00Z"

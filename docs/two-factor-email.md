@@ -16,42 +16,43 @@ The service uses the `Email` section in `appsettings*.json`:
 
 ```json
 "Email": {
-  "FromAddress": "aipharmplus@outlook.com",
+  "FromAddress": "aipharmproject@gmail.com",
   "FromName": "AIPharm",
-  "SmtpHost": "smtp.office365.com",
+  "SmtpHost": "smtp.gmail.com",
   "SmtpPort": 587,
   "EnableSsl": true,
-  "Username": "aipharmplus@outlook.com",
-  "Password": "nxfxsshmebghqnul",
+  "Username": "aipharmproject@gmail.com",
+  "Password": "vdzotamtdvlirmpt",
   "PickupDirectory": "App_Data/Emails",
   "UsePickupDirectory": false,
   "CheckCertificateRevocation": false
 }
 ```
 
-- **Sender account:** The backend uses the dedicated Outlook mailbox `aipharmplus@outlook.com`. Use the Outlook app password `nxfxsshmebghqnul` for SMTP while the interactive mailbox password remains `Sklad123!@` for direct sign-in. Update these values if you rotate the credentials or switch providers.
+- **Sender account:** The backend uses the dedicated Gmail mailbox `aipharmproject@gmail.com`. Use the Gmail app password `vdzotamtdvlirmpt` (copy it without spaces) for SMTP authentication and update the configuration if you ever rotate the secret or move to another provider.
 - **Per-user delivery:** Leave `OverrideToAddress` unset so verification codes are sent to each account's email address.
-- **Local pickup folder (optional):** Set `UsePickupDirectory` to `true` if you want `.eml` files written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` instead of dispatching through Outlook. This is helpful when testing with fictional mailboxes because the messages never leave your machine.
-- **SMTP host:** Outlook/Office 365 uses `smtp.office365.com` on port `587` with STARTTLS (`EnableSsl: true`). Adjust the settings if you switch providers.
+- **Local pickup folder (optional):** Set `UsePickupDirectory` to `true` if you want `.eml` files written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` instead of dispatching through Gmail. This is helpful when testing with fictional mailboxes because the messages never leave your machine.
+- **SMTP host:** Gmail uses `smtp.gmail.com` on port `587` with STARTTLS (`EnableSsl: true`). Adjust the settings if you switch providers.
 - **Secrets:** For production scenarios store credentials securely (environment variables, user-secrets, Key Vault, etc.).
 
-### Outlook SMTP checklist
+### Gmail SMTP checklist
 
 If no email arrives in your inbox:
 
-- **Confirm SMTP access is enabled** – Sign in to [Outlook security settings](https://account.live.com/security) and ensure *Authenticated SMTP* is allowed for the `aipharmplus@outlook.com` mailbox. Accounts with two-step verification may require an app password.
-- **Verify credentials** – The `Username` and `Password` in `appsettings*.json` must match the Outlook mailbox exactly. Rebuild the backend container after updating these secrets.
+- **Confirm 2-Step Verification and the app password** – Visit your [Google Account security page](https://myaccount.google.com/security), enable 2-Step Verification, and create an App Password for "Mail". Paste the 16-character password (without spaces) into `appsettings*.json`.
+- **Allow IMAP/SMTP access** – In Gmail's *Settings → Forwarding and POP/IMAP*, keep IMAP enabled. Gmail rejects SMTP connections that rely on app passwords when IMAP access is disabled.
+- **Verify credentials** – The `Username` and `Password` in `appsettings*.json` must match the Gmail mailbox exactly. Rebuild the backend container after updating these secrets.
 - **Keep pickup disabled** – Set `UsePickupDirectory` to `false` when you expect real emails. When enabled, messages are saved as `.eml` files under `AIPharm.Backend/AIPharm.Web/App_Data/Emails` and no outbound SMTP attempt is made.
-- **Certificate revocation checks** – `CheckCertificateRevocation` is disabled by default to avoid TLS handshake failures in restricted environments where CRL/OCSP endpoints are unreachable. Enable it only when the hosting environment allows outbound HTTPS to Microsoft's revocation services.
-- **Check backend logs** – `docker-compose logs backend` should contain `Email for <recipient> sent via SMTP server smtp.office365.com:587`. Any `Failed to send email` entries include the raw SMTP error for troubleshooting.
+- **Certificate revocation checks** – `CheckCertificateRevocation` is disabled by default to avoid TLS handshake failures in restricted environments where CRL/OCSP endpoints are unreachable. Enable it only when the hosting environment allows outbound HTTPS to Google's revocation services.
+- **Check backend logs** – `docker-compose logs backend` should contain `Email for <recipient> sent via SMTP server smtp.gmail.com:587`. Any `Failed to send email` entries include the raw SMTP error for troubleshooting.
 
-## Example sequence (Outlook delivery)
+## Example sequence (Gmail delivery)
 
 ```bash
 # 1) Login with credentials
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"aipharmplus@outlook.com","password":"Admin123!"}'
+  -d '{"email":"aipharmproject@gmail.com","password":"Admin123!"}'
 
 # Response excerpt
 # {
@@ -60,13 +61,13 @@ curl -X POST http://localhost:8080/api/auth/login \
 #   "codeExpiresAt": "2024-09-18T11:22:33.123Z"
 # }
 
-# 2) Retrieve the code from your inbox (the sender is aipharmplus@outlook.com). If you enabled the pickup directory, the `.eml` file is stored under AIPharm.Backend/AIPharm.Web/App_Data/Emails instead of being sent.
+# 2) Retrieve the code from your inbox (the sender is aipharmproject@gmail.com). If you enabled the pickup directory, the `.eml` file is stored under AIPharm.Backend/AIPharm.Web/App_Data/Emails instead of being sent.
 
 # 3) Submit the code + token to finish authentication
 curl -X POST http://localhost:8080/api/auth/verify-2fa \
   -H "Content-Type: application/json" \
   -d '{
-  "email":"aipharmplus@outlook.com",
+  "email":"aipharmproject@gmail.com",
   "twoFactorToken":"<token-from-step-1>",
   "code":"123456"
 }'
