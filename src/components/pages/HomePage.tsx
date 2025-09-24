@@ -93,7 +93,6 @@ const HomePage: React.FC<HomePageProps> = ({
               <p className="text-sm font-semibold text-emerald-700 uppercase tracking-wide">
                 {t('home.dateTime.title')}
               </p>
-              <p className="text-sm text-emerald-600">{t('home.dateTime.autoUpdate')}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto text-emerald-900">
               <div>

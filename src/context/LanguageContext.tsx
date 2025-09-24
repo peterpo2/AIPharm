@@ -47,7 +47,6 @@ const translations = {
     'home.dateTime.title': 'Текуща дата и час',
     'home.dateTime.localDate': 'Дата',
     'home.dateTime.localTime': 'Час',
-    'home.dateTime.autoUpdate': 'Актуализира се автоматично',
 
     // Categories
     'categories.title': 'Категории',
@@ -410,7 +409,6 @@ const translations = {
     'home.dateTime.title': 'Current date & time',
     'home.dateTime.localDate': 'Date',
     'home.dateTime.localTime': 'Time',
-    'home.dateTime.autoUpdate': 'Updates automatically',
 
     // Categories
     'categories.title': 'Categories',
