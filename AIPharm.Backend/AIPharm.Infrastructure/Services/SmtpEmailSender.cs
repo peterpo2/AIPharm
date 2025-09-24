@@ -200,8 +200,13 @@ public class SmtpEmailSender : IEmailSender
     {
         using var client = new MailKit.Net.Smtp.SmtpClient
         {
-            CheckCertificateRevocation = true
+            CheckCertificateRevocation = _settings.CheckCertificateRevocation
         };
+
+        if (!_settings.CheckCertificateRevocation)
+        {
+            _logger.LogDebug("SMTP certificate revocation checking disabled by configuration.");
+        }
 
         try
         {

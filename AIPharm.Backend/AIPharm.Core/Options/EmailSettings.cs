@@ -17,6 +17,7 @@ namespace AIPharm.Core.Options
         public string? OAuthClientSecret { get; set; }
         public string? PickupDirectory { get; set; }
         public bool UsePickupDirectory { get; set; }
+        public bool CheckCertificateRevocation { get; set; } = false;
         public int CodeLength { get; set; } = 6;
         public int CodeLifetimeMinutes { get; set; } = 10;
         public int ResendCooldownSeconds { get; set; } = 60;
