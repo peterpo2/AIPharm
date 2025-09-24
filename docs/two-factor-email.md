@@ -22,13 +22,13 @@ The service uses the `Email` section in `appsettings*.json`:
   "SmtpPort": 587,
   "EnableSsl": true,
   "Username": "aipharmplus@outlook.com",
-  "Password": "Sklad123!@",
+  "Password": "nxfxsshmebghqnul",
   "PickupDirectory": "App_Data/Emails",
   "UsePickupDirectory": false
 }
 ```
 
-- **Sender account:** The backend uses the dedicated Outlook mailbox `aipharmplus@outlook.com` (password `Sklad123!@`) to dispatch login and registration emails. Update these values if you rotate the password or switch providers.
+- **Sender account:** The backend uses the dedicated Outlook mailbox `aipharmplus@outlook.com`. Use the Outlook app password `nxfxsshmebghqnul` for SMTP while the interactive mailbox password remains `Sklad123!@` for direct sign-in. Update these values if you rotate the credentials or switch providers.
 - **Per-user delivery:** Leave `OverrideToAddress` unset so verification codes are sent to each account's email address.
 - **Local pickup folder (optional):** Set `UsePickupDirectory` to `true` if you want `.eml` files written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails` instead of dispatching through Outlook. This is helpful when testing with fictional mailboxes because the messages never leave your machine.
 - **SMTP host:** Outlook/Office 365 uses `smtp.office365.com` on port `587` with STARTTLS (`EnableSsl: true`). Adjust the settings if you switch providers.
