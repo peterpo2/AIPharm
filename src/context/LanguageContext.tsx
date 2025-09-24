@@ -43,6 +43,12 @@ const translations = {
     'hero.productsInStock': 'Продукта в наличност',
     'hero.professionalCare': 'Професионална грижа',
 
+    // Home Page
+    'home.dateTime.title': 'Текуща дата и час',
+    'home.dateTime.localDate': 'Дата',
+    'home.dateTime.localTime': 'Час',
+    'home.dateTime.autoUpdate': 'Актуализира се автоматично',
+
     // Categories
     'categories.title': 'Категории',
     'categories.subtitle': 'Разгледайте нашите основни категории и открийте подходящите продукти.',
@@ -133,7 +139,6 @@ const translations = {
     'auth.haveAccount': 'Вече имате акаунт?',
     'auth.loginHere': 'Влезте тук',
     'auth.registerHere': 'Регистрирайте се',
-    'auth.demoAccounts': 'Стандартен акаунт:',
     'auth.admin': 'Админ',
     'auth.customers': 'Клиенти',
     'auth.user': 'Потребител',
@@ -401,6 +406,12 @@ const translations = {
     'hero.productsInStock': 'Products in Stock',
     'hero.professionalCare': 'Professional Care',
 
+    // Home Page
+    'home.dateTime.title': 'Current date & time',
+    'home.dateTime.localDate': 'Date',
+    'home.dateTime.localTime': 'Time',
+    'home.dateTime.autoUpdate': 'Updates automatically',
+
     // Categories
     'categories.title': 'Categories',
     'categories.subtitle': 'Explore our main categories and find the right treatments.',
@@ -491,7 +502,6 @@ const translations = {
     'auth.haveAccount': 'Already have an account?',
     'auth.loginHere': 'Sign in here',
     'auth.registerHere': 'Register here',
-    'auth.demoAccounts': 'Default Account:',
     'auth.admin': 'Admin',
     'auth.customers': 'Customers',
     'auth.user': 'User',

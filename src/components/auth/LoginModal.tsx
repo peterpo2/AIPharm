@@ -442,35 +442,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
                   </button>
                 </form>
 
-                <div className="mt-6 p-4 bg-blue-50 rounded-xl">
-                  <h4 className="font-medium text-blue-900 mb-2">{t('auth.demoAccounts')}</h4>
-                  <div className="text-sm text-blue-700 space-y-1">
-                    <p>
-                      <strong>{t('auth.admin')}:</strong> aipharmproject@gmail.com / Admin123!
-                    </p>
-                    <p>
-                      <strong>{t('auth.customers')}:</strong>{' '}
-                      <span className="block sm:inline">
-                        maria.ivanova@example.com / Customer123!
-                      </span>
-                      <br className="hidden sm:block" />
-                      <span className="block sm:inline">
-                        georgi.petrov@example.com / Customer456!
-                      </span>
-                      <br className="hidden sm:block" />
-                      <span className="block sm:inline">
-                        iva.stoyanova@example.com / Customer789!
-                      </span>
-                    </p>
-                    <p className="text-xs text-blue-600">
-                      Two-factor verification codes are emailed from{' '}
-                      <strong>aipharmproject@gmail.com</strong>. Enable the optional pickup folder
-                      (<code>Email:UsePickupDirectory = true</code>) if you want copies saved under{' '}
-                      <code>App_Data/Emails</code>; otherwise check the recipient inbox for the code.
-                    </p>
-                  </div>
-                </div>
-
                 <div className="mt-6 text-center">
                   <p className="text-gray-600">
                     {t('auth.noAccount')}{' '}

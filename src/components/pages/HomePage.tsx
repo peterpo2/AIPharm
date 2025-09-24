@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import HeroSection from '../HeroSection';
@@ -29,6 +29,33 @@ const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const [currentDateTime, setCurrentDateTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  const locale = language === 'bg' ? 'bg-BG' : 'en-GB';
+
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'full',
+      }).format(currentDateTime),
+    [currentDateTime, locale]
+  );
+
+  const formattedTime = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        timeStyle: 'medium',
+      }).format(currentDateTime),
+    [currentDateTime, locale]
+  );
 
   const selectedCategoryEntity = selectedCategory
     ? categories.find((category) => category.id === selectedCategory)
@@ -60,6 +87,31 @@ const HomePage: React.FC<HomePageProps> = ({
       {showHero && <HeroSection />}
 
       <main className="container mx-auto px-4 py-8 bg-white min-h-screen">
+        <section className="mb-8">
+          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-emerald-700 uppercase tracking-wide">
+                {t('home.dateTime.title')}
+              </p>
+              <p className="text-sm text-emerald-600">{t('home.dateTime.autoUpdate')}</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto text-emerald-900">
+              <div>
+                <p className="text-xs font-medium uppercase text-emerald-700 tracking-wide">
+                  {t('home.dateTime.localDate')}
+                </p>
+                <p className="text-lg font-semibold">{formattedDate}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase text-emerald-700 tracking-wide">
+                  {t('home.dateTime.localTime')}
+                </p>
+                <p className="text-lg font-semibold">{formattedTime}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {showPreview ? (
           <>
             <section className="mb-12">
