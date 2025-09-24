@@ -1,16 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  AlertCircle,
   Ban,
+  Calendar,
   CheckCircle2,
+  ClipboardList,
   Loader2,
   Mail,
+  MapPin,
+  Package,
+  RefreshCw,
   Search,
   Shield,
+  Truck,
   User,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import type { PaymentMethod } from '../../types';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -39,6 +47,42 @@ interface EditableUserFields {
 
 type ToastState = { type: 'success' | 'error'; text: string } | null;
 
+type AdminView = 'users' | 'orders';
+
+interface ManagedOrderItem {
+  id: number;
+  productId: number;
+  productName: string;
+  productDescription?: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+interface ManagedOrder {
+  id: number;
+  orderNumber: string;
+  status: number;
+  paymentMethod: PaymentMethod | number;
+  total: number;
+  deliveryFee: number;
+  grandTotal?: number;
+  customerName?: string;
+  customerEmail?: string;
+  phoneNumber?: string;
+  deliveryAddress?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  userEmail?: string;
+  userFullName?: string;
+  items: ManagedOrderItem[];
+}
+
 interface UsersApiResponse {
   success?: boolean;
   message?: string;
@@ -49,6 +93,12 @@ interface UpdateUserApiResponse {
   success?: boolean;
   message?: string;
   user?: ManagedUser;
+}
+
+interface OrdersApiResponse {
+  success?: boolean;
+  message?: string;
+  orders?: ManagedOrder[];
 }
 
 const RAW_API_BASE =
@@ -81,6 +131,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
+  const [activeView, setActiveView] = useState<AdminView>('users');
+  const [orders, setOrders] = useState<ManagedOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const PAYMENT_METHODS: PaymentMethod[] = ['CashOnDelivery', 'Card', 'BankTransfer'];
 
   useEffect(() => {
     if (!toast) return;
@@ -164,13 +219,68 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       setIsLoading(false);
     }
   }, [t]);
-useEffect(() => {
-    if (!isOpen || !isAdmin) {
+
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    setOrdersError(null);
+
+    const token =
+      localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+    if (!token) {
+      setOrdersError(t('admin.orders.errors.noSession'));
+      setOrdersLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(buildUrl('orders'), {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      let body: OrdersApiResponse | null = null;
+      try {
+        body = (await response.json()) as OrdersApiResponse;
+      } catch {
+        body = null;
+      }
+
+      if (!response.ok || !body?.success) {
+        throw new Error(body?.message || t('admin.orders.errors.fetchFailed'));
+      }
+
+      const items: ManagedOrder[] = Array.isArray(body.orders) ? body.orders : [];
+      setOrders(
+        items.slice().sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('admin.orders.errors.fetchFailed');
+      setOrdersError(message);
+      setOrders([]);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [t]);
+  useEffect(() => {
+    if (!isOpen || !isAdmin || activeView !== 'users') {
       return;
     }
 
     void fetchUsers();
-  }, [fetchUsers, isAdmin, isOpen]);
+  }, [activeView, fetchUsers, isAdmin, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !isAdmin || activeView !== 'orders') {
+      return;
+    }
+
+    void fetchOrders();
+  }, [activeView, fetchOrders, isAdmin, isOpen]);
 
   const filteredUsers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -187,7 +297,7 @@ useEffect(() => {
   }, [users, searchTerm]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || activeView !== 'users') {
       return;
     }
 
@@ -202,7 +312,7 @@ useEffect(() => {
       setSelectedUserId(firstUser.id);
       setEditData(mapToEditable(firstUser));
     }
-  }, [filteredUsers, isOpen, selectedUserId]);
+  }, [activeView, filteredUsers, isOpen, selectedUserId]);
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -259,6 +369,56 @@ useEffect(() => {
     }
     return date.toLocaleString();
   };
+
+  const orderStatusConfig = useMemo(
+    () => [
+      {
+        label: t('orders.status.pending'),
+        className: 'bg-amber-100 text-amber-700 border-amber-200',
+      },
+      {
+        label: t('orders.status.confirmed'),
+        className: 'bg-sky-100 text-sky-700 border-sky-200',
+      },
+      {
+        label: t('orders.status.processing'),
+        className: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+      },
+      {
+        label: t('orders.status.shipped'),
+        className: 'bg-blue-100 text-blue-700 border-blue-200',
+      },
+      {
+        label: t('orders.status.delivered'),
+        className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      },
+      {
+        label: t('orders.status.cancelled'),
+        className: 'bg-rose-100 text-rose-700 border-rose-200',
+      },
+    ],
+    [t]
+  );
+
+  const resolveOrderStatus = (status: number) =>
+    orderStatusConfig[status] ?? orderStatusConfig[0];
+
+  const resolvePaymentLabel = (value: PaymentMethod | number | undefined) => {
+    const method =
+      typeof value === 'number'
+        ? PAYMENT_METHODS[value] ?? 'CashOnDelivery'
+        : value ?? 'CashOnDelivery';
+    switch (method) {
+      case 'Card':
+        return t('checkout.payment.card');
+      case 'BankTransfer':
+        return t('checkout.payment.bankTransfer');
+      default:
+        return t('checkout.payment.cashOnDelivery');
+    }
+  };
+
+  const formatCurrency = (amount: number) => `€${amount.toFixed(2)}`;
 
   const resetChanges = () => {
     if (!selectedUser) return;
@@ -363,267 +523,444 @@ useEffect(() => {
             </button>
           </div>
 
-          <div className="grid min-h-[420px] divide-y border-b border-slate-100 md:grid-cols-[320px,1fr] md:divide-x md:divide-y-0">
-            <div className="flex flex-col space-y-5 p-6">
-              <div>
-                <label className="text-sm font-medium text-slate-600" htmlFor="admin-user-search">
-                  {t('admin.users.searchLabel')}
-                </label>
-                <div className="relative mt-2">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="admin-user-search"
-                    type="search"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder={t('admin.users.searchPlaceholder')}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                  />
+          <div className="flex items-center space-x-2 border-b border-slate-100 px-6 py-3 md:px-8">
+            <button
+              type="button"
+              onClick={() => setActiveView('users')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeView === 'users'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'text-slate-500 hover:text-emerald-600'
+              }`}
+            >
+              {t('admin.panel.tabs.users')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('orders')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeView === 'orders'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'text-slate-500 hover:text-emerald-600'
+              }`}
+            >
+              {t('admin.panel.tabs.orders')}
+            </button>
+          </div>
+
+          {activeView === 'users' && (
+            <div className="grid min-h-[420px] divide-y border-b border-slate-100 md:grid-cols-[320px,1fr] md:divide-x md:divide-y-0">
+              <div className="flex flex-col space-y-5 p-6">
+                <div>
+                  <label className="text-sm font-medium text-slate-600" htmlFor="admin-user-search">
+                    {t('admin.users.searchLabel')}
+                  </label>
+                  <div className="relative mt-2">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="admin-user-search"
+                      type="search"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder={t('admin.users.searchPlaceholder')}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
+                </div>
+
+                <div className="relative flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+                  {isLoading ? (
+                    <div className="flex h-full items-center justify-center text-slate-500">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
+                  ) : error ? (
+                    <div className="flex h-full flex-col items-center justify-center space-y-2 px-6 text-center text-sm text-rose-600">
+                      <Ban className="h-8 w-8" />
+                      <p>{error}</p>
+                      <button
+                        onClick={fetchUsers}
+                        className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                      >
+                        {t('admin.users.retry')}
+                      </button>
+                    </div>
+                  ) : filteredUsers.length ? (
+                    <div className="max-h-[60vh] space-y-2 overflow-y-auto p-3">
+                      {filteredUsers.map((item) => {
+                        const isActive = item.id === selectedUserId;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => handleSelectUser(item)}
+                            className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                              isActive
+                                ? 'border-emerald-300 bg-white shadow-md shadow-emerald-100'
+                                : 'border-transparent bg-white hover:border-emerald-200 hover:shadow-sm'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-900">
+                                  {item.fullName?.trim() || t('admin.users.unknownName')}
+                                </p>
+                                <p className="mt-1 flex items-center space-x-2 text-xs text-slate-500">
+                                  <Mail className="h-3.5 w-3.5 text-slate-400" />
+                                  <span className="break-all">{item.email}</span>
+                                </p>
+                              </div>
+                              <div className="space-y-1 text-right">
+                                {item.isAdmin && (
+                                  <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                                    <Shield className="mr-1 h-3 w-3" />
+                                    {t('admin.users.badges.admin')}
+                                  </span>
+                                )}
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                    item.isDeleted
+                                      ? 'bg-rose-100 text-rose-700'
+                                      : 'bg-emerald-100 text-emerald-700'
+                                  }`}
+                                >
+                                  {item.isDeleted
+                                    ? t('admin.users.badges.deactivated')
+                                    : t('admin.users.badges.active')}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center space-y-2 px-6 text-center text-sm text-slate-500">
+                      <User className="h-8 w-8 text-slate-400" />
+                      <p>{t('admin.users.empty')}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="relative flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-                {isLoading ? (
-                  <div className="flex h-full items-center justify-center text-slate-500">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  </div>
-                ) : error ? (
-                  <div className="flex h-full flex-col items-center justify-center space-y-2 px-6 text-center text-sm text-rose-600">
-                    <Ban className="h-8 w-8" />
-                    <p>{error}</p>
-                    <button
-                      onClick={fetchUsers}
-                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
-                    >
-                      {t('admin.users.retry')}
-                    </button>
-                  </div>
-                ) : filteredUsers.length ? (
-                  <div className="max-h-[60vh] space-y-2 overflow-y-auto p-3">
-                    {filteredUsers.map((item) => {
-                      const isActive = item.id === selectedUserId;
-                      return (
+              <div className="p-6">
+                {selectedUser && editData ? (
+                  <form onSubmit={handleSave} className="space-y-6">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <h3 className="text-xl font-semibold text-slate-900">
+                          {editData.fullName.trim() || t('admin.users.unknownName')}
+                        </h3>
+                        <p className="text-sm text-slate-500">{editData.email}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                          {t('admin.users.memberSince').replace('{date}', formatDate(selectedUser.createdAt))}
+                        </span>
+                        {selectedUser.isAdmin && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                            <Shield className="mr-1 h-3.5 w-3.5" />
+                            {t('admin.users.badges.admin')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {toast && (
+                      <div
+                        className={`flex items-start space-x-2 rounded-2xl border px-4 py-3 text-sm ${
+                          toast.type === 'success'
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'border-rose-200 bg-rose-50 text-rose-700'
+                        }`}
+                      >
+                        {toast.type === 'success' ? (
+                          <CheckCircle2 className="mt-0.5 h-4 w-4" />
+                        ) : (
+                          <Ban className="mt-0.5 h-4 w-4" />
+                        )}
+                        <span>{toast.text}</span>
+                      </div>
+                    )}
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="md:col-span-2">
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-edit-email">
+                          {t('admin.users.fields.email')}
+                        </label>
+                        <input
+                          id="admin-edit-email"
+                          name="email"
+                          type="email"
+                          required
+                          value={editData.email}
+                          onChange={handleFieldChange}
+                          className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-edit-fullName">
+                          {t('admin.users.fields.fullName')}
+                        </label>
+                        <input
+                          id="admin-edit-fullName"
+                          name="fullName"
+                          value={editData.fullName}
+                          onChange={handleFieldChange}
+                          maxLength={150}
+                          placeholder={t('admin.users.fields.fullNamePlaceholder')}
+                          className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-edit-phone">
+                          {t('admin.users.fields.phone')}
+                        </label>
+                        <input
+                          id="admin-edit-phone"
+                          name="phoneNumber"
+                          value={editData.phoneNumber}
+                          onChange={handleFieldChange}
+                          maxLength={30}
+                          placeholder={t('admin.users.fields.phonePlaceholder')}
+                          className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-edit-address">
+                          {t('admin.users.fields.address')}
+                        </label>
+                        <input
+                          id="admin-edit-address"
+                          name="address"
+                          value={editData.address}
+                          onChange={handleFieldChange}
+                          maxLength={250}
+                          placeholder={t('admin.users.fields.addressPlaceholder')}
+                          className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {t('admin.users.permissions.title')}
+                      </label>
+                      <label className="flex items-center space-x-3 text-sm text-slate-600">
+                        <input
+                          type="checkbox"
+                          name="isAdmin"
+                          checked={editData.isAdmin}
+                          onChange={handleFieldChange}
+                          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span>{t('admin.users.permissions.admin')}</span>
+                      </label>
+                      <label className="flex items-center space-x-3 text-sm text-slate-600">
+                        <input
+                          type="checkbox"
+                          name="isDeleted"
+                          checked={editData.isDeleted}
+                          onChange={handleFieldChange}
+                          className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                        />
+                        <span>{t('admin.users.permissions.deactivate')}</span>
+                      </label>
+                      {user?.id === selectedUser.id && (
+                        <p className="text-xs text-amber-600">
+                          {t('admin.users.permissions.selfWarning')}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="button"
+                        onClick={resetChanges}
+                        disabled={!hasChanges || isSaving}
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {t('admin.users.actions.reset')}
+                      </button>
+                      <div className="flex items-center space-x-3">
                         <button
-                          key={item.id}
-                          onClick={() => handleSelectUser(item)}
-                          className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                            isActive
-                              ? 'border-emerald-300 bg-white shadow-md shadow-emerald-100'
-                              : 'border-transparent bg-white hover:border-emerald-200 hover:shadow-sm'
-                          }`}
+                          type="button"
+                          onClick={fetchUsers}
+                          disabled={isSaving}
+                          className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-900">
-                                {item.fullName?.trim() || t('admin.users.unknownName')}
-                              </p>
-                              <p className="mt-1 flex items-center space-x-2 text-xs text-slate-500">
-                                <Mail className="h-3.5 w-3.5 text-slate-400" />
-                                <span className="break-all">{item.email}</span>
-                              </p>
-                            </div>
-                            <div className="space-y-1 text-right">
-                              {item.isAdmin && (
-                                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-                                  <Shield className="mr-1 h-3 w-3" />
-                                  {t('admin.users.badges.admin')}
-                                </span>
-                              )}
-                              <span
-                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                  item.isDeleted
-                                    ? 'bg-rose-100 text-rose-700'
-                                    : 'bg-emerald-100 text-emerald-700'
-                                }`}
-                              >
-                                {item.isDeleted
-                                  ? t('admin.users.badges.deactivated')
-                                  : t('admin.users.badges.active')}
-                              </span>
-                            </div>
-                          </div>
+                          {t('admin.users.actions.refresh')}
                         </button>
-                      );
-                    })}
-                  </div>
+                        <button
+                          type="submit"
+                          disabled={!hasChanges || isSaving}
+                          className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isSaving ? t('admin.users.actions.saving') : t('admin.users.actions.save')}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
                 ) : (
-                  <div className="flex h-full flex-col items-center justify-center space-y-2 px-6 text-center text-sm text-slate-500">
-                    <User className="h-8 w-8 text-slate-400" />
-                    <p>{t('admin.users.empty')}</p>
+                  <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
+                    <User className="h-10 w-10 text-slate-300" />
+                    <p className="text-sm text-slate-500">{t('admin.users.noSelection')}</p>
                   </div>
                 )}
               </div>
             </div>
+          )}
 
-            <div className="p-6">
-              {selectedUser && editData ? (
-                <form onSubmit={handleSave} className="space-y-6">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h3 className="text-xl font-semibold text-slate-900">
-                        {editData.fullName.trim() || t('admin.users.unknownName')}
-                      </h3>
-                      <p className="text-sm text-slate-500">{editData.email}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                        {t('admin.users.memberSince').replace('{date}', formatDate(selectedUser.createdAt))}
-                      </span>
-                      {selectedUser.isAdmin && (
-                        <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
-                          <Shield className="mr-1 h-3.5 w-3.5" />
-                          {t('admin.users.badges.admin')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+          {activeView === 'orders' && (
+            <div className="space-y-6 border-b border-slate-100 p-6 md:px-8">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {t('admin.orders.title')}
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    {t('admin.orders.subtitle')}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                    {t('admin.orders.count').replace('{count}', String(orders.length))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void fetchOrders()}
+                    className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700"
+                  >
+                    <RefreshCw className="mr-1 h-4 w-4" />
+                    {t('admin.orders.refresh')}
+                  </button>
+                </div>
+              </div>
 
-                  {toast && (
-                    <div
-                      className={`flex items-start space-x-2 rounded-2xl border px-4 py-3 text-sm ${
-                        toast.type === 'success'
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                          : 'border-rose-200 bg-rose-50 text-rose-700'
-                      }`}
-                    >
-                      {toast.type === 'success' ? (
-                        <CheckCircle2 className="mt-0.5 h-4 w-4" />
-                      ) : (
-                        <Ban className="mt-0.5 h-4 w-4" />
-                      )}
-                      <span>{toast.text}</span>
-                    </div>
-                  )}
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="md:col-span-2">
-                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-edit-email">
-                        {t('admin.users.fields.email')}
-                      </label>
-                      <input
-                        id="admin-edit-email"
-                        name="email"
-                        type="email"
-                        required
-                        value={editData.email}
-                        onChange={handleFieldChange}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-edit-fullName">
-                        {t('admin.users.fields.fullName')}
-                      </label>
-                      <input
-                        id="admin-edit-fullName"
-                        name="fullName"
-                        value={editData.fullName}
-                        onChange={handleFieldChange}
-                        maxLength={150}
-                        placeholder={t('admin.users.fields.fullNamePlaceholder')}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-edit-phone">
-                        {t('admin.users.fields.phone')}
-                      </label>
-                      <input
-                        id="admin-edit-phone"
-                        name="phoneNumber"
-                        value={editData.phoneNumber}
-                        onChange={handleFieldChange}
-                        maxLength={30}
-                        placeholder={t('admin.users.fields.phonePlaceholder')}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-edit-address">
-                        {t('admin.users.fields.address')}
-                      </label>
-                      <input
-                        id="admin-edit-address"
-                        name="address"
-                        value={editData.address}
-                        onChange={handleFieldChange}
-                        maxLength={250}
-                        placeholder={t('admin.users.fields.addressPlaceholder')}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {t('admin.users.permissions.title')}
-                    </label>
-                    <label className="flex items-center space-x-3 text-sm text-slate-600">
-                      <input
-                        type="checkbox"
-                        name="isAdmin"
-                        checked={editData.isAdmin}
-                        onChange={handleFieldChange}
-                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                      />
-                      <span>{t('admin.users.permissions.admin')}</span>
-                    </label>
-                    <label className="flex items-center space-x-3 text-sm text-slate-600">
-                      <input
-                        type="checkbox"
-                        name="isDeleted"
-                        checked={editData.isDeleted}
-                        onChange={handleFieldChange}
-                        className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-                      />
-                      <span>{t('admin.users.permissions.deactivate')}</span>
-                    </label>
-                    {user?.id === selectedUser.id && (
-                      <p className="text-xs text-amber-600">
-                        {t('admin.users.permissions.selfWarning')}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                    <button
-                      type="button"
-                      onClick={resetChanges}
-                      disabled={!hasChanges || isSaving}
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {t('admin.users.actions.reset')}
-                    </button>
-                    <div className="flex items-center space-x-3">
-                      <button
-                        type="button"
-                        onClick={fetchUsers}
-                        disabled={isSaving}
-                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {t('admin.users.actions.refresh')}
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={!hasChanges || isSaving}
-                        className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isSaving ? t('admin.users.actions.saving') : t('admin.users.actions.save')}
-                      </button>
-                    </div>
-                  </div>
-                </form>
+              {ordersLoading ? (
+                <div className="flex h-40 flex-col items-center justify-center space-y-3 text-slate-500">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <p>{t('admin.orders.loading')}</p>
+                </div>
+              ) : ordersError ? (
+                <div className="flex flex-col items-center justify-center space-y-3 text-center text-rose-600">
+                  <AlertCircle className="h-8 w-8" />
+                  <p>{ordersError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void fetchOrders()}
+                    className="inline-flex items-center space-x-2 rounded-full border border-rose-200 bg-white px-4 py-2 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    <span>{t('admin.orders.retry')}</span>
+                  </button>
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center space-y-3 py-10 text-center text-slate-500">
+                  <Package className="h-10 w-10 text-slate-400" />
+                  <p className="font-semibold">{t('admin.orders.empty')}</p>
+                </div>
               ) : (
-                <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
-                  <User className="h-10 w-10 text-slate-300" />
-                  <p className="text-sm text-slate-500">{t('admin.users.noSelection')}</p>
+                <div className="space-y-4">
+                  {orders.map((order) => {
+                    const statusConfig = resolveOrderStatus(order.status);
+                    const grandTotal = order.grandTotal ?? order.total + order.deliveryFee;
+                    return (
+                      <div key={order.id} className="space-y-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+                        <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <div className="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              <Package className="h-4 w-4" />
+                              <span>{t('orders.detail.orderNumber')}</span>
+                            </div>
+                            <p className="text-lg font-semibold text-slate-900">{order.orderNumber}</p>
+                            <div className="mt-1 flex items-center space-x-2 text-sm text-slate-500">
+                              <Calendar className="h-4 w-4" />
+                              <span>{t('orders.detail.placedOn').replace('{date}', formatDate(order.createdAt))}</span>
+                            </div>
+                          </div>
+                          <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${statusConfig.className}`}
+                          >
+                            {statusConfig.label}
+                          </span>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {t('admin.orders.customer')}
+                              </p>
+                              <p className="text-sm text-slate-900">
+                                {order.userFullName?.trim() || order.customerName || t('admin.orders.unknownCustomer')}
+                              </p>
+                              <p className="text-xs text-slate-500">{order.userEmail || order.customerEmail}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {t('orders.detail.paymentMethod')}
+                              </p>
+                              <p className="text-sm text-slate-900">
+                                {resolvePaymentLabel(order.paymentMethod)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {t('admin.orders.summary.total')}
+                              </p>
+                              <p className="text-sm text-slate-900">{formatCurrency(grandTotal)}</p>
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-2 text-sm text-slate-600">
+                              <Truck className="h-4 w-4 text-slate-400" />
+                              <span>{t('orders.detail.deliveryStatus')}</span>
+                            </div>
+                            <div className="flex items-start space-x-2 text-sm text-slate-600">
+                              <MapPin className="mt-1 h-4 w-4 text-slate-400" />
+                              <div>
+                                {order.deliveryAddress && <p>{order.deliveryAddress}</p>}
+                                <p>
+                                  {[order.postalCode, order.city].filter(Boolean).join(' ')}
+                                </p>
+                                {order.country && <p>{order.country}</p>}
+                              </div>
+                            </div>
+                            {order.notes && (
+                              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                                {order.notes}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                          <div className="flex items-center space-x-2 text-sm font-semibold text-slate-700">
+                            <ClipboardList className="h-4 w-4" />
+                            <span>{t('orders.detail.items')}</span>
+                          </div>
+                          <div className="space-y-2 text-sm text-slate-600">
+                            {order.items.map((item) => (
+                              <div key={item.id} className="flex items-center justify-between">
+                                <span>
+                                  {item.productName} × {item.quantity}
+                                </span>
+                                <span className="font-medium text-slate-900">
+                                  {formatCurrency(item.totalPrice)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

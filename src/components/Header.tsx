@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X, Phone, LogOut, Settings, Shield } from 'lucide-react';
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  Phone,
+  LogOut,
+  Settings,
+  Shield,
+  Receipt,
+} from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -10,6 +21,7 @@ import RegisterModal from './auth/RegisterModal';
 import AIPharmLogo from './Logo';
 import AdminPanel from './admin/AdminPanel';
 import ProfileSettingsModal from './profile/ProfileSettingsModal';
+import MyOrdersModal from './profile/MyOrdersModal';
 import { quickLinks } from '../data/navigation';
 
 interface HeaderProps {
@@ -35,6 +47,7 @@ const Header: React.FC<HeaderProps> = ({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOrdersModal, setShowOrdersModal] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -47,6 +60,7 @@ const Header: React.FC<HeaderProps> = ({
     setShowUserMenu(false);
     setShowAdminPanel(false);
     setShowProfileModal(false);
+    setShowOrdersModal(false);
   };
 
   const openAdminPanel = () => {
@@ -57,6 +71,11 @@ const Header: React.FC<HeaderProps> = ({
   const openProfileModal = () => {
     setShowUserMenu(false);
     setShowProfileModal(true);
+  };
+
+  const openOrdersModal = () => {
+    setShowUserMenu(false);
+    setShowOrdersModal(true);
   };
 
   const navigationItems = [
@@ -191,6 +210,13 @@ const Header: React.FC<HeaderProps> = ({
                       <Settings className="w-4 h-4" />
                       <span>{t('header.settings')}</span>
                     </button>
+                    <button
+                      onClick={openOrdersModal}
+                      className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                    >
+                      <Receipt className="w-4 h-4" />
+                      <span>{t('header.myOrders')}</span>
+                    </button>
                     {isAdmin && (
                       <button
                         onClick={openAdminPanel}
@@ -296,9 +322,43 @@ const Header: React.FC<HeaderProps> = ({
               {t(link.key)}
             </Link>
           ))}
+          {isAuthenticated && (
+            <>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  setShowOrdersModal(true);
+                }}
+                className="flex w-full items-center space-x-2 rounded-xl border border-gray-100 px-4 py-2 text-left text-gray-700 transition hover:border-emerald-200 hover:text-emerald-700"
+              >
+                <Receipt className="h-4 w-4" />
+                <span>{t('header.myOrders')}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  openProfileModal();
+                }}
+                className="flex w-full items-center space-x-2 rounded-xl border border-gray-100 px-4 py-2 text-left text-gray-700 transition hover:border-blue-200 hover:text-blue-700"
+              >
+                <Settings className="h-4 w-4" />
+                <span>{t('header.settings')}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  void handleLogout();
+                }}
+                className="flex w-full items-center space-x-2 rounded-xl border border-gray-100 px-4 py-2 text-left text-red-600 transition hover:border-red-200 hover:text-red-700"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{t('header.logout')}</span>
+              </button>
+            </>
+          )}
           {!isAuthenticated && (
             <>
-              <button 
+              <button
                 onClick={() => setShowLoginModal(true)}
                 className="block w-full text-left py-2 text-emerald-600 hover:text-emerald-700 transition-colors font-medium"
               >
@@ -334,6 +394,7 @@ const Header: React.FC<HeaderProps> = ({
       />
       <AdminPanel isOpen={isAdmin && showAdminPanel} onClose={() => setShowAdminPanel(false)} />
       <ProfileSettingsModal isOpen={showProfileModal && isAuthenticated} onClose={() => setShowProfileModal(false)} />
+      <MyOrdersModal isOpen={showOrdersModal && isAuthenticated} onClose={() => setShowOrdersModal(false)} />
     </header>
   );
 };

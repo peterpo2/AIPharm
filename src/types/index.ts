@@ -34,6 +34,42 @@ export interface CartItem {
   unitPrice: number;
 }
 
+export type PaymentMethod = 'CashOnDelivery' | 'Card' | 'BankTransfer';
+
+export interface OrderItemSummary {
+  id: number;
+  productId: number;
+  productName: string;
+  productDescription?: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface OrderSummary {
+  id: number;
+  orderNumber: string;
+  status: number;
+  paymentMethod: PaymentMethod | number;
+  total: number;
+  deliveryFee: number;
+  grandTotal: number;
+  customerName?: string;
+  customerEmail?: string;
+  phoneNumber?: string;
+  deliveryAddress?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  userEmail?: string;
+  userFullName?: string;
+  items: OrderItemSummary[];
+}
+
 export interface ShoppingCart {
   id: number;
   userId: string;

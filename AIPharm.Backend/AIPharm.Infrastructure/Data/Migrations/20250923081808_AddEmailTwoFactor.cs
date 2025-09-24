@@ -61,6 +61,54 @@ namespace AIPharm.Infrastructure.Data.Migrations
                 table: "Users",
                 type: "datetime2",
                 nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "City",
+                schema: "dbo",
+                table: "Orders",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "Country",
+                schema: "dbo",
+                table: "Orders",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "CustomerEmail",
+                schema: "dbo",
+                table: "Orders",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "CustomerName",
+                schema: "dbo",
+                table: "Orders",
+                type: "nvarchar(150)",
+                maxLength: 150,
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "PaymentMethod",
+                schema: "dbo",
+                table: "Orders",
+                type: "int",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<string>(
+                name: "PostalCode",
+                schema: "dbo",
+                table: "Orders",
+                type: "nvarchar(20)",
+                maxLength: 20,
+                nullable: true);
         }
 
         /// <inheritdoc />
@@ -100,6 +148,36 @@ namespace AIPharm.Infrastructure.Data.Migrations
                 name: "TwoFactorLoginTokenExpiry",
                 schema: "dbo",
                 table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "City",
+                schema: "dbo",
+                table: "Orders");
+
+            migrationBuilder.DropColumn(
+                name: "Country",
+                schema: "dbo",
+                table: "Orders");
+
+            migrationBuilder.DropColumn(
+                name: "CustomerEmail",
+                schema: "dbo",
+                table: "Orders");
+
+            migrationBuilder.DropColumn(
+                name: "CustomerName",
+                schema: "dbo",
+                table: "Orders");
+
+            migrationBuilder.DropColumn(
+                name: "PaymentMethod",
+                schema: "dbo",
+                table: "Orders");
+
+            migrationBuilder.DropColumn(
+                name: "PostalCode",
+                schema: "dbo",
+                table: "Orders");
         }
     }
 }
