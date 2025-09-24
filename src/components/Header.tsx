@@ -119,6 +119,15 @@ const Header: React.FC<HeaderProps> = ({
                 <span>{t('header.adminPanel')}</span>
               </button>
             )}
+            {isAuthenticated && (
+              <button
+                onClick={openOrdersModal}
+                className="inline-flex items-center space-x-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-600 transition hover:border-blue-300 hover:bg-blue-100"
+              >
+                <Receipt className="h-4 w-4" />
+                <span>{t('header.myOrders')}</span>
+              </button>
+            )}
             {isAuthenticated ? (
               <span className="text-emerald-600 font-medium">
                 {t('header.hello')}, {user?.fullName || user?.email}

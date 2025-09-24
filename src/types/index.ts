@@ -36,6 +36,14 @@ export interface CartItem {
 
 export type PaymentMethod = 'CashOnDelivery' | 'Card' | 'BankTransfer';
 
+export type OrderStatus =
+  | 'Pending'
+  | 'Confirmed'
+  | 'Processing'
+  | 'Shipped'
+  | 'Delivered'
+  | 'Cancelled';
+
 export interface OrderItemSummary {
   id: number;
   productId: number;
@@ -49,7 +57,7 @@ export interface OrderItemSummary {
 export interface OrderSummary {
   id: number;
   orderNumber: string;
-  status: number;
+  status: OrderStatus | number;
   paymentMethod: PaymentMethod | number;
   total: number;
   deliveryFee: number;

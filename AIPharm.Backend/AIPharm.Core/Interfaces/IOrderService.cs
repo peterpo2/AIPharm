@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AIPharm.Core.DTOs;
+using AIPharm.Domain.Entities;
 
 namespace AIPharm.Core.Interfaces
 {
@@ -9,5 +10,6 @@ namespace AIPharm.Core.Interfaces
         Task<OrderDto> CreateOrderAsync(string userId, CreateOrderDto orderDto);
         Task<IEnumerable<OrderDto>> GetOrdersForUserAsync(string userId);
         Task<IEnumerable<OrderDto>> GetAllOrdersAsync();
+        Task<OrderDto> UpdateOrderStatusAsync(int orderId, OrderStatus status);
     }
 }

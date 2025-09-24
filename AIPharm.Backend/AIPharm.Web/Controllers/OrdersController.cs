@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using AIPharm.Core.DTOs;
@@ -86,6 +87,52 @@ namespace AIPharm.Web.Controllers
                 {
                     success = false,
                     message = "Failed to create order.",
+                    error = ex.Message
+                });
+            }
+        }
+
+        [HttpPatch("{orderId:int}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromBody] UpdateOrderStatusDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Validation failed.",
+                    errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .Where(error => !string.IsNullOrWhiteSpace(error))
+                });
+            }
+
+            try
+            {
+                var order = await _orderService.UpdateOrderStatusAsync(orderId, request.Status);
+                return Ok(new
+                {
+                    success = true,
+                    message = "Order status updated successfully.",
+                    order
+                });
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Failed to update order status.",
                     error = ex.Message
                 });
             }

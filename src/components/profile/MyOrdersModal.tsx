@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import type { OrderSummary, PaymentMethod } from '../../types';
+import type { OrderStatus, OrderSummary, PaymentMethod } from '../../types';
 
 interface MyOrdersModalProps {
   isOpen: boolean;
@@ -36,6 +36,15 @@ const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
 
 const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, '')}`;
 
+const ORDER_STATUSES: OrderStatus[] = [
+  'Pending',
+  'Confirmed',
+  'Processing',
+  'Shipped',
+  'Delivered',
+  'Cancelled',
+];
+
 const PAYMENT_METHODS: PaymentMethod[] = [
   'CashOnDelivery',
   'Card',
@@ -49,6 +58,15 @@ const resolvePaymentMethod = (value: PaymentMethod | number | undefined): Paymen
     return PAYMENT_METHODS[value] ?? 'CashOnDelivery';
   }
   return value ?? 'CashOnDelivery';
+};
+
+const resolveStatusIndex = (status: OrderStatus | number): number => {
+  if (typeof status === 'number') {
+    return status;
+  }
+
+  const index = ORDER_STATUSES.indexOf(status);
+  return index >= 0 ? index : 0;
 };
 
 const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose }) => {
@@ -163,8 +181,9 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose }) => {
     return null;
   }
 
-  const resolveStatus = (status: number) => {
-    const config = statusConfig[status] ?? statusConfig[0];
+  const resolveStatus = (status: OrderStatus | number) => {
+    const index = resolveStatusIndex(status);
+    const config = statusConfig[index] ?? statusConfig[0];
     return config;
   };
 

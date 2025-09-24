@@ -84,4 +84,10 @@ namespace AIPharm.Core.DTOs
         [Required]
         public PaymentMethod PaymentMethod { get; set; }
     }
+
+    public class UpdateOrderStatusDto
+    {
+        [Required]
+        public OrderStatus Status { get; set; }
+    }
 }

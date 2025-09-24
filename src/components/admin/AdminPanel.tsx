@@ -4,6 +4,7 @@ import {
   Ban,
   Calendar,
   CheckCircle2,
+  Clock3,
   ClipboardList,
   Loader2,
   Mail,
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import type { PaymentMethod } from '../../types';
+import type { OrderStatus, PaymentMethod } from '../../types';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ interface ManagedOrderItem {
 interface ManagedOrder {
   id: number;
   orderNumber: string;
-  status: number;
+  status: OrderStatus | number;
   paymentMethod: PaymentMethod | number;
   total: number;
   deliveryFee: number;
@@ -101,6 +102,12 @@ interface OrdersApiResponse {
   orders?: ManagedOrder[];
 }
 
+interface UpdateOrderStatusResponse {
+  success?: boolean;
+  message?: string;
+  order?: ManagedOrder;
+}
+
 const RAW_API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
@@ -111,6 +118,15 @@ const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
 
 const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, '')}`;
 
+const ORDER_STATUSES: OrderStatus[] = [
+  'Pending',
+  'Confirmed',
+  'Processing',
+  'Shipped',
+  'Delivered',
+  'Cancelled',
+];
+
 const mapToEditable = (user: ManagedUser): EditableUserFields => ({
   email: user.email,
   fullName: user.fullName ?? '',
@@ -119,6 +135,23 @@ const mapToEditable = (user: ManagedUser): EditableUserFields => ({
   isAdmin: user.isAdmin,
   isDeleted: user.isDeleted,
 });
+
+const normalizeOrderStatus = (status: OrderStatus | number): OrderStatus => {
+  if (typeof status === 'number') {
+    return ORDER_STATUSES[status] ?? 'Pending';
+  }
+
+  return ORDER_STATUSES.includes(status) ? status : 'Pending';
+};
+
+const resolveOrderStatusIndex = (status: OrderStatus | number): number => {
+  if (typeof status === 'number') {
+    return status;
+  }
+
+  const index = ORDER_STATUSES.indexOf(status);
+  return index >= 0 ? index : 0;
+};
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const { isAdmin, user } = useAuth();
@@ -135,6 +168,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [orders, setOrders] = useState<ManagedOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [ordersToast, setOrdersToast] = useState<ToastState>(null);
+  const [statusUpdates, setStatusUpdates] = useState<Record<number, OrderStatus | null>>({});
   const PAYMENT_METHODS: PaymentMethod[] = ['CashOnDelivery', 'Card', 'BankTransfer'];
 
   useEffect(() => {
@@ -142,6 +177,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     const timer = setTimeout(() => setToast(null), 3600);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (!ordersToast) return;
+    const timer = setTimeout(() => setOrdersToast(null), 3600);
+    return () => clearTimeout(timer);
+  }, [ordersToast]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -168,6 +209,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     return () => {
       document.body.style.overflow = '';
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setOrdersToast(null);
+      setStatusUpdates({});
+    }
   }, [isOpen]);
 
   const fetchUsers = useCallback(async () => {
@@ -223,6 +271,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const fetchOrders = useCallback(async () => {
     setOrdersLoading(true);
     setOrdersError(null);
+    setOrdersToast(null);
+    setStatusUpdates({});
 
     const token =
       localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
@@ -281,6 +331,67 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
     void fetchOrders();
   }, [activeView, fetchOrders, isAdmin, isOpen]);
+
+  const handleUpdateOrderStatus = useCallback(
+    async (orderId: number, status: OrderStatus) => {
+      const token =
+        localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+      if (!token) {
+        setOrdersToast({ type: 'error', text: t('admin.orders.errors.noSession') });
+        return;
+      }
+
+      setStatusUpdates((prev) => ({ ...prev, [orderId]: status }));
+      setOrdersToast(null);
+
+      try {
+        const response = await fetch(buildUrl(`orders/${orderId}/status`), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status }),
+        });
+
+        let body: UpdateOrderStatusResponse | null = null;
+        try {
+          body = (await response.json()) as UpdateOrderStatusResponse;
+        } catch {
+          body = null;
+        }
+
+        if (!response.ok || !body?.success || !body.order) {
+          throw new Error(body?.message || t('admin.orders.errors.updateFailed'));
+        }
+
+        setOrders((prev) =>
+          prev
+            .map((item) => (item.id === orderId ? { ...item, ...body.order } : item))
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            )
+        );
+        setOrdersError(null);
+        setOrdersToast({ type: 'success', text: t('admin.orders.status.updated') });
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : t('admin.orders.errors.updateFailed');
+        setOrdersToast({ type: 'error', text: message });
+      } finally {
+        setStatusUpdates((prev) => {
+          const next = { ...prev };
+          delete next[orderId];
+          return next;
+        });
+      }
+    },
+    [t]
+  );
 
   const filteredUsers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -400,8 +511,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     [t]
   );
 
-  const resolveOrderStatus = (status: number) =>
-    orderStatusConfig[status] ?? orderStatusConfig[0];
+  const resolveOrderStatus = (status: OrderStatus | number) =>
+    orderStatusConfig[resolveOrderStatusIndex(status)] ?? orderStatusConfig[0];
 
   const resolvePaymentLabel = (value: PaymentMethod | number | undefined) => {
     const method =
@@ -838,6 +949,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
+              {ordersToast && (
+                <div
+                  className={`flex items-start space-x-2 rounded-2xl border px-4 py-3 text-sm ${
+                    ordersToast.type === 'success'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-rose-200 bg-rose-50 text-rose-700'
+                  }`}
+                >
+                  {ordersToast.type === 'success' ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4" />
+                  ) : (
+                    <Ban className="mt-0.5 h-4 w-4" />
+                  )}
+                  <span>{ordersToast.text}</span>
+                </div>
+              )}
+
               {ordersLoading ? (
                 <div className="flex h-40 flex-col items-center justify-center space-y-3 text-slate-500">
                   <Loader2 className="h-6 w-6 animate-spin" />
@@ -866,6 +994,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   {orders.map((order) => {
                     const statusConfig = resolveOrderStatus(order.status);
                     const grandTotal = order.grandTotal ?? order.total + order.deliveryFee;
+                    const normalizedStatus = normalizeOrderStatus(order.status);
+                    const updatingStatus = statusUpdates[order.id] ?? null;
+                    const isUpdatingStatus = Boolean(updatingStatus);
+                    const approveDisabled =
+                      isUpdatingStatus || normalizedStatus === 'Confirmed';
+                    const waitDisabled =
+                      isUpdatingStatus || normalizedStatus === 'Pending';
+                    const declineDisabled =
+                      isUpdatingStatus || normalizedStatus === 'Cancelled';
                     return (
                       <div key={order.id} className="space-y-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                         <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 md:flex-row md:items-center md:justify-between">
@@ -885,6 +1022,66 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                           >
                             {statusConfig.label}
                           </span>
+                        </div>
+
+                        <div className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between">
+                          <div className="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <Clock3 className="h-4 w-4 text-slate-400" />
+                            <span>{t('admin.orders.actions.title')}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void handleUpdateOrderStatus(order.id, 'Confirmed')}
+                              disabled={approveDisabled}
+                              className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-100 ${
+                                normalizedStatus === 'Confirmed'
+                                  ? 'bg-emerald-600 text-white shadow-sm'
+                                  : 'border border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                              } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
+                            >
+                              {isUpdatingStatus && updatingStatus === 'Confirmed' ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-4 w-4" />
+                              )}
+                              <span>{t('admin.orders.actions.approve')}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleUpdateOrderStatus(order.id, 'Pending')}
+                              disabled={waitDisabled}
+                              className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-100 ${
+                                normalizedStatus === 'Pending'
+                                  ? 'bg-amber-500 text-white shadow-sm'
+                                  : 'border border-amber-200 text-amber-700 hover:bg-amber-50'
+                              } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
+                            >
+                              {isUpdatingStatus && updatingStatus === 'Pending' ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Clock3 className="h-4 w-4" />
+                              )}
+                              <span>{t('admin.orders.actions.wait')}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleUpdateOrderStatus(order.id, 'Cancelled')}
+                              disabled={declineDisabled}
+                              className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-rose-100 ${
+                                normalizedStatus === 'Cancelled'
+                                  ? 'bg-rose-600 text-white shadow-sm'
+                                  : 'border border-rose-200 text-rose-700 hover:bg-rose-50'
+                              } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
+                            >
+                              {isUpdatingStatus && updatingStatus === 'Cancelled' ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Ban className="h-4 w-4" />
+                              )}
+                              <span>{t('admin.orders.actions.decline')}</span>
+                            </button>
+                          </div>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">

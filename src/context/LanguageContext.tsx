@@ -287,6 +287,14 @@ const translations = {
     'admin.orders.customer': 'Клиент',
     'admin.orders.unknownCustomer': 'Неизвестен клиент',
     'admin.orders.summary.total': 'Общо (с доставка)',
+    'admin.orders.actions.title': 'Статус на поръчката',
+    'admin.orders.actions.approve': 'Одобри',
+    'admin.orders.actions.wait': 'Изчакай',
+    'admin.orders.actions.decline': 'Откажи',
+    'admin.orders.status.updated': 'Статусът на поръчката е обновен.',
+    'admin.orders.errors.noSession': 'Няма активна сесия. Моля, влезте отново.',
+    'admin.orders.errors.fetchFailed': 'Неуспешно зареждане на поръчките.',
+    'admin.orders.errors.updateFailed': 'Неуспешно обновяване на статуса на поръчката.',
 
     // Footer
     'footer.title': 'AIPHARM+',
@@ -722,6 +730,14 @@ const translations = {
     'admin.orders.customer': 'Customer',
     'admin.orders.unknownCustomer': 'Unknown customer',
     'admin.orders.summary.total': 'Grand total',
+    'admin.orders.actions.title': 'Order status',
+    'admin.orders.actions.approve': 'Approve',
+    'admin.orders.actions.wait': 'Wait',
+    'admin.orders.actions.decline': 'Decline',
+    'admin.orders.status.updated': 'Order status updated.',
+    'admin.orders.errors.noSession': 'No active session. Please sign in again.',
+    'admin.orders.errors.fetchFailed': 'Failed to load orders.',
+    'admin.orders.errors.updateFailed': 'Failed to update the order status.',
 
     // Footer
     'footer.title': 'AIPHARM+',

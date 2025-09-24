@@ -127,6 +127,39 @@ namespace AIPharm.Core.Services
             return orders.Select(MapOrder).ToList();
         }
 
+        public async Task<OrderDto> UpdateOrderStatusAsync(int orderId, OrderStatus status)
+        {
+            if (orderId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(orderId));
+            }
+
+            if (!Enum.IsDefined(typeof(OrderStatus), status))
+            {
+                throw new ArgumentOutOfRangeException(nameof(status));
+            }
+
+            var order = await _orderRepository.GetByIdAsync(orderId)
+                        ?? throw new KeyNotFoundException($"Order with ID {orderId} was not found.");
+
+            if (order.Status != status)
+            {
+                order.Status = status;
+            }
+
+            order.UpdatedAt = DateTime.UtcNow;
+            await _orderRepository.UpdateAsync(order);
+
+            var updatedOrder = await _orderRepository.Query()
+                .Where(o => o.Id == orderId)
+                .Include(o => o.Items)
+                .Include(o => o.User)
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Failed to load the order after updating its status.");
+
+            return MapOrder(updatedOrder);
+        }
+
         private static string GenerateOrderNumber()
         {
             var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
