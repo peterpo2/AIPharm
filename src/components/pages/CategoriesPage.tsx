@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRightCircle } from 'lucide-react';
+import { ArrowRightCircle, Filter, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLanguage } from '../../context/LanguageContext';
@@ -27,17 +27,44 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({ categories, products, o
   );
 
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(categorySummaries[0]?.id ?? null);
+  const [searchValue, setSearchValue] = useState('');
+  const [sortOption, setSortOption] = useState<'popular' | 'alphabetical' | 'count'>('popular');
+
+  const filteredCategories = useMemo(() => {
+    const normalizedQuery = searchValue.trim().toLowerCase();
+
+    const filtered = categorySummaries.filter((category) => {
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return (
+        category.translatedName.toLowerCase().includes(normalizedQuery) ||
+        category.description?.toLowerCase().includes(normalizedQuery)
+      );
+    });
+
+    const sorted = [...filtered];
+
+    if (sortOption === 'alphabetical') {
+      sorted.sort((a, b) => a.translatedName.localeCompare(b.translatedName));
+    } else {
+      sorted.sort((a, b) => b.count - a.count || a.translatedName.localeCompare(b.translatedName));
+    }
+
+    return sorted;
+  }, [categorySummaries, searchValue, sortOption]);
 
   useEffect(() => {
-    if (categorySummaries.length === 0) {
+    if (!filteredCategories.length) {
       setActiveCategoryId(null);
       return;
     }
 
-    if (!activeCategoryId || !categorySummaries.some((category) => category.id === activeCategoryId)) {
-      setActiveCategoryId(categorySummaries[0].id);
+    if (!activeCategoryId || !filteredCategories.some((category) => category.id === activeCategoryId)) {
+      setActiveCategoryId(filteredCategories[0].id);
     }
-  }, [activeCategoryId, categorySummaries]);
+  }, [activeCategoryId, filteredCategories]);
 
   const activeCategory = activeCategoryId
     ? categorySummaries.find((category) => category.id === activeCategoryId)
@@ -54,20 +81,20 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({ categories, products, o
   };
 
   return (
-    <div className="bg-gray-50 py-12">
+    <div className="bg-gray-50 py-10">
       <div className="container mx-auto px-4">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_1fr] xl:gap-10">
-          <aside className="flex flex-col gap-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm lg:sticky lg:top-24 lg:h-fit">
+        <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-3">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                <Filter className="h-3.5 w-3.5" />
                 {t('categories.title')}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900 lg:text-[2.5rem] lg:leading-[1.1]">
-                {t('products.catalogTitle')}
-              </h1>
-              <p className="text-sm text-gray-600 leading-relaxed">{t('categories.subtitle')}</p>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">{t('products.catalogTitle')}</h1>
+                <p className="text-sm text-gray-600 leading-relaxed">{t('categories.subtitle')}</p>
+              </div>
             </div>
-
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
               <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
@@ -77,134 +104,80 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({ categories, products, o
                 <span className="h-1.5 w-1.5 rounded-full bg-sky-500" aria-hidden />
                 {products.length} {t('products.products')}
               </span>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={handleViewAllProducts}
-                className="inline-flex flex-1 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:border-emerald-300 hover:bg-emerald-100"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-gray-600 transition-colors hover:border-emerald-300 hover:text-emerald-700"
               >
                 {t('products.viewAll')}
-              </button>
-              <button
-                type="button"
-                onClick={() => activeCategory && handleCategoryClick(activeCategory.id)}
-                className="inline-flex flex-1 items-center justify-center rounded-2xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-emerald-300 hover:text-emerald-700"
-              >
-                {t('categories.viewProducts')}
+                <ArrowRightCircle className="h-3.5 w-3.5" />
               </button>
             </div>
+          </div>
 
-            <nav className="-mx-2 -mb-2 flex flex-col gap-1 overflow-y-auto pr-1 text-left">
-              {categorySummaries.map((category) => {
-                const IconComponent = getCategoryIcon(category.icon);
-                const isActive = category.id === activeCategoryId;
-
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => setActiveCategoryId(category.id)}
-                    className={`group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm transition-all ${
-                      isActive
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
-                    }`}
-                  >
-                    <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-                        isActive ? 'bg-emerald-500/90 text-white' : 'bg-white text-emerald-600'
+          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,260px)_1fr]">
+            <div className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+              <label htmlFor="categories-search" className="mb-3 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                {t('categories.searchLabel')}
+              </label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  id="categories-search"
+                  type="search"
+                  value={searchValue}
+                  onChange={(event) => setSearchValue(event.target.value)}
+                  placeholder={t('categories.searchPlaceholder')}
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-700 placeholder:text-gray-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                />
+              </div>
+              <div className="mt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('categories.sortLabel')}</p>
+                <div className="mt-3 grid grid-cols-1 gap-2">
+                  {[
+                    { key: 'popular' as const, label: t('categories.sortPopular') },
+                    { key: 'alphabetical' as const, label: t('categories.sortAlphabetical') },
+                    { key: 'count' as const, label: t('categories.sortProducts') },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => setSortOption(option.key)}
+                      className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
+                        sortOption === option.key
+                          ? 'border-emerald-300 bg-white text-emerald-700 shadow-sm'
+                          : 'border-transparent bg-white/70 text-gray-600 hover:border-emerald-200 hover:bg-white hover:text-emerald-700'
                       }`}
                     >
-                      <IconComponent className="h-4 w-4" />
-                    </span>
-                    <div className="flex flex-1 items-center justify-between gap-4">
-                      <span className="font-semibold">{category.translatedName}</span>
-                      <span className={`text-[0.65rem] font-semibold uppercase tracking-wide ${isActive ? 'text-emerald-50' : 'text-emerald-600'}`}>
-                        {category.count}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
-
-          <section className="space-y-6">
-            {activeCategory && (
-              <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex flex-1 items-start gap-4">
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                      {(() => {
-                        const IconComponent = getCategoryIcon(activeCategory.icon);
-                        return <IconComponent className="h-6 w-6" />;
-                      })()}
-                    </span>
-                    <div className="space-y-3">
-                      <div>
-                        <h2 className="text-2xl font-bold text-gray-900">{activeCategory.translatedName}</h2>
-                        <p className="text-sm text-gray-600 leading-relaxed">{activeCategory.description}</p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide">
-                        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-                          {activeCategory.count} {t('products.products')}
-                        </span>
-                        <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-gray-600">
-                          <span className="h-1.5 w-1.5 rounded-full bg-gray-400" aria-hidden />
-                          {t('products.categoryOverviewDescription')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleCategoryClick(activeCategory.id)}
-                      className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
-                    >
-                      {t('categories.viewProducts')}
+                      <span>{option.label}</span>
+                      {sortOption === option.key && <span className="text-xs font-semibold text-emerald-600">✓</span>}
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleViewAllProducts}
-                      className="inline-flex items-center justify-center rounded-2xl border border-gray-200 px-6 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-emerald-300 hover:text-emerald-700"
-                    >
-                      {t('products.viewAll')}
-                      <ArrowRightCircle className="ml-2 h-4 w-4" />
-                    </button>
-                  </div>
+                  ))}
                 </div>
               </div>
-            )}
+            </div>
 
-            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{t('products.catalogDescription')}</h3>
-                  <p className="text-sm text-gray-500">{t('products.categoryOverview')}</p>
-                </div>
-              </div>
+            <div className="space-y-5">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {categorySummaries.map((category) => {
+                {filteredCategories.map((category) => {
                   const IconComponent = getCategoryIcon(category.icon);
                   const isActive = category.id === activeCategoryId;
 
                   return (
-                    <button
+                    <div
                       key={category.id}
-                      type="button"
-                      onClick={() => setActiveCategoryId(category.id)}
-                      className={`flex h-full flex-col justify-between rounded-2xl border p-4 text-left transition-all ${
+                      className={`flex h-full flex-col justify-between rounded-2xl border p-4 transition-all ${
                         isActive
                           ? 'border-emerald-300 bg-emerald-50 shadow-sm'
                           : 'border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${isActive ? 'bg-emerald-500 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                            isActive ? 'bg-emerald-500 text-white' : 'bg-emerald-50 text-emerald-600'
+                          }`}
+                        >
                           <IconComponent className="h-5 w-5" />
                         </span>
                         <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-600">
@@ -212,16 +185,85 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({ categories, products, o
                         </span>
                       </div>
                       <div className="mt-4 space-y-2">
-                        <h4 className="text-base font-semibold text-gray-900">{category.translatedName}</h4>
+                        <button
+                          type="button"
+                          onClick={() => setActiveCategoryId(category.id)}
+                          className="text-left text-base font-semibold text-gray-900 hover:text-emerald-700"
+                        >
+                          {category.translatedName}
+                        </button>
                         <p className="text-xs text-gray-500 line-clamp-3">{category.description}</p>
                       </div>
-                    </button>
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryClick(category.id)}
+                          className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
+                        >
+                          {t('categories.viewProducts')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveCategoryId(category.id)}
+                          className="inline-flex items-center justify-center rounded-xl border border-transparent bg-white/80 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 transition hover:border-emerald-200 hover:text-emerald-700"
+                        >
+                          {t('categories.preview')}
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
+
+              {activeCategory && (
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex flex-1 items-start gap-4">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                        {(() => {
+                          const IconComponent = getCategoryIcon(activeCategory.icon);
+                          return <IconComponent className="h-5 w-5" />;
+                        })()}
+                      </span>
+                      <div className="space-y-2">
+                        <div>
+                          <h2 className="text-xl font-semibold text-gray-900">{activeCategory.translatedName}</h2>
+                          <p className="text-sm text-gray-600 leading-relaxed">{activeCategory.description}</p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                            {activeCategory.count} {t('products.products')}
+                          </span>
+                          <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-gray-600">
+                            {t('products.categoryOverviewDescription')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCategoryClick(activeCategory.id)}
+                        className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
+                      >
+                        {t('categories.viewProducts')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleViewAllProducts}
+                        className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-emerald-300 hover:text-emerald-700"
+                      >
+                        {t('products.viewAll')}
+                        <ArrowRightCircle className="ml-2 h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   );
