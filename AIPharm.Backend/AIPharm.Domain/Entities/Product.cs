@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -22,6 +23,9 @@ namespace AIPharm.Domain.Entities
         
         [Column(TypeName = "decimal(10,2)")]
         public decimal Price { get; set; }
+
+        [Column(TypeName = "decimal(4,2)")]
+        public decimal VatRate { get; set; } = 0.20m;
         
         public int StockQuantity { get; set; }
         
@@ -63,5 +67,11 @@ namespace AIPharm.Domain.Entities
         public virtual Category Category { get; set; } = null!;
         public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+        [NotMapped]
+        public decimal PriceWithoutVat => decimal.Round(Price / (1 + VatRate), 2, MidpointRounding.AwayFromZero);
+
+        [NotMapped]
+        public decimal VatAmount => decimal.Round(Price - PriceWithoutVat, 2, MidpointRounding.AwayFromZero);
     }
 }

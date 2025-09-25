@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace AIPharm.Domain.Entities
@@ -33,5 +34,6 @@ namespace AIPharm.Domain.Entities
         // Navigation properties
         public virtual ICollection<ShoppingCart> ShoppingCarts { get; set; } = new List<ShoppingCart>();
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+        public virtual ICollection<NhifPrescription> NhifPrescriptions { get; set; } = new List<NhifPrescription>();
     }
 }
