@@ -143,7 +143,7 @@ const translations = {
     'cart.remove': 'Премахни',
     'cart.total': 'Общо',
     'cart.freeDelivery': '✓ Безплатна доставка',
-    'cart.loginRequired': 'Влезте в акаунта си, за да завършите поръчката.',
+    'cart.loginRequired': 'Влезте в профила си, за да завършите поръчката.',
     'cart.regularPrice': 'Стандартна цена',
     'cart.promoPrice': 'Промо цена',
     'cart.addForFreeDelivery': 'Добавете продукти за €{amount} за безплатна доставка',
