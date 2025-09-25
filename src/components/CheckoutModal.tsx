@@ -7,7 +7,7 @@ import {
   MapPin,
   Mail,
   Phone,
-  IdCard,
+  Fingerprint,
   User,
   X,
 } from 'lucide-react';
@@ -411,7 +411,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       {t('checkout.field.personalId')}
                     </label>
                     <div className="relative">
-                      <IdCard className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Fingerprint className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <input
                         id="checkout-personal-id"
                         name="personalIdentificationNumber"
