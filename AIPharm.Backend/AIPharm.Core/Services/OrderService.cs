@@ -13,6 +13,7 @@ namespace AIPharm.Core.Services
     {
         private const decimal FreeDeliveryThreshold = 25m;
         private const decimal StandardDeliveryFee = 4.99m;
+        private const decimal DefaultVatRate = 0.20m;
 
         private readonly IRepository<Order> _orderRepository;
         private readonly IRepository<Product> _productRepository;
@@ -42,7 +43,8 @@ namespace AIPharm.Core.Services
                        ?? throw new ArgumentException("User not found.", nameof(userId));
 
             var orderItems = new List<OrderItem>();
-            decimal subtotal = 0m;
+            decimal netTotal = 0m;
+            decimal vatTotal = 0m;
 
             foreach (var item in orderDto.Items)
             {
@@ -54,20 +56,36 @@ namespace AIPharm.Core.Services
                 var product = await _productRepository.GetByIdAsync(item.ProductId)
                               ?? throw new ArgumentException($"Product with ID {item.ProductId} was not found.");
 
+                var vatRate = product.VatRate > 0 ? product.VatRate : DefaultVatRate;
                 var unitPrice = product.Price;
-                subtotal += unitPrice * item.Quantity;
 
+                var lineGross = decimal.Round(unitPrice * item.Quantity, 2, MidpointRounding.AwayFromZero);
+                var netUnitPrice = decimal.Round(unitPrice / (1 + vatRate), 4, MidpointRounding.AwayFromZero);
+                var lineNet = decimal.Round(netUnitPrice * item.Quantity, 2, MidpointRounding.AwayFromZero);
+                var lineVat = decimal.Round(lineGross - lineNet, 2, MidpointRounding.AwayFromZero);
+
+                netTotal += lineNet;
+                vatTotal += lineVat;
                 orderItems.Add(new OrderItem
                 {
                     ProductId = product.Id,
                     Quantity = item.Quantity,
                     UnitPrice = unitPrice,
+                    VatRate = vatRate,
+                    VatAmount = lineVat,
                     ProductName = product.Name,
                     ProductDescription = product.Description,
                 });
             }
 
-            var deliveryFee = subtotal >= FreeDeliveryThreshold ? 0m : StandardDeliveryFee;
+            var subtotal = decimal.Round(netTotal, 2, MidpointRounding.AwayFromZero);
+            var vatAmount = decimal.Round(vatTotal, 2, MidpointRounding.AwayFromZero);
+            var totalWithVat = decimal.Round(subtotal + vatAmount, 2, MidpointRounding.AwayFromZero);
+
+            var deliveryFee = totalWithVat >= FreeDeliveryThreshold ? 0m : StandardDeliveryFee;
+
+            var distinctVatRates = orderItems.Select(oi => oi.VatRate).Distinct().ToList();
+            var aggregatedVatRate = distinctVatRates.Count == 1 ? distinctVatRates[0] : DefaultVatRate;
 
             var order = new Order
             {
@@ -76,7 +94,10 @@ namespace AIPharm.Core.Services
                 OrderNumber = GenerateOrderNumber(),
                 Status = OrderStatus.Pending,
                 PaymentMethod = orderDto.PaymentMethod,
-                Total = decimal.Round(subtotal, 2, MidpointRounding.AwayFromZero),
+                Total = totalWithVat,
+                Subtotal = subtotal,
+                VatAmount = vatAmount,
+                VatRate = aggregatedVatRate,
                 DeliveryFee = deliveryFee,
                 DeliveryAddress = Normalize(orderDto.DeliveryAddress),
                 City = Normalize(orderDto.City),
@@ -186,6 +207,9 @@ namespace AIPharm.Core.Services
                 Status = order.Status,
                 PaymentMethod = order.PaymentMethod,
                 Total = order.Total,
+                Subtotal = order.Subtotal,
+                VatAmount = order.VatAmount,
+                VatRate = order.VatRate,
                 DeliveryFee = order.DeliveryFee,
                 CustomerName = order.CustomerName ?? order.User?.FullName,
                 CustomerEmail = order.CustomerEmail ?? order.User?.Email,
@@ -210,7 +234,9 @@ namespace AIPharm.Core.Services
                         ProductDescription = i.ProductDescription,
                         Quantity = i.Quantity,
                         UnitPrice = i.UnitPrice,
-                        TotalPrice = decimal.Round(i.UnitPrice * i.Quantity, 2, MidpointRounding.AwayFromZero)
+                        TotalPrice = decimal.Round(i.UnitPrice * i.Quantity, 2, MidpointRounding.AwayFromZero),
+                        VatAmount = decimal.Round(i.VatAmount, 2, MidpointRounding.AwayFromZero),
+                        VatRate = i.VatRate
                     })
                     .ToList()
             };

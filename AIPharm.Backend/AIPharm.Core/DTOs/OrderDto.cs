@@ -9,9 +9,13 @@ namespace AIPharm.Core.DTOs
     {
         public int Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
+        public string OrderKey => OrderNumber;
         public OrderStatus Status { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
         public decimal Total { get; set; }
+        public decimal Subtotal { get; set; }
+        public decimal VatAmount { get; set; }
+        public decimal VatRate { get; set; }
         public decimal DeliveryFee { get; set; }
         public decimal GrandTotal => Total + DeliveryFee;
         public string? CustomerName { get; set; }
@@ -23,6 +27,7 @@ namespace AIPharm.Core.DTOs
         public string? Country { get; set; }
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime OrderDate => CreatedAt;
         public DateTime UpdatedAt { get; set; }
         public string UserId { get; set; } = string.Empty;
         public string? UserEmail { get; set; }
@@ -39,6 +44,9 @@ namespace AIPharm.Core.DTOs
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal TotalPrice { get; set; }
+        public decimal VatAmount { get; set; }
+        public decimal VatRate { get; set; }
+        public decimal NetTotal => decimal.Round(TotalPrice - VatAmount, 2, MidpointRounding.AwayFromZero);
     }
 
     public class CreateOrderItemDto
