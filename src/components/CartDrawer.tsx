@@ -54,6 +54,13 @@ const CartDrawer: React.FC = () => {
     setShowCheckoutModal(false);
   };
 
+  const handleLoginPromptClick = () => {
+    dispatch({ type: 'SET_CART_OPEN', payload: false });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aiPharm:openLoginModal'));
+    }
+  };
+
   if (!state.isOpen && !showCheckoutModal) return null;
 
   return (
@@ -196,7 +203,13 @@ const CartDrawer: React.FC = () => {
                 {!isAuthenticated && (
                   <div className="flex items-center space-x-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
                     <Lock className="h-4 w-4" />
-                    <span>{t('cart.loginRequired')}</span>
+                    <button
+                      type="button"
+                      onClick={handleLoginPromptClick}
+                      className="font-semibold underline-offset-4 transition-colors hover:underline focus:underline focus:outline-none"
+                    >
+                      {t('cart.loginRequired')}
+                    </button>
                   </div>
                 )}
 

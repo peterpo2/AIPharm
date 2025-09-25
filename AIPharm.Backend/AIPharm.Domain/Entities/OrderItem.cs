@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -13,6 +14,12 @@ namespace AIPharm.Domain.Entities
         
         [Column(TypeName = "decimal(10,2)")]
         public decimal UnitPrice { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal VatAmount { get; set; }
+
+        [Column(TypeName = "decimal(4,2)")]
+        public decimal VatRate { get; set; } = 0.20m;
         
         [MaxLength(200)]
         public string ProductName { get; set; } = string.Empty;
@@ -27,5 +34,8 @@ namespace AIPharm.Domain.Entities
         // Calculated properties
         [NotMapped]
         public decimal TotalPrice => UnitPrice * Quantity;
+
+        [NotMapped]
+        public decimal NetTotal => decimal.Round(TotalPrice - VatAmount, 2, MidpointRounding.AwayFromZero);
     }
 }
