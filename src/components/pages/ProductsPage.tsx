@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { ArrowUpRight, CheckCircle } from 'lucide-react';
 
 import ProductGrid from '../ProductGrid';
 import { useLanguage } from '../../context/LanguageContext';
@@ -50,114 +50,145 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
     : t('products.allProducts');
 
   return (
-    <div className="bg-gray-50 py-10">
-      <div className="container mx-auto px-4 space-y-8">
-        <section className="space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm lg:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl space-y-3">
-              <span className="text-sm font-semibold uppercase tracking-wide text-emerald-600">
+    <div className="bg-gray-50 py-12">
+      <div className="container mx-auto px-4">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_1fr] xl:gap-10">
+          <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:h-fit">
+            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
                 {t('products.catalogTitle')}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900 lg:text-4xl">{t('products.catalogDescription')}</h1>
-              <p className="text-base text-gray-600">{t('products.categoryOverviewDescription')}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm">
-                <p className="font-semibold text-emerald-700">{t('products.totalProductsLabel')}</p>
-                <p className="text-2xl font-bold text-emerald-800">{allProducts.length}</p>
+              <h1 className="mt-3 text-3xl font-bold text-gray-900 lg:text-[2.5rem] lg:leading-[1.1]">
+                {t('products.catalogDescription')}
+              </h1>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">{t('products.categoryOverviewDescription')}</p>
+
+              <div className="mt-6 grid grid-cols-2 gap-3 text-xs font-semibold">
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                  <p className="text-emerald-700">{t('products.totalProductsLabel')}</p>
+                  <p className="mt-1 text-2xl font-bold text-emerald-800">{allProducts.length}</p>
+                </div>
+                <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3">
+                  <p className="text-sky-700">{t('products.category')}</p>
+                  <p className="mt-1 text-2xl font-bold text-sky-800">{categories.length}</p>
+                </div>
               </div>
-              <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm">
-                <p className="font-semibold text-sky-700">{t('products.category')}</p>
-                <p className="text-2xl font-bold text-sky-800">{categories.length}</p>
-              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-            <button
-              type="button"
-              onClick={() => onCategoryChange(null)}
-              className={`flex h-full flex-col justify-center rounded-xl border p-4 text-left text-emerald-700 transition-all duration-200 ${
-                selectedCategory === null
-                  ? 'border-emerald-300 bg-emerald-50 shadow-sm'
-                  : 'border-emerald-200 bg-emerald-50 hover:border-emerald-300 hover:bg-emerald-100'
-              }`}
-            >
-              <span className="text-sm font-semibold">{t('products.viewAll')}</span>
-              <span className="mt-1 text-xs text-emerald-700">{t('products.categoryOverview')}</span>
-            </button>
-
-            {categorySummaries.map((category) => {
-              const IconComponent = getCategoryIcon(category.icon);
-              const isSelected = selectedCategory === category.id;
-
-              return (
+            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  {t('products.category')}
+                </h2>
                 <button
-                  key={category.id}
                   type="button"
-                  onClick={() => onCategoryChange(category.id)}
-                  className={`group flex h-full flex-col justify-between rounded-xl border p-4 text-left transition-all duration-200 ${
-                    isSelected
-                      ? 'border-emerald-300 bg-emerald-50 shadow-sm'
-                      : 'border-gray-200 bg-white hover:border-emerald-300 hover:shadow-md'
+                  onClick={() => onCategoryChange(null)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                    selectedCategory === null
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                      : 'border-transparent text-gray-500 hover:border-emerald-300 hover:text-emerald-700'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg text-emerald-600 transition-colors duration-200 ${
-                        isSelected ? 'bg-emerald-500 text-white' : 'bg-emerald-50 group-hover:bg-emerald-100'
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {t('products.viewAll')}
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {categorySummaries.map((category) => {
+                  const IconComponent = getCategoryIcon(category.icon);
+                  const isSelected = selectedCategory === category.id;
+
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => onCategoryChange(category.id)}
+                      className={`group flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition-all ${
+                        isSelected
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm'
+                          : 'border-transparent bg-gray-50 text-gray-600 hover:border-emerald-200 hover:bg-white hover:text-emerald-700'
                       }`}
                     >
-                      <IconComponent className="h-5 w-5" />
-                    </span>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-                      {category.count} {t('products.products')}
-                    </span>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    <h3 className="text-base font-semibold text-gray-900">{category.translatedName}</h3>
-                    <p className="text-xs text-gray-500">
-                      {t('products.inCategory')} {category.translatedName}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                            isSelected ? 'bg-emerald-500 text-white' : 'bg-white text-emerald-600'
+                          }`}
+                        >
+                          <IconComponent className="h-5 w-5" />
+                        </span>
+                        <div>
+                          <p className="font-semibold leading-tight">{category.translatedName}</p>
+                          <p className="text-xs text-gray-500 group-hover:text-emerald-600">
+                            {t('products.inCategory')} {category.translatedName}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-600">
+                        {category.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
 
-        <section>
-          {(hasActiveFilters || filteredProducts.length > 0) && (
-            <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <section className="space-y-6">
+            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{resultsTitle}</h2>
-                  <p className="text-gray-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+                    {t('products.catalogTitle')}
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold text-gray-900 lg:text-3xl">{resultsTitle}</h2>
+                  <p className="mt-2 text-sm text-gray-600">
                     {hasActiveFilters
                       ? `${filteredProducts.length} ${t('products.products')}`
                       : t('products.categoryOverview')}
                   </p>
                 </div>
-                {hasActiveFilters && (
-                  <button
-                    type="button"
-                    onClick={() => onCategoryChange(null)}
-                    className="inline-flex items-center px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:border-emerald-300 hover:text-emerald-600 transition-colors"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    {t('products.viewAll')}
-                  </button>
+
+                {selectedCategoryEntity && (
+                  <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                    {(() => {
+                      const IconComponent = getCategoryIcon(selectedCategoryEntity.icon);
+                      return (
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-emerald-600">
+                          <IconComponent className="h-5 w-5" />
+                        </span>
+                      );
+                    })()}
+                    <div>
+                      <p className="font-semibold text-gray-900">{selectedCategoryLabel}</p>
+                      <p className="text-xs text-gray-500">
+                        {t('products.inCategory')} {selectedCategoryLabel}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
 
-          <ProductGrid
-            products={filteredProducts}
-            isLoading={false}
-            onEmptyAction={() => onCategoryChange(null)}
-          />
-        </section>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => onCategoryChange(null)}
+                  className="mt-6 inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-emerald-300 hover:text-emerald-700"
+                >
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                  {t('products.viewAll')}
+                </button>
+              )}
+            </div>
+
+            <ProductGrid
+              products={filteredProducts}
+              isLoading={false}
+              onEmptyAction={() => onCategoryChange(null)}
+            />
+          </section>
+        </div>
       </div>
     </div>
   );
