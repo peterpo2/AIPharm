@@ -1,240 +1,103 @@
-# 🐳 AIPharm+ Docker Setup
+# Docker Guide for AIPharm+
 
-Complete containerized setup for AIPharm+ with Docker Compose.
+AIPharm+ is a digital-pharmacy demo that blends a React storefront, .NET 8 Web API, SQL Server database, and an OpenAI-powered
+assistant. The Docker setup lets you experience every feature—including the seeded catalog, AI chat widget, and admin dashboard—
+without installing the individual runtimes.
 
-## 🚀 Quick Start
-
-### Prerequisites
-- **Docker Desktop** installed on Windows 11
-- **Git** (to clone the project)
-
-### 1. Clone & Run
-```bash
-# Clone the project
-git clone <your-repo-url>
-cd AIPharm
-
-# Start everything with one command
-docker-compose up
-```
-
-### 2. Access the Application
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8080
-- **Swagger UI**: http://localhost:8080/swagger
-- **Database**: localhost:1433 (sa/YOURPASSWORD)
-
-## 🏗️ Architecture
-
-### Services
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │    Backend      │    │   Database      │
-│   React + Vite  │───▶│   .NET 8 API    │───▶│  SQL Server     │
-│   Port: 3000    │    │   Port: 8080    │    │   Port: 1433    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-### Docker Containers
-- **aipharm-frontend** - React application
-- **aipharm-backend** - .NET 8 Web API
-- **aipharm-database** - SQL Server 2022
-
-## 📋 Available Commands
-
-### Start Services
-```bash
-# Start all services
-docker-compose up
-
-# Start in background
-docker-compose up -d
-
-# Start specific service
-docker-compose up frontend
-```
-
-### Stop Services
-```bash
-# Stop all services
-docker-compose down
-
-# Stop and remove volumes (⚠️ deletes database data)
-docker-compose down -v
-```
-
-### View Logs
-```bash
-# All services
-docker-compose logs
-
-# Specific service
-docker-compose logs backend
-docker-compose logs frontend
-docker-compose logs database
-
-# Follow logs
-docker-compose logs -f backend
-```
-
-### Rebuild Services
-```bash
-# Rebuild all
-docker-compose build
-
-# Rebuild specific service
-docker-compose build backend
-
-# Rebuild and start
-docker-compose up --build
-```
-
-## 🔧 Development
-
-### Hot Reload
-- **Frontend**: ✅ Automatic (Vite hot reload)
-- **Backend**: ❌ Requires rebuild (`docker-compose build backend`)
-
-### Making Changes
-
-#### Frontend Changes
-```bash
-# Changes in src/ are automatically reflected
-# No rebuild needed
-```
-
-#### Backend Changes
-```bash
-# After changing C# code:
-docker-compose build backend
-docker-compose up backend
-```
-
-### Database Access
-```bash
-# Connect to SQL Server
-docker exec -it aipharm-database /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YOURPASSWORD
-```
-
-## 🎯 Default Account
-
-### Login Credentials
-- **Admin**: aipharmproject@gmail.com / Admin123!
-
-Registration confirmations and 2FA emails are dispatched via the Gmail mailbox `aipharmproject@gmail.com`. Enable the optional pickup folder by setting `Email:UsePickupDirectory=true` if you want `.eml` copies written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`; otherwise the messages are sent directly to each recipient's inbox. When using Gmail SMTP delivery, ensure 2-Step Verification is enabled, the app password `vdzotamtdvlirmpt` is up to date, and rebuild the backend container after updating the credentials in `appsettings.Docker.json`.
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-#### Port Already in Use
-```bash
-# Check what's using the port
-netstat -ano | findstr :3000
-netstat -ano | findstr :8080
-
-# Kill the process
-taskkill /PID <PID> /F
-```
-
-#### Database Connection Issues
-```bash
-# Check database health
-docker-compose ps
-docker-compose logs database
-
-# Restart database
-docker-compose restart database
-```
-
-#### Frontend Not Loading
-```bash
-# Check frontend logs
-docker-compose logs frontend
-
-# Rebuild frontend
-docker-compose build frontend
-docker-compose up frontend
-```
-
-#### Backend API Errors
-```bash
-# Check backend logs
-docker-compose logs backend
-
-# Check database connection
-docker-compose exec backend curl http://localhost:8080/api/health
-```
-
-### Reset Everything
-```bash
-# Nuclear option - reset everything
-docker-compose down -v
-docker system prune -a
-docker-compose up --build
-```
-
-## 📊 Container Status
-
-### Check Running Containers
-```bash
-docker ps
-```
-
-### Container Resource Usage
-```bash
-docker stats
-```
-
-### Container Shell Access
-```bash
-# Backend container
-docker exec -it aipharm-backend bash
-
-# Frontend container
-docker exec -it aipharm-frontend sh
-
-# Database container
-docker exec -it aipharm-database bash
-```
-
-## 🚀 Production Deployment
-
-### Environment Variables
-Create `.env` file:
-```env
-# Database
-SA_PASSWORD=YourStrongPassword123!
-
-# JWT
-JWT_KEY=YourSuperSecretJWTKey
-
-# API URL
-VITE_API_BASE_URL=https://your-api-domain.com/api
-```
-
-### Production Docker Compose
-```bash
-# Use production compose file
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-## 📝 Notes
-
-- **Database data** persists in Docker volume `sqlserver_data`
-- **First startup** takes longer (downloading images, database setup)
-- **Hot reload** works for frontend, backend needs rebuild
-- **Swagger** is available in all environments for API testing
-
-## 🎉 Success!
-
-If you see:
-- Frontend at http://localhost:3000
-- Backend at http://localhost:8080/swagger
-- No errors in logs
-
-You're ready to develop! 🚀
+This is a beginner-friendly walkthrough for running the entire project with Docker Compose.  You do not need Visual Studio,
+Node.js, or SQL Server when using these steps.
 
 ---
 
-**Happy Coding with Docker!** 🐳💊
+## 1. Requirements
+
+1. [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+2. [Git](https://git-scm.com/downloads) to copy the repository.
+3. An OpenAI API key with billing enabled (the chat bot will not work without credit on your OpenAI account).
+4. A strong SQL Server password that you will use for the demo database.
+
+Optional: update the email settings if you want the app to send real emails.  The defaults point to a sample Gmail inbox.
+
+---
+
+## 2. Prepare the project
+
+1. Open a terminal and clone the repository:
+   ```bash
+   git clone https://github.com/your-username/AIPharm.git
+   cd AIPharm
+   ```
+2. Open `docker-compose.yml` and replace every `Xyzzy2005!` value with the SQL Server password you chose.
+3. Create a file named `.env` in the same folder and add your OpenAI key:
+   ```bash
+   echo OpenAI__ApiKey=your-openai-api-key > .env
+   ```
+   - If you are on Windows PowerShell use: `Set-Content -Path .env -Value 'OpenAI__ApiKey=your-openai-api-key'`
+4. (Optional) Edit `AIPharm.Backend/AIPharm.Web/appsettings.json` and replace the email address, password, and SMTP host with
+your own values if you need working email.
+
+You only need to do these edits once.
+
+---
+
+## 3. Start the containers
+
+```bash
+docker-compose up --build
+```
+
+- The first run downloads the base images, so give it a few minutes.
+- When you see `✅ Database migrated and seeded.` the backend and database are ready.
+
+### Access the services
+| Service | URL |
+| --- | --- |
+| Storefront | http://localhost:3000 |
+| Swagger API explorer | http://localhost:5000/swagger |
+| SQL Server | localhost, port 1433 |
+
+Use the password you chose earlier when connecting to the database.
+
+---
+
+## 4. Stop, start, and clean up later
+
+| Action | Command |
+| --- | --- |
+| Stop everything | Press `Ctrl + C` in the terminal that is running Docker Compose |
+| Restart after making code changes | `docker-compose up --build` |
+| Run in the background | `docker-compose up -d` |
+| View logs from one service | `docker-compose logs backend` (replace `backend` with `frontend` or `database`) |
+| Shut down and delete the database volume | `docker-compose down -v` |
+
+If you change the SQL password or OpenAI key rerun `docker-compose up --build` to reload the configuration.
+
+---
+
+## 5. Sign in with the sample users
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Administrator | aipharmproject@gmail.com | Admin123! |
+| Customer | maria.ivanova@example.com | Customer123! |
+| Customer | georgi.petrov@example.com | Customer456! |
+
+Change the administrator password if you plan to show the project to others.
+
+---
+
+## 6. Troubleshooting
+
+| Problem | What to try |
+| --- | --- |
+| Docker says a port is in use | Close other apps that listen on ports 3000, 5000, or 1433. Then rerun `docker-compose up --build`. |
+| The backend container restarts repeatedly | Ensure the SQL password in `docker-compose.yml` matches the one in `ConnectionStrings__DefaultConnection`. |
+| AI chat responses fail | Confirm your OpenAI account has credit and the `.env` file contains the correct API key. Restart the backend container after editing the key. |
+| Emails are not delivered | Update the `Email` section in `appsettings.json` with your own SMTP settings and app password. |
+
+If you get stuck, run `docker-compose down -v` to reset the environment and start again.
+
+---
+
+You are now ready to explore the project with Docker.  Once you feel comfortable you can move on to the more detailed
+`SETUP-GUIDE.md` for manual development workflows.

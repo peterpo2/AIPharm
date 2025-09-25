@@ -1,282 +1,46 @@
-#
+# AIPharm+
 
-## 🌟 **Project Overview**
+AIPharm+ is a full digital-pharmacy demo that combines a .NET 8 Web API, a React + TypeScript storefront, seeded SQL Server
+data, and an AI chat assistant powered by OpenAI. The goal is to help you explore a realistic e-commerce experience that includes
+medical product browsing, ordering, and conversational support.
 
-AIPharm+ is a cutting-edge digital pharmacy platform that combines traditional pharmaceutical care with modern AI technology. Built with .NET 8 backend and React frontend, it offers a seamless shopping experience with intelligent product recommendations and medical consultations.
-
-### 🎯 **Key Highlights**
-- 🤖 **AI Medical Assistant** - Get instant advice on medications
-- 🛒 **Smart Shopping Cart** - Real-time inventory and pricing
-- 🔍 **Advanced Search** - Find products by name, ingredient, or category
-- 📱 **Mobile-First Design** - Responsive across all devices
-- 🌍 **Multi-Language Support** - Bulgarian and English
-- 🐳 **Docker Ready** - One-command deployment
+This README keeps the original project context while adding step-by-step setup guidance for newcomers. If you follow each section
+in order you will have the project running locally.
 
 ---
 
-## 🚀 **Quick Start**
+## Project overview
 
-### **Prerequisites**
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed
-- Git for cloning the repository
+### Key highlights
+- **AI medical assistant** – ask medication questions and receive context-aware answers from the OpenAI API.
+- **Modern storefront** – a responsive React UI with search, categories, cart management, and localized Bulgarian/English text.
+- **Production-style backend** – .NET 8 Web API with JWT authentication, Swagger docs, health checks, and Entity Framework Core.
+- **Ready-to-use data** – seeded products, categories, customers, and orders so you can test flows immediately.
 
-### **Installation**
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/aipharm-plus.git
-cd aipharm-plus
+### Feature tour
 
-# Start everything with  🏥 AIPharm+ - Modern AI-Powered Digital Pharmacy
+| Frontend | Backend |
+| --- | --- |
+| React 18 + TypeScript + Vite | .NET 8 Web API with Clean Architecture |
+| Tailwind CSS styling with responsive layouts | Entity Framework Core with SQL Server |
+| Dynamic product catalog, cart, and checkout flows | JWT authentication, email notifications, and background services |
+| Built-in AI chat widget for customer help | Swagger/OpenAPI docs, health checks, and seeded demo data |
 
-<div align="center">
-
-![AIPharm+ Logo](https://img.shields.io/badge/AIPharm+-Digital%20Pharmacy-00D4AA?style=for-the-badge&logo=medical-cross&logoColor=white)
-
-**A full-featured e-commerce platform for pharmacies with AI assistant, modern design, and automated database management.**
-
-[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com/)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-
-[🚀 Quick Start](#-quick-start) • [✨ Features](#-features) • [🏗️ Architecture](#️-architecture) • [📖 Documentation](#-documentation) • [🤝 Contributing](#-contributing)
-
-</div>
-
----Docker
-docker-compose up
-```
-
-### **Access the Application**
-- 🌐 **Frontend**: http://localhost:3000
-- 🔧 **Backend API**: http://localhost:8080
-- 📚 **Swagger Documentation**: http://localhost:8080/swagger
-- 🗄️ **Database**: localhost:1433 (sa/YOURPASSWORD)
-
-### **Default Account**
-| Role | Email | Password |
-|------|-------|----------|
-| 👑 **Admin (default)** | aipharmproject@gmail.com | Admin123! |
-| 🛍️ **Customer** | maria.ivanova@example.com | Customer123! |
-| 🛍️ **Customer** | georgi.petrov@example.com | Customer456! |
-| 🛍️ **Customer** | iva.stoyanova@example.com | Customer789! |
-
-> **Note:** Registration confirmations and two-factor verification emails are sent from `aipharmproject@gmail.com`. If you enable the optional pickup folder (`Email:UsePickupDirectory = true`) the messages are written to `AIPharm.Backend/AIPharm.Web/App_Data/Emails`; otherwise they are delivered straight to each recipient's inbox. For Gmail delivery ensure 2-Step Verification is enabled, the app password `vdzotamtdvlirmpt` is current, and the credentials in `appsettings*.json` match the mailbox before rebuilding the backend container.
-
----
-
-## ✨ **Features**
-
-<table>
-<tr>
-<td width="50%">
-
-### 🎨 **Frontend Features**
-- ✅ Modern React 18 with TypeScript
-- ✅ Tailwind CSS for styling
-- ✅ Framer Motion animations
-- ✅ Responsive design (mobile-first)
-- ✅ Real-time cart updates
-- ✅ Multi-language support (BG/EN)
-- ✅ AI chat integration
-- ✅ Advanced product filtering
-- ✅ User authentication & profiles
-
-</td>
-<td width="50%">
-
-### ⚙️ **Backend Features**
-- ✅ .NET 8 Web API
-- ✅ Clean Architecture pattern
-- ✅ Entity Framework Core
-- ✅ JWT Authentication
-- ✅ AutoMapper integration
-- ✅ Swagger/OpenAPI docs
-- ✅ SQL Server database
-- ✅ Repository pattern
-- ✅ Dependency injection
-- ✅ Health checks
-
-</td>
-</tr>
-</table>
-
-### 🤖 **AI Assistant Capabilities**
-- 💊 **Medication Information** - Detailed drug information and usage
-- ⚠️ **Side Effects** - Comprehensive safety information
-- 💡 **Dosage Guidance** - Proper usage instructions
-- 🔄 **Drug Interactions** - Safety warnings and recommendations
-- 📋 **General Health Advice** - Basic medical guidance
-
----
-
-## 🏗️ **Architecture**
-
-### **System Architecture**
+### Architecture at a glance
 ```mermaid
 graph TB
     A[React Frontend] --> B[.NET 8 Web API]
     B --> C[Entity Framework Core]
     C --> D[SQL Server Database]
-    B --> E[AI Assistant Service]
+    B --> E[OpenAI Assistant Service]
     F[Docker Compose] --> A
     F --> B
     F --> D
 ```
 
-### **Project Structure**
-```
-AIPharm/
-├── 🌐 Frontend (React + TypeScript)
-│   ├── src/
-│   │   ├── components/          # UI Components
-│   │   ├── context/             # State Management
-│   │   ├── services/            # API Integration
-│   │   └── types/               # TypeScript Definitions
-│   └── public/                  # Static Assets
-│
-├── 🔧 Backend (.NET 8)
-│   ├── AIPharm.Web/             # API Controllers
-│   ├── AIPharm.Core/            # Business Logic
-│   ├── AIPharm.Domain/          # Entities & Models
-│   └── AIPharm.Infrastructure/  # Data Access Layer
-│
-└── 🐳 Docker Configuration
-    ├── docker-compose.yml       # Service Orchestration
-    ├── Dockerfile.frontend      # React Container
-    └── Dockerfile.backend       # .NET Container
-```
-
-### **Technology Stack**
-
-<div align="center">
-
-| Layer | Technologies |
-|-------|-------------|
-| **Frontend** | ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white) ![Tailwind](https://img.shields.io/badge/Tailwind-06B6D4?style=flat&logo=tailwindcss&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white) |
-| **Backend** | ![.NET](https://img.shields.io/badge/.NET_8-512BD4?style=flat&logo=dotnet&logoColor=white) ![C#](https://img.shields.io/badge/C%23-239120?style=flat&logo=c-sharp&logoColor=white) ![Entity Framework](https://img.shields.io/badge/EF_Core-512BD4?style=flat&logo=microsoft&logoColor=white) |
-| **Database** | ![SQL Server](https://img.shields.io/badge/SQL_Server-CC2927?style=flat&logo=microsoft-sql-server&logoColor=white) |
-| **DevOps** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white) ![Git](https://img.shields.io/badge/Git-F05032?style=flat&logo=git&logoColor=white) |
-
-</div>
-
----
-
-## 📊 **Database Schema**
-
-### **Core Entities**
-```sql
-Users (Authentication & Profiles)
-├── Categories (Product Organization)
-│   └── Products (Pharmacy Inventory)
-│       ├── CartItems (Shopping Cart)
-│       └── OrderItems (Purchase History)
-└── Orders (Transaction Records)
-```
-
-### **Sample Data**
-- 📦 **12+ Products** with real pharmaceutical data
-- 🏷️ **6 Categories** (Painkillers, Vitamins, Cold & Flu, etc.)
-- 👤 **Default Admin Account** with email 2FA enabled
-- 🛒 **Shopping Cart** functionality
-- 📋 **Order Management** system
-
----
-
-## 🛠️ **Development**
-
-### **Local Development Setup**
-
-#### **Option 1: Docker (Recommended)**
-```bash
-# Clone and start
-git clone https://github.com/yourusername/aipharm-plus.git
-cd aipharm-plus
-docker-compose up
-```
-
-#### **Option 2: Manual Setup**
-```bash
-# Backend (.NET 8 required)
-cd AIPharm.Backend
-dotnet restore
-dotnet run --project AIPharm.Web
-
-# Frontend (Node.js 18+ required)
-npm install
-npm run dev
-```
-
-### **Available Scripts**
-```bash
-# Docker commands
-docker-compose up          # Start all services
-docker-compose down        # Stop all services
-docker-compose build       # Rebuild containers
-docker-compose logs        # View logs
-
-# Development commands
-npm run dev               # Start frontend dev server
-npm run build            # Build for production
-dotnet run               # Start backend API
-dotnet test              # Run backend tests
-```
-
-### **Environment Configuration**
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Configure your settings
-VITE_API_BASE_URL=http://localhost:8080/api
-SA_PASSWORD=YourStrongPassword123!
-JWT_KEY=YourSuperSecretJWTKey
-```
-
----
-
-## 📖 **API Documentation**
-
-### **Core Endpoints**
-
-#### **🔐 Authentication**
-```http
-POST /api/auth/login      # User login
-POST /api/auth/register   # User registration
-GET  /api/auth/me         # Current user info
-POST /api/auth/logout     # User logout
-```
-
-#### **🛍️ Products**
-```http
-GET    /api/products           # Get products (with filtering)
-GET    /api/products/{id}      # Get product details
-GET    /api/products/search    # Search products
-POST   /api/products           # Create product (Admin)
-PUT    /api/products/{id}      # Update product (Admin)
-DELETE /api/products/{id}      # Delete product (Admin)
-```
-
-#### **🛒 Shopping Cart**
-```http
-GET    /api/cart              # Get current cart
-POST   /api/cart/items        # Add item to cart
-PUT    /api/cart/items/{id}   # Update cart item
-DELETE /api/cart/items/{id}   # Remove from cart
-DELETE /api/cart              # Clear cart
-```
-
-#### **🤖 AI Assistant**
-```http
-POST /api/assistant/ask       # Ask AI a question
-GET  /api/assistant/history   # Get conversation history
-```
-
-### **Response Examples**
-
+### Example API responses
 <details>
-<summary>📦 Product Response</summary>
+<summary>Product response</summary>
 
 ```json
 {
@@ -286,264 +50,153 @@ GET  /api/assistant/history   # Get conversation history
   "description": "Ефективно обезболяващо и жаропонижаващо средство",
   "price": 2.30,
   "stockQuantity": 150,
-  "categoryId": 1,
   "categoryName": "Обезболяващи",
-  "requiresPrescription": false,
-  "activeIngredient": "Парацетамол",
-  "dosage": "500мг",
-  "manufacturer": "Актавис",
-  "rating": 4.7,
-  "reviewCount": 89
+  "requiresPrescription": false
 }
 ```
+
 </details>
 
 <details>
-<summary>🛒 Cart Response</summary>
+<summary>AI assistant prompt and reply</summary>
 
 ```json
 {
-  "id": 1,
-  "userId": "demo-user",
-  "items": [
-    {
-      "id": 1,
-      "productId": 1,
-      "productName": "Парацетамол 500мг",
-      "quantity": 2,
-      "unitPrice": 2.30,
-      "totalPrice": 4.60
-    }
-  ],
-  "total": 4.60,
-  "itemCount": 2
+  "question": "What is the recommended dosage for ibuprofen?",
+  "answer": "Adults can take 200–400 mg every 4–6 hours. Do not exceed 1200 mg in 24 hours without medical supervision."
 }
 ```
+
 </details>
 
----
-
-## 🧪 **Testing**
-
-### **Backend Testing**
-```bash
-# Run all tests
-dotnet test
-
-# Run with coverage
-dotnet test --collect:"XPlat Code Coverage"
-```
-
-### **Frontend Testing**
-```bash
-# Unit tests
-npm run test
-
-# E2E tests
-npm run test:e2e
-
-# Coverage report
-npm run test:coverage
-```
-
-### **API Testing**
-- 📚 **Swagger UI**: http://localhost:8080/swagger
-- 🔧 **Postman Collection**: Available in `/docs` folder
-- 🤖 **Automated Tests**: Included in CI/CD pipeline
+Use the sections below when you are ready to clone the repository and configure your environment.
 
 ---
 
-## 🚀 **Deployment**
+## 1. What you need before cloning the project
 
-### **Docker Deployment (Recommended)**
-```bash
-# Production build
-docker-compose -f docker-compose.prod.yml up -d
+| Purpose | What to do |
+| --- | --- |
+| Source code | Install [Git](https://git-scm.com/downloads). You will use it to copy the project from GitHub. |
+| Running everything with one command | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). It lets you run the backend, database, and frontend without configuring them one by one. |
+| AI chat assistant | Create an [OpenAI account](https://platform.openai.com/). The chat bot uses the paid API, so add a billing method and buy some credits before you run the project. Afterwards create an API key and keep it private. |
+| Outgoing email (optional) | The sample configuration uses Gmail. If you want email to work you must use **your own mailbox** and app password. Do **not** ship the default password. |
+| Manual development (optional) | If you prefer running the projects yourself install the .NET 8 SDK, Node.js 18+, and a SQL Server instance. These are not required when using Docker. |
 
-# Scale services
-docker-compose up --scale frontend=2 --scale backend=3
-```
-
-### **Cloud Deployment**
-- ☁️ **Azure**: App Service + SQL Database
-- 🌐 **AWS**: ECS + RDS
-- 🔥 **Google Cloud**: Cloud Run + Cloud SQL
-- 🌊 **DigitalOcean**: App Platform + Managed Database
-
-### **Environment Variables**
-```bash
-# Production settings
-ASPNETCORE_ENVIRONMENT=Production
-ConnectionStrings__DefaultConnection=YourProductionConnectionString
-Jwt__Key=YourProductionJWTKey
-VITE_API_BASE_URL=https://your-api-domain.com/api
-```
+> **Tip:** Set up the OpenAI account and email credentials first. You will need them when editing the configuration files in step 3.
 
 ---
 
-## 📈 **Performance & Monitoring**
+## 2. Copy the project from GitHub
 
-### **Performance Features**
-- ⚡ **Vite** for fast frontend builds
-- 🔄 **Hot Module Replacement** in development
-- 📦 **Code Splitting** for optimized loading
-- 🗄️ **Entity Framework** query optimization
-- 💾 **Response Caching** for API endpoints
-- 🔍 **Database Indexing** for fast searches
-
-### **Monitoring**
-- 🏥 **Health Checks** - `/api/health`
-- 📊 **Application Insights** integration ready
-- 📝 **Structured Logging** with Serilog
-- 🔍 **Error Tracking** and reporting
-
----
-
-## 🔒 **Security**
-
-### **Authentication & Authorization**
-- 🔐 **JWT Tokens** with secure signing
-- 👤 **Role-based Access Control** (Admin/User)
-- 🛡️ **Password Hashing** with BCrypt
-- 🔄 **Token Refresh** mechanism
-- 🚫 **Rate Limiting** for API protection
-
-### **Data Protection**
-- 🔒 **HTTPS** enforcement
-- 🛡️ **CORS** configuration
-- 🔐 **SQL Injection** protection via EF Core
-- 🧹 **Input Validation** and sanitization
-- 📝 **Audit Logging** for sensitive operations
-
----
-
-## 🌍 **Internationalization**
-
-### **Supported Languages**
-- 🇧🇬 **Bulgarian** (Default)
-- 🇬🇧 **English**
-
-### **Features**
-- 🔄 **Dynamic Language Switching**
-- 🏷️ **Product Name Translation**
-- 📱 **UI Component Translation**
-- 🌐 **API Response Localization**
-- 🎌 **Country Flag Indicators**
-
----
-
-## 🤝 **Contributing**
-
-We welcome contributions! Here's how you can help:
-
-### **Getting Started**
-1. 🍴 **Fork** the repository
-2. 🌿 **Create** a feature branch: `git checkout -b feature/amazing-feature`
-3. 💻 **Make** your changes
-4. ✅ **Test** your changes
-5. 📝 **Commit**: `git commit -m 'Add amazing feature'`
-6. 🚀 **Push**: `git push origin feature/amazing-feature`
-7. 🔄 **Create** a Pull Request
-
-### **Development Guidelines**
-- 📋 Follow existing code style
-- ✅ Add tests for new features
-- 📝 Update documentation
-- 🔍 Ensure all tests pass
-- 📱 Test on multiple devices
-
-### **Code Style**
-- **Backend**: Follow C# conventions and Clean Code principles
-- **Frontend**: Use ESLint and Prettier configurations
-- **Database**: Use descriptive names and proper indexing
-- **Docker**: Optimize container sizes and security
-
----
-
-## 📄 **License**
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2024 AIPharm+
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
-
----
-
-## 🙏 **Acknowledgments**
-
-### **Technologies & Libraries**
-- 🚀 [.NET 8](https://dotnet.microsoft.com/) - Backend framework
-- ⚛️ [React](https://reactjs.org/) - Frontend library
-- 🎨 [Tailwind CSS](https://tailwindcss.com/) - Styling framework
-- 🐳 [Docker](https://www.docker.com/) - Containerization
-- 🗄️ [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - ORM
-- 🔧 [Vite](https://vitejs.dev/) - Build tool
-
-### **Inspiration**
-- 💊 Modern pharmacy management systems
-- 🤖 AI-powered healthcare solutions
-- 🛒 E-commerce best practices
-- 📱 Mobile-first design principles
-
----
-
-## 📞 **Support**
-
-### **Getting Help**
-- 📖 **Documentation**: Check our [Wiki](https://github.com/yourusername/aipharm-plus/wiki)
-- 🐛 **Issues**: [Report bugs](https://github.com/yourusername/aipharm-plus/issues)
-- 💬 **Discussions**: [Join conversations](https://github.com/yourusername/aipharm-plus/discussions)
-- 📧 **Email**: aipharmproject@gmail.com (two-factor sender & admin inbox)
-
-### **FAQ**
-<details>
-<summary>❓ How do I reset the database?</summary>
+Open a terminal (PowerShell on Windows, Terminal on macOS/Linux) and run:
 
 ```bash
-docker-compose down -v
-docker-compose up
+git clone https://github.com/your-username/AIPharm.git
+cd AIPharm
 ```
-</details>
 
-<details>
-<summary>❓ How do I add new products?</summary>
-
-1. Login as admin (aipharmproject@gmail.com / Admin123!)
-2. Use the Swagger UI at http://localhost:8080/swagger
-3. Use the POST /api/products endpoint
-</details>
-
-<details>
-<summary>❓ How do I change the language?</summary>
-
-Click the language switcher in the top-right corner (БГ/EN flags).
-</details>
+You should now be inside the project folder that contains the `docker-compose.yml` file.
 
 ---
 
-<div align="center">
+## 3. Update the secrets and passwords
 
-### 🌟 **Star this repository if you found it helpful!**
+All secrets live in text files so you must edit them once before starting the project.
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/aipharm-plus?style=social)](https://github.com/yourusername/aipharm-plus/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/aipharm-plus?style=social)](https://github.com/yourusername/aipharm-plus/network/members)
-[![GitHub issues](https://img.shields.io/github/issues/yourusername/aipharm-plus)](https://github.com/yourusername/aipharm-plus/issues)
+### 3.1 Choose a database password
+1. Open `docker-compose.yml` in a text editor.
+2. Replace every instance of `Xyzzy2005!` with **your own strong password**. There are two lines to change (one under `database`, one under `backend`).
+3. Save the file.
 
-**Made with ❤️ by the AIPharm+ Team**
+### 3.2 Add your OpenAI API key
+There are two easy options—pick whichever you prefer:
 
-[🔝 Back to Top](#-aipharm---modern-ai-powered-digital-pharmacy)
+- **Option A: environment variable (recommended for Docker users)**  
+  1. Create a new file named `.env` in the project root.  
+  2. Paste the line `OpenAI__ApiKey=your-openai-api-key` and save.  
+  3. Docker Compose automatically loads the value and passes it to the backend.
 
-</div>
+- **Option B: edit the appsettings file**  
+  1. Open `AIPharm.Backend/AIPharm.Web/appsettings.json`.  
+  2. Find the `"OpenAI": { "ApiKey": "" }` section and paste your key between the quotes.  
+  3. Save the file.  
+  4. Remember not to commit this file to public source control.
+
+### 3.3 Configure email (optional)
+If you want the app to send verification emails:
+1. Open `AIPharm.Backend/AIPharm.Web/appsettings.json`.
+2. In the `Email` section replace the Gmail address, app password, and other settings with your own email provider values.  Gmail requires 2-Step Verification and an app password.
+3. To store copies of outgoing emails on disk set `UsePickupDirectory` to `true` and pick a folder inside `AIPharm.Backend/AIPharm.Web/App_Data`.
+
+If you do not need email right now you can leave the defaults. The app will still run.
+
+---
+
+## 4. Start everything with Docker (recommended)
+
+1. Make sure Docker Desktop is running.
+2. From the project root run:
+   ```bash
+   docker-compose up --build
+   ```
+3. The first run downloads several images and may take a few minutes.  When the logs quiet down you are ready.
+
+### Where to go next
+- Frontend store: http://localhost:3000
+- Backend API: http://localhost:5000/swagger
+- SQL Server: localhost on port 1433 (use the password you chose earlier)
+
+To stop everything press `Ctrl + C` in the terminal.  To delete the containers run `docker-compose down`.
+
+---
+
+## 5. Log in with the sample accounts
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Administrator | aipharmproject@gmail.com | Admin123! |
+| Customer | maria.ivanova@example.com | Customer123! |
+| Customer | georgi.petrov@example.com | Customer456! |
+
+Change the admin password after your first login if you will use this project for a demo.
+
+---
+
+## 6. Optional: run the projects without Docker
+
+If you installed the optional tooling from the prerequisites you can run each project by hand:
+
+### Backend (.NET)
+```bash
+cd AIPharm.Backend
+dotnet restore
+cd AIPharm.Web
+dotnet ef database update
+dotnet run
+```
+This starts the API on https://localhost:7001 by default.
+
+### Frontend (React)
+```bash
+cd src
+npm install
+npm run dev
+```
+Open the site at http://localhost:5173.  If the backend runs on a different port update `VITE_API_BASE_URL` in `src/.env` or start the dev server with `VITE_API_BASE_URL=https://localhost:7001/api npm run dev`.
+
+### Database
+Attach to your SQL Server using the password you set in section 3.1.
+
+---
+
+## 7. Common questions
+
+- **Do I have to pay OpenAI?** Yes. The chat assistant calls the paid API. Without credit on your OpenAI account the requests will fail with a 401/403 error.
+- **The backend cannot connect to SQL Server.** Double-check that the password you put into `docker-compose.yml` matches the one in the connection string.  Restart the containers after changing it.
+- **Emails are not arriving.** Verify the address, password, and SMTP host in `appsettings.json`. Gmail requires an app password and TLS on port 587.
+- **How do I reset everything?** Run `docker-compose down -v` to delete the containers and database volume, then start again with `docker-compose up --build`.
+
+---
+
+You now have a local copy of AIPharm+.  Explore the code, change the styling, or extend the API once you are comfortable.

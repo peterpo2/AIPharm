@@ -1,276 +1,131 @@
-# 🏥 AIPharm+ - Complete Setup Guide
+# Manual Setup Guide for AIPharm+
 
-A modern AI-powered digital pharmacy with React frontend and .NET 8 backend.
+AIPharm+ delivers a full digital-pharmacy experience: React + TypeScript storefront, .NET 8 Web API with AI-powered assistance,
+seeded SQL Server data, and sample accounts for testing. Running it manually gives you insight into how each part works and how
+they connect.
 
-## 📋 Prerequisites
-
-### Required Software:
-- **Visual Studio 2022** (17.8 or newer) with ASP.NET Core workload
-- **.NET 8 SDK** (8.0.100 or newer)
-- **Node.js** (18.0 or newer)
-- **SQL Server** (LocalDB, Express, or full version)
-- **Git** (for version control)
-
-### Check Your Versions:
-```powershell
-# Check .NET version
-dotnet --version
-
-# Check Node.js version
-node --version
-
-# Check npm version
-npm --version
-```
-
-## 🚀 Step-by-Step Setup
-
-### **Step 1: Download & Extract Project**
-1. Download the project files
-2. Extract to a folder (e.g., `C:\Projects\AIPharm`)
-3. You should see:
-   ```
-   AIPharm/
-   ├── AIPharm.Backend/     # .NET 8 Backend
-   ├── src/                 # React Frontend
-   ├── public/              # Static assets
-   ├── package.json         # Frontend dependencies
-   └── README.md
-   ```
-
-### **Step 2: Setup Backend (.NET 8)**
-
-#### **Open in Visual Studio 2022:**
-1. Launch **Visual Studio 2022**
-2. Click **File → Open → Project/Solution**
-3. Navigate to `AIPharm.Backend\AIPharm.sln`
-4. Click **Open**
-
-#### **Verify Project Structure:**
-```
-AIPharm.Backend/
-├── AIPharm.sln              # Solution file
-├── AIPharm.Web/             # API Controllers, Startup
-├── AIPharm.Core/            # Business Logic, Services
-├── AIPharm.Domain/          # Entities, Models
-└── AIPharm.Infrastructure/  # Database, Repositories
-```
-
-#### **Build the Solution:**
-1. Right-click on **Solution 'AIPharm'**
-2. Select **Rebuild Solution**
-3. Wait for build to complete (should be successful)
-
-#### **Start the Backend:**
-1. Set **AIPharm.Web** as startup project (right-click → Set as Startup Project)
-2. Press **F5** or **Ctrl+F5** to start
-3. Browser opens at `https://localhost:7001/swagger`
-4. You should see the Swagger API documentation
-
-#### **Verify Database:**
-- Database `AIPharm` is created automatically
-- Sample data is loaded (products, categories, users)
-- No manual database setup needed!
-
-### **Step 3: Setup Frontend (React)**
-
-#### **Open Terminal in Project Root:**
-1. Open **PowerShell** or **Command Prompt**
-2. Navigate to project root: `cd C:\Projects\AIPharm`
-
-#### **Install Dependencies:**
-```powershell
-npm install
-```
-
-#### **Start Development Server:**
-```powershell
-npm run dev
-```
-
-#### **Expected Output:**
-```
-> aipharm-plus@1.0.0 dev
-> vite
-
-  VITE v5.4.8  ready in 500 ms
-
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: use --host to expose
-```
-
-#### **Open in Browser:**
-- Navigate to `http://localhost:5173/`
-- You should see the AIPharm+ homepage
-
-## ✅ Verification Checklist
-
-### **Backend Running Successfully:**
-- ✅ Visual Studio shows no build errors
-- ✅ Browser opens Swagger at `https://localhost:7001/swagger`
-- ✅ API endpoints are visible in Swagger
-- ✅ Health check returns: `GET /api/health`
-
-### **Frontend Running Successfully:**
-- ✅ Terminal shows Vite server running
-- ✅ Browser opens at `http://localhost:5173/`
-- ✅ Homepage loads with products
-- ✅ Language switcher works (БГ/EN)
-- ✅ AI chat button appears
-
-### **Full Integration Test:**
-- ✅ Products load on homepage
-- ✅ Categories filter works
-- ✅ Search functionality works
-- ✅ Add to cart works
-- ✅ AI assistant responds
-- ✅ No console errors
-
-## 🔧 Troubleshooting
-
-### **Backend Issues:**
-
-#### **Build Errors:**
-```powershell
-# Clean and rebuild
-dotnet clean
-dotnet restore
-dotnet build
-```
-
-#### **Database Connection Issues:**
-- Check SQL Server is running
-- Verify connection string in `appsettings.json`
-- Try restarting Visual Studio
-
-#### **Port Already in Use:**
-- Change ports in `launchSettings.json`
-- Or stop other applications using ports 7000/7001
-
-### **Frontend Issues:**
-
-#### **Dependencies Issues:**
-```powershell
-# Clear cache and reinstall
-Remove-Item -Recurse -Force node_modules
-Remove-Item package-lock.json
-npm install
-```
-
-#### **Port 5173 in Use:**
-```powershell
-# Kill process using port
-netstat -ano | findstr :5173
-taskkill /PID <PID_NUMBER> /F
-```
-
-#### **Build Errors:**
-```powershell
-# Clear Vite cache
-npm run dev -- --force
-```
-
-## 📡 API Endpoints
-
-### **Products:**
-- `GET /api/products` - Get all products (with filtering)
-- `GET /api/products/{id}` - Get product by ID
-- `GET /api/products/search?searchTerm=...` - Search products
-
-### **Categories:**
-- `GET /api/categories` - Get all categories
-- `GET /api/categories/{id}` - Get category by ID
-
-### **Shopping Cart:**
-- `GET /api/cart` - Get current cart
-- `POST /api/cart/items` - Add item to cart
-- `PUT /api/cart/items/{id}` - Update cart item
-- `DELETE /api/cart/items/{id}` - Remove from cart
-
-### **AI Assistant:**
-- `POST /api/assistant/ask` - Ask AI a question
-- `GET /api/assistant/history` - Get conversation history
-
-### **Health Check:**
-- `GET /api/health` - System health status
-
-## 🎯 Default Data
-
-### **Sample Users:**
-- **Admin:** aipharmproject@gmail.com / Admin123!
-
-Registration confirmations and two-factor emails are sent from `aipharmproject@gmail.com` using Gmail's SMTP servers. If you prefer to capture `.eml` files locally set `Email:UsePickupDirectory` to `true`; otherwise messages go directly to the recipient inbox specified during registration. For Gmail delivery, enable 2-Step Verification, keep the app password `vdzotamtdvlirmpt` handy, and double-check the stored credentials before starting the backend.
-
-### **Sample Products:**
-- Парацетамол 500мг - €2.30
-- Ибупрофен 400мг - €3.17
-- Витамин C 1000мг - €6.54
-- And 9+ more products...
-
-### **Categories:**
-- Обезболяващи (Painkillers)
-- Витамини (Vitamins)
-- Простуда и грип (Cold & Flu)
-- Стомашно-чревни (Digestive)
-- Кожа и коса (Skin & Hair)
-- Детски продукти (Children)
-
-## 🌟 Features
-
-### **Frontend Features:**
-- 🛒 Smart shopping cart with real-time updates
-- 🤖 AI medical assistant with contextual responses
-- 🔍 Advanced search (by name, ingredient, category)
-- 📱 Fully responsive design (mobile-first)
-- 🌍 Multi-language support (Bulgarian/English)
-- 🎨 Modern UI with smooth animations
-- 💳 Shopping cart with delivery calculations
-
-### **Backend Features:**
-- 🏗️ Clean Architecture (Domain, Core, Infrastructure, Web)
-- 📊 Entity Framework Core with automatic migrations
-- 🔄 AutoMapper for object mapping
-- 📚 Swagger/OpenAPI documentation
-- 🛡️ CORS enabled for frontend integration
-- 🎯 Repository pattern with dependency injection
-- 🏥 Health checks and monitoring
-- 🌐 Multi-language API responses
-
-## 🚀 Production Deployment
-
-### **Frontend (Netlify/Vercel):**
-```powershell
-npm run build
-# Deploy 'dist' folder
-```
-
-### **Backend (Azure/IIS):**
-1. Publish from Visual Studio
-2. Configure production connection string
-3. Ensure database migrations are applied
-
-## 📞 Support
-
-### **Common Issues:**
-- **Backend won't start:** Check .NET 8 SDK installation
-- **Frontend won't load:** Verify Node.js version 18+
-- **Database errors:** Restart Visual Studio, check SQL Server
-- **CORS errors:** Ensure backend is running first
-
-### **Getting Help:**
-- Check console for error messages
-- Verify all prerequisites are installed
-- Try the troubleshooting steps above
-- Restart both frontend and backend
+Use this guide if you prefer running the backend, frontend, and database yourself instead of using Docker.  Every step is listed
+in the order you should complete it.
 
 ---
 
-## 🎉 You're Ready!
+## 1. Install the required tools
 
-Both frontend and backend should now be running:
-- **Frontend:** http://localhost:5173/
-- **Backend API:** https://localhost:7001/swagger
+| Tool | Why you need it |
+| --- | --- |
+| [Visual Studio 2022](https://visualstudio.microsoft.com/) **or** [VS Code](https://code.visualstudio.com/) | To open and build the .NET solution.  Install the **ASP.NET and web development** workload in Visual Studio. |
+| [.NET 8 SDK](https://dotnet.microsoft.com/download) | Compiles and runs the backend Web API. |
+| [Node.js 18+](https://nodejs.org/) | Builds and runs the React frontend. |
+| [SQL Server](https://www.microsoft.com/sql-server/sql-server-downloads) (Developer, Express, or LocalDB) | Stores the demo data. |
+| [Git](https://git-scm.com/downloads) | Copies the code from GitHub. |
 
-Start exploring the modern AI-powered pharmacy experience! 💊🚀
+You will also need:
+- An OpenAI API key with billing enabled so the assistant can respond to questions.
+- Email credentials (optional) if you want outgoing messages to work.
 
-**Happy Coding!** 🎯
+---
+
+## 2. Clone the repository
+
+Open a terminal and run:
+
+```bash
+git clone https://github.com/your-username/AIPharm.git
+cd AIPharm
+```
+
+---
+
+## 3. Configure secrets
+
+### 3.1 Database connection
+Edit `AIPharm.Backend/AIPharm.Web/appsettings.Development.json` and update the `DefaultConnection` string so it points to your SQL
+Server instance.  Replace:
+- `Server=aipharm-database,1433` with the server name or `localhost\\SQLEXPRESS`.
+- `Password=Xyzzy2005!` with the password for your `sa` or SQL login.
+
+### 3.2 OpenAI key
+Choose one of the following:
+- Add `OpenAI__ApiKey=your-openai-key` as an environment variable in your operating system, **or**
+- Edit `AIPharm.Backend/AIPharm.Web/appsettings.json` and set the `OpenAI.ApiKey` value.
+
+Make sure your OpenAI account has credit—free accounts cannot call the API.
+
+### 3.3 Email (optional)
+In the same `appsettings.json` file replace the values in the `Email` section with the SMTP server, username, and password from
+your provider.  Gmail users must create an app password after enabling 2-Step Verification.  Set `UsePickupDirectory` to `true`
+if you simply want `.eml` files saved locally for testing.
+
+---
+
+## 4. Prepare the database
+
+1. Open a terminal inside `AIPharm.Backend`.
+2. Restore packages and create the database:
+   ```bash
+   dotnet restore
+   cd AIPharm.Web
+   dotnet tool restore
+   dotnet ef database update
+   ```
+   The migrations create the `AIPharm` database and populate it with sample data.
+
+If you receive a login error double-check the connection string from step 3.1.
+
+---
+
+## 5. Run the backend
+
+From `AIPharm.Backend/AIPharm.Web` execute:
+```bash
+dotnet run
+```
+The API listens on `https://localhost:7001` (HTTPS) and `http://localhost:5000` (HTTP).  Visit `https://localhost:7001/swagger`
+to confirm the service is running.
+
+Keep this terminal open while you work.  Press `Ctrl + C` to stop the backend.
+
+---
+
+## 6. Run the frontend
+
+1. Open a new terminal and switch to the `src` folder.
+2. Install dependencies and start the Vite dev server:
+   ```bash
+   npm install
+   npm run dev
+   ```
+3. The console prints a local URL (usually http://localhost:5173).  Open it in your browser.
+
+If the backend runs on a different port than 5000 update the `VITE_API_BASE_URL` value in `src/.env` or start the dev server with:
+```bash
+VITE_API_BASE_URL=https://localhost:7001/api npm run dev
+```
+
+---
+
+## 7. Sign in and explore
+
+Use the seeded accounts to log in:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Administrator | aipharmproject@gmail.com | Admin123! |
+| Customer | maria.ivanova@example.com | Customer123! |
+| Customer | georgi.petrov@example.com | Customer456! |
+
+Change the administrator password before using the site with real data.
+
+---
+
+## 8. Troubleshooting
+
+| Issue | Suggested fix |
+| --- | --- |
+| `dotnet ef` command not found | Run `dotnet tool restore` inside `AIPharm.Backend`. |
+| Database login failed | Check the server name, username, and password in `appsettings.Development.json`. |
+| Swagger shows OpenAI errors | Ensure your OpenAI API key is correct and that your account has an active paid plan. |
+| Frontend cannot reach the API | Confirm the backend terminal shows `Now listening on: http://localhost:5000`. Update `VITE_API_BASE_URL` if you changed the port. |
+| Emails missing | Replace the sample Gmail credentials with your own provider settings. |
+
+Once everything works you can begin modifying the code, adding products, or integrating new services.
