@@ -296,6 +296,11 @@ namespace AIPharm.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("PersonalIdentificationNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<DateTime>("PurchaseDate")
                         .HasColumnType("datetime2");
 

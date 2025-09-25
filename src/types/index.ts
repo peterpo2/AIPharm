@@ -70,6 +70,20 @@ export interface OrderItemSummary {
   netTotal: number;
 }
 
+export interface NhifPrescriptionSummary {
+  id: number;
+  prescriptionNumber: string;
+  personalIdentificationNumber: string;
+  prescribedDate: string;
+  purchaseDate: string;
+  orderNumber: string;
+  userId: string;
+  patientPaidAmount: number;
+  nhifPaidAmount: number;
+  otherCoverageAmount?: number | null;
+  createdAt: string;
+}
+
 export interface OrderSummary {
   id: number;
   orderNumber: string;
@@ -97,6 +111,7 @@ export interface OrderSummary {
   userEmail?: string;
   userFullName?: string;
   items: OrderItemSummary[];
+  nhifPrescriptions?: NhifPrescriptionSummary[];
 }
 
 export interface ShoppingCart {

@@ -12,6 +12,10 @@ namespace AIPharm.Domain.Entities
         [MaxLength(50)]
         public string PrescriptionNumber { get; set; } = string.Empty;
 
+        [Required]
+        [MaxLength(20)]
+        public string PersonalIdentificationNumber { get; set; } = string.Empty;
+
         public DateTime PrescribedDate { get; set; }
 
         public DateTime PurchaseDate { get; set; }

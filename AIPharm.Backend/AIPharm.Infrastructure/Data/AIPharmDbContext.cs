@@ -232,6 +232,9 @@ namespace AIPharm.Infrastructure.Data
                         entity.Property(e => e.OrderNumber)
                               .IsRequired()
                               .HasMaxLength(100);
+                        entity.Property(e => e.PersonalIdentificationNumber)
+                              .IsRequired()
+                              .HasMaxLength(20);
                         entity.Property(e => e.PatientPaidAmount)
                               .HasColumnType("decimal(10,2)");
                         entity.Property(e => e.NhifPaidAmount)
