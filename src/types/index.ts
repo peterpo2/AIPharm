@@ -65,14 +65,35 @@ export interface OrderItemSummary {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  vatAmount: number;
+  vatRate: number;
+  netTotal: number;
+}
+
+export interface NhifPrescriptionSummary {
+  id: number;
+  prescriptionNumber: string;
+  personalIdentificationNumber: string;
+  prescribedDate: string;
+  purchaseDate: string;
+  orderNumber: string;
+  userId: string;
+  patientPaidAmount: number;
+  nhifPaidAmount: number;
+  otherCoverageAmount?: number | null;
+  createdAt: string;
 }
 
 export interface OrderSummary {
   id: number;
   orderNumber: string;
+  orderKey?: string;
   status: OrderStatus | number;
   paymentMethod: PaymentMethod | number;
   total: number;
+  subtotal: number;
+  vatAmount: number;
+  vatRate: number;
   deliveryFee: number;
   grandTotal: number;
   customerName?: string;
@@ -84,11 +105,13 @@ export interface OrderSummary {
   country?: string;
   notes?: string;
   createdAt: string;
+  orderDate?: string;
   updatedAt: string;
   userId: string;
   userEmail?: string;
   userFullName?: string;
   items: OrderItemSummary[];
+  nhifPrescriptions?: NhifPrescriptionSummary[];
 }
 
 export interface ShoppingCart {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Search,
@@ -52,6 +52,20 @@ const Header: React.FC<HeaderProps> = ({
   const [showOrdersModal, setShowOrdersModal] = useState(false);
 
   const canAccessAdmin = isAdmin || isStaff;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleOpenLoginModal = () => setShowLoginModal(true);
+
+    window.addEventListener('aiPharm:openLoginModal', handleOpenLoginModal);
+
+    return () => {
+      window.removeEventListener('aiPharm:openLoginModal', handleOpenLoginModal);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
