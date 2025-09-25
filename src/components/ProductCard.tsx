@@ -7,9 +7,10 @@ import { useLanguage } from '../context/LanguageContext';
 
 interface ProductCardProps {
   product: Product;
+  onProductClick?: (product: Product) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) => {
   const { dispatch } = useCart();
   const { askAssistant } = useChat();
   const { language, t } = useLanguage();
@@ -82,10 +83,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const getManufacturer = () =>
     language === 'bg' ? product.manufacturer : product.manufacturerEn;
 
+  const handleProductClick = () => {
+    if (onProductClick) {
+      onProductClick(product);
+    }
+  };
+
   return (
     <div className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Image */}
       <div className="relative aspect-square overflow-hidden bg-gray-50">
+        {onProductClick && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleProductClick();
+            }}
+            className="absolute inset-0 z-10 h-full w-full"
+            aria-label={t('products.viewDetails')}
+          />
+        )}
         <img
           src={product.imageUrl}
           alt={getProductName()}
@@ -112,7 +130,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
         <button
           type="button"
-          className="absolute right-3 top-3 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all duration-300 hover:scale-110 hover:bg-white group-hover:opacity-100"
+          onClick={(event) => event.stopPropagation()}
+          className="absolute right-3 top-3 z-20 rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-all duration-300 hover:scale-110 hover:bg-white group-hover:opacity-100"
         >
           <Heart className="h-4 w-4 text-gray-600 transition-colors duration-200 hover:text-red-500" />
         </button>
@@ -157,9 +176,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
 
         {/* Title */}
-        <h3 className="mb-2 line-clamp-2 font-bold text-gray-900 transition-colors duration-300 group-hover:text-emerald-600">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            handleProductClick();
+          }}
+          className="mb-2 line-clamp-2 w-full text-left font-bold text-gray-900 transition-colors duration-300 group-hover:text-emerald-600"
+        >
           {getProductName()}
-        </h3>
+        </button>
 
         {/* Details */}
         <div className="mb-4 space-y-1 text-sm text-gray-600">

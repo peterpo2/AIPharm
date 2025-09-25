@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Package } from 'lucide-react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
 import { useLanguage } from '../context/LanguageContext';
+import ProductDetailModal from './ProductDetailModal';
 
 interface ProductGridProps {
   products: Product[];
@@ -12,6 +13,7 @@ interface ProductGridProps {
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading = false, onEmptyAction }) => {
   const { t } = useLanguage();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   if (isLoading) {
     return (
@@ -57,11 +59,20 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading = false, 
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} onProductClick={setSelectedProduct} />
+        ))}
+      </div>
+
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+        />
+      )}
+    </>
   );
 };
 
