@@ -14,22 +14,29 @@ const LanguageSwitcher: React.FC = () => {
           title="Switch to English"
         >
           <div className="w-6 h-4 rounded-sm overflow-hidden shadow-sm">
-            <div className="w-full h-full bg-gradient-to-b from-blue-600 via-blue-600 to-blue-600 relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-white to-red-500 opacity-80"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-transparent to-transparent w-1/3"></div>
-              <div className="absolute inset-0 bg-gradient-to-l from-red-500 via-transparent to-transparent w-1/3 right-0"></div>
-              <div className="absolute inset-0 bg-white opacity-60"></div>
-              <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-blue-600"></div>
-              <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-blue-600"></div>
-              <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-red-500"></div>
-              <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-red-500"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full h-0.5 bg-white"></div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-0.5 h-full bg-white"></div>
-              </div>
-            </div>
+            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" className="h-full w-full">
+              <rect width="60" height="30" fill="#012169" />
+              <path
+                d="M0 0L60 30M60 0L0 30"
+                stroke="#ffffff"
+                strokeWidth="6"
+              />
+              <path
+                d="M0 0L60 30M60 0L0 30"
+                stroke="#C8102E"
+                strokeWidth="2.4"
+              />
+              <path
+                d="M30 0v30M0 15h60"
+                stroke="#ffffff"
+                strokeWidth="10"
+              />
+              <path
+                d="M30 0v30M0 15h60"
+                stroke="#C8102E"
+                strokeWidth="6"
+              />
+            </svg>
           </div>
           <span className="text-sm font-semibold text-gray-700">EN</span>
         </button>

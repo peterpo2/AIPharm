@@ -17,7 +17,7 @@ interface ProductsPageProps {
 
 type AvailabilityFilter = 'all' | 'inStock' | 'outOfStock';
 type PrescriptionFilter = 'all' | 'requires' | 'otc';
-type SortOption = 'relevance' | 'priceAsc' | 'priceDesc' | 'rating';
+type SortOption = 'relevance' | 'priceAsc' | 'priceDesc';
 
 const ProductsPage: React.FC<ProductsPageProps> = ({
   searchTerm,
@@ -113,10 +113,6 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
 
     if (sortOption === 'priceDesc') {
       return [...filtered].sort((a, b) => b.price - a.price);
-    }
-
-    if (sortOption === 'rating') {
-      return [...filtered].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     }
 
     return filtered;
@@ -368,7 +364,6 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
                   { key: 'relevance' as SortOption, label: t('products.sortPopular') },
                   { key: 'priceAsc' as SortOption, label: t('products.sortPriceLowHigh') },
                   { key: 'priceDesc' as SortOption, label: t('products.sortPriceHighLow') },
-                  { key: 'rating' as SortOption, label: t('products.sortRating') },
                 ].map((option) => (
                   <button
                     key={option.key}
