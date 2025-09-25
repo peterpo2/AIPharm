@@ -156,6 +156,8 @@ To stop everything press `Ctrl + C` in the terminal.  To delete the containers r
 | Role | Email | Password |
 | --- | --- | --- |
 | Administrator | aipharmproject@gmail.com | Admin123! |
+| Staff | diyana.angelova@example.com | Employee123! |
+| Staff | petar.iliev@example.com | Employee456! |
 | Customer | maria.ivanova@example.com | Customer123! |
 | Customer | georgi.petrov@example.com | Customer456! |
 

@@ -7,6 +7,7 @@ interface User {
   phoneNumber?: string;
   address?: string;
   isAdmin: boolean;
+  isStaff: boolean;
   createdAt: string;
   isDeleted: boolean;
 }
@@ -26,6 +27,7 @@ interface ProfileUpdateData {
   phoneNumber?: string;
   address?: string;
   isAdmin?: boolean;
+  isStaff?: boolean;
   isDeleted?: boolean;
 }
 
@@ -54,6 +56,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isStaff: boolean;
   isLoading: boolean;
   login: (
     email: string,
@@ -145,6 +148,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const isAuthenticated = !!user;
   const isAdmin = user?.isAdmin || false;
+  const isStaff = user?.isStaff || false;
 
   // Check auth status on app load
   useEffect(() => {
@@ -432,6 +436,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         user,
         isAuthenticated,
         isAdmin,
+        isStaff,
         isLoading,
         login,
         verifyTwoFactor,

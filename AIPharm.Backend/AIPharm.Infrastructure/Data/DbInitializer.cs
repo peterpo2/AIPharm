@@ -211,6 +211,7 @@ namespace AIPharm.Infrastructure.Data
                     Email = "aipharmproject@gmail.com",
                     FullName = "AIPharm Administrator",
                     IsAdmin = true,
+                    IsStaff = true,
                     PasswordHash = PasswordHasher.Hash("Admin123!"),
                     PhoneNumber = "+359 88 999 0000",
                     Address = "София, бул. Витоша 25",
@@ -222,6 +223,7 @@ namespace AIPharm.Infrastructure.Data
                     Email = "maria.ivanova@example.com",
                     FullName = "Мария Иванова",
                     IsAdmin = false,
+                    IsStaff = false,
                     PasswordHash = PasswordHasher.Hash("Customer123!"),
                     PhoneNumber = "+359 88 555 1212",
                     Address = "Пловдив, ул. Капитан Райчо 7",
@@ -233,6 +235,7 @@ namespace AIPharm.Infrastructure.Data
                     Email = "georgi.petrov@example.com",
                     FullName = "Георги Петров",
                     IsAdmin = false,
+                    IsStaff = false,
                     PasswordHash = PasswordHasher.Hash("Customer456!"),
                     PhoneNumber = "+359 89 444 2323",
                     Address = "Варна, бул. Сливница 102",
@@ -244,11 +247,36 @@ namespace AIPharm.Infrastructure.Data
                     Email = "iva.stoyanova@example.com",
                     FullName = "Ива Стоянова",
                     IsAdmin = false,
+                    IsStaff = false,
                     PasswordHash = PasswordHasher.Hash("Customer789!"),
                     PhoneNumber = "+359 87 333 3434",
                     Address = "Бургас, ул. Александровска 54",
                     CreatedAt = now.AddMonths(-1),
                     TwoFactorEnabled = true
+                },
+                new()
+                {
+                    Email = "diyana.angelova@example.com",
+                    FullName = "Дияна Ангелова",
+                    IsAdmin = false,
+                    IsStaff = true,
+                    PasswordHash = PasswordHasher.Hash("Employee123!"),
+                    PhoneNumber = "+359 88 321 4455",
+                    Address = "София, ул. Иван Вазов 12",
+                    CreatedAt = now.AddMonths(-4),
+                    TwoFactorEnabled = false
+                },
+                new()
+                {
+                    Email = "petar.iliev@example.com",
+                    FullName = "Петър Илиев",
+                    IsAdmin = false,
+                    IsStaff = true,
+                    PasswordHash = PasswordHasher.Hash("Employee456!"),
+                    PhoneNumber = "+359 89 210 8899",
+                    Address = "Пловдив, бул. Христо Ботев 44",
+                    CreatedAt = now.AddMonths(-5),
+                    TwoFactorEnabled = false
                 }
             };
 

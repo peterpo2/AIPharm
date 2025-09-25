@@ -34,7 +34,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> GetAllOrders()
         {
             var orders = await _orderService.GetAllOrdersAsync();
@@ -93,7 +93,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpPatch("{orderId:int}/status")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromBody] UpdateOrderStatusDto request)
         {
             if (!ModelState.IsValid)

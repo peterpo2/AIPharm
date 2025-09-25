@@ -90,7 +90,7 @@ namespace AIPharm.Web.Controllers
 
             if (!isAdmin)
             {
-                if (request.IsAdmin.HasValue || request.IsDeleted.HasValue)
+                if (request.IsAdmin.HasValue || request.IsDeleted.HasValue || request.IsStaff.HasValue)
                 {
                     return BadRequest(new
                     {
@@ -152,6 +152,11 @@ namespace AIPharm.Web.Controllers
                     user.IsAdmin = request.IsAdmin.Value;
                 }
 
+                if (request.IsStaff.HasValue)
+                {
+                    user.IsStaff = request.IsStaff.Value;
+                }
+
                 if (request.IsDeleted.HasValue)
                 {
                     user.IsDeleted = request.IsDeleted.Value;
@@ -176,6 +181,7 @@ namespace AIPharm.Web.Controllers
             phoneNumber = user.PhoneNumber,
             address = user.Address,
             isAdmin = user.IsAdmin,
+            isStaff = user.IsStaff,
             isDeleted = user.IsDeleted,
             createdAt = user.CreatedAt.ToString("o")
         };
@@ -196,6 +202,8 @@ namespace AIPharm.Web.Controllers
         public string? Address { get; set; }
 
         public bool? IsAdmin { get; set; }
+
+        public bool? IsStaff { get; set; }
 
         public bool? IsDeleted { get; set; }
     }

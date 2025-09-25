@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Search,
@@ -19,7 +19,6 @@ import LanguageSwitcher from './LanguageSwitcher';
 import LoginModal from './auth/LoginModal';
 import RegisterModal from './auth/RegisterModal';
 import AIPharmLogo from './Logo';
-import AdminPanel from './admin/AdminPanel';
 import ProfileSettingsModal from './profile/ProfileSettingsModal';
 import MyOrdersModal from './profile/MyOrdersModal';
 import { quickLinks } from '../data/navigation';
@@ -42,34 +41,23 @@ const Header: React.FC<HeaderProps> = ({
   onNavigateToNews,
 }) => {
   const { state, dispatch } = useCart();
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isStaff, logout } = useAuth();
   const { t } = useLanguage();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showOrdersModal, setShowOrdersModal] = useState(false);
 
-  useEffect(() => {
-    if (!isAdmin) {
-      setShowAdminPanel(false);
-    }
-  }, [isAdmin]);
+  const canAccessAdmin = isAdmin || isStaff;
 
   const handleLogout = async () => {
     await logout();
     setShowUserMenu(false);
-    setShowAdminPanel(false);
     setShowProfileModal(false);
     setShowOrdersModal(false);
-  };
-
-  const openAdminPanel = () => {
-    setShowUserMenu(false);
-    setShowAdminPanel(true);
   };
 
   const openProfileModal = () => {
@@ -124,14 +112,18 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="flex items-center space-x-6">
             <LanguageSwitcher />
-            {isAuthenticated && isAdmin && (
-              <button
-                onClick={openAdminPanel}
+            {isAuthenticated && canAccessAdmin && (
+              <Link
+                to="/admin"
                 className="inline-flex items-center space-x-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
               >
-                <Shield className="h-4 w-4" />
+                {isAdmin ? (
+                  <Shield className="h-4 w-4" />
+                ) : (
+                  <Settings className="h-4 w-4" />
+                )}
                 <span>{t('header.adminPanel')}</span>
-              </button>
+              </Link>
             )}
             {isAuthenticated && (
               <button
@@ -145,7 +137,13 @@ const Header: React.FC<HeaderProps> = ({
             {isAuthenticated ? (
               <span className="text-emerald-600 font-medium">
                 {t('header.hello')}, {user?.fullName || user?.email}
-                {isAdmin && <Shield className="inline w-4 h-4 ml-1 text-amber-500" />}
+                {canAccessAdmin && (
+                  isAdmin ? (
+                    <Shield className="inline w-4 h-4 ml-1 text-amber-500" />
+                  ) : (
+                    <Settings className="inline w-4 h-4 ml-1 text-sky-500" />
+                  )
+                )}
               </span>
             ) : (
               <button 
@@ -205,9 +203,15 @@ const Header: React.FC<HeaderProps> = ({
                 }`}
               >
                 <User className="w-6 h-6" />
-                {isAdmin && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
-                    <Shield className="w-2.5 h-2.5 text-white" />
+                {canAccessAdmin && (
+                  <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
+                    isAdmin ? 'bg-amber-500' : 'bg-sky-500'
+                  }`}>
+                    {isAdmin ? (
+                      <Shield className="w-2.5 h-2.5 text-white" />
+                    ) : (
+                      <Settings className="w-2.5 h-2.5 text-white" />
+                    )}
                   </div>
                 )}
               </button>
@@ -218,10 +222,20 @@ const Header: React.FC<HeaderProps> = ({
                   <div className="px-4 py-3 border-b border-gray-100">
                     <p className="font-medium text-gray-900">{user?.fullName || 'Потребител'}</p>
                     <p className="text-sm text-gray-500">{user?.email}</p>
-                    {isAdmin && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mt-1">
-                        <Shield className="w-3 h-3 mr-1" />
-                        {t('header.administrator')}
+                    {canAccessAdmin && (
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                          isAdmin
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-sky-100 text-sky-700'
+                        }`}
+                      >
+                        {isAdmin ? (
+                          <Shield className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Settings className="w-3 h-3 mr-1" />
+                        )}
+                        {t(isAdmin ? 'header.administrator' : 'header.staffMember')}
                       </span>
                     )}
                   </div>
@@ -240,14 +254,23 @@ const Header: React.FC<HeaderProps> = ({
                       <Receipt className="w-4 h-4" />
                       <span>{t('header.myOrders')}</span>
                     </button>
-                    {isAdmin && (
-                      <button
-                        onClick={openAdminPanel}
-                        className="w-full px-4 py-2 text-left text-amber-600 hover:bg-amber-50 flex items-center space-x-2"
+                    {canAccessAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setShowUserMenu(false)}
+                        className={`w-full px-4 py-2 text-left flex items-center space-x-2 ${
+                          isAdmin
+                            ? 'text-amber-600 hover:bg-amber-50'
+                            : 'text-sky-600 hover:bg-sky-50'
+                        }`}
                       >
-                        <Shield className="w-4 h-4" />
+                        {isAdmin ? (
+                          <Shield className="w-4 h-4" />
+                        ) : (
+                          <Settings className="w-4 h-4" />
+                        )}
                         <span>{t('header.adminPanel')}</span>
-                      </button>
+                      </Link>
                     )}
                     <button 
                       onClick={handleLogout}
@@ -415,7 +438,6 @@ const Header: React.FC<HeaderProps> = ({
           setShowLoginModal(true);
         }}
       />
-      <AdminPanel isOpen={isAdmin && showAdminPanel} onClose={() => setShowAdminPanel(false)} />
       <ProfileSettingsModal isOpen={showProfileModal && isAuthenticated} onClose={() => setShowProfileModal(false)} />
       <MyOrdersModal isOpen={showOrdersModal && isAuthenticated} onClose={() => setShowOrdersModal(false)} />
     </header>

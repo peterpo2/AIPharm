@@ -107,6 +107,7 @@ export interface User {
   phoneNumber?: string;
   address?: string;
   isAdmin?: boolean;
+  isStaff?: boolean;
   isDeleted?: boolean;
   createdAt?: string;
 }

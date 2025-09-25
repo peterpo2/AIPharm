@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -94,6 +95,7 @@ namespace AIPharm.Web.Controllers
                         phoneNumber = user.PhoneNumber,
                         address = user.Address,
                         isAdmin = user.IsAdmin,
+                        isStaff = user.IsStaff,
                         createdAt = user.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         isDeleted = user.IsDeleted
                     }
@@ -188,6 +190,7 @@ namespace AIPharm.Web.Controllers
                         phoneNumber = user.PhoneNumber,
                         address = user.Address,
                         isAdmin = user.IsAdmin,
+                        isStaff = user.IsStaff,
                         createdAt = user.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                         isDeleted = user.IsDeleted
                     }
@@ -328,6 +331,7 @@ namespace AIPharm.Web.Controllers
                 phoneNumber = user.PhoneNumber,
                 address = user.Address,
                 isAdmin = user.IsAdmin,
+                isStaff = user.IsStaff,
                 createdAt = user.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                 isDeleted = user.IsDeleted
             });
@@ -455,15 +459,26 @@ namespace AIPharm.Web.Controllers
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
 
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.FullName ?? user.Email),
+                new Claim(ClaimTypes.Role, "User")
+            };
+
+            if (user.IsAdmin)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+            else if (user.IsStaff)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Staff"));
+            }
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Name, user.FullName ?? user.Email),
-                    new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(24),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],

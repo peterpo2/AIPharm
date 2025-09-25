@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { X, Mail, User, Phone, MapPin, Shield } from 'lucide-react';
+import { X, Mail, User, Phone, MapPin, Shield, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -11,7 +11,7 @@ interface ProfileSettingsModalProps {
 type MessageState = { type: 'success' | 'error'; text: string } | null;
 
 const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onClose }) => {
-  const { user, updateProfile, isAdmin } = useAuth();
+  const { user, updateProfile, isAdmin, isStaff } = useAuth();
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -166,11 +166,18 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
                     </p>
                     <p className="text-xs text-gray-400 mt-1">{t('profile.readonlyEmail')}</p>
                   </div>
-                  {isAdmin && (
+                  {isAdmin ? (
                     <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1">
                       <Shield className="h-3.5 w-3.5 mr-1" />
                       {t('profile.adminBadge')}
                     </span>
+                  ) : (
+                    isStaff && (
+                      <span className="inline-flex items-center rounded-full bg-sky-100 text-sky-700 text-xs font-semibold px-3 py-1">
+                        <Settings className="h-3.5 w-3.5 mr-1" />
+                        {t('profile.staffBadge')}
+                      </span>
+                    )
                   )}
                 </div>
 

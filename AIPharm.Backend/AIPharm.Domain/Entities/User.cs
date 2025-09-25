@@ -18,6 +18,7 @@ namespace AIPharm.Domain.Entities
         public string PasswordHash { get; set; } = string.Empty;  // ✅ new field
 
         public bool IsAdmin { get; set; } = false;
+        public bool IsStaff { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsDeleted { get; set; } = false;
 

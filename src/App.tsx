@@ -20,6 +20,7 @@ import Contacts from './components/pages/Contacts';
 import Promotions from './components/pages/Promotions';
 import News from './components/pages/News';
 import FAQ from './components/pages/FAQ';
+import AdminDashboard from './components/pages/AdminDashboard';
 
 function AppContent() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -167,6 +168,7 @@ function AppContent() {
           <Route path="/promotions" element={<Promotions />} />
           <Route path="/news" element={<News />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
