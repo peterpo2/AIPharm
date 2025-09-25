@@ -139,7 +139,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
-    setStep('form');
+    setStep(containsPrescription ? 'eprescription' : 'form');
     setIsSubmitting(false);
     setError(null);
     setCreatedOrder(null);
@@ -214,33 +214,46 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
-    if (containsPrescription && step === 'form') {
-      setError(null);
-      setStep('eprescription');
-      return;
-    }
-
     const trimmedEgn = formData.egn.trim();
     const trimmedPrescription = formData.prescriptionCode.trim();
 
     if (containsPrescription) {
+      if (step === 'eprescription') {
+        if (!trimmedEgn) {
+          setError(t('checkout.validation.egnRequired'));
+          return;
+        }
+
+        if (!/^\d{10}$/.test(trimmedEgn)) {
+          setError(t('checkout.validation.egnFormat'));
+          return;
+        }
+
+        if (!trimmedPrescription) {
+          setError(t('checkout.validation.prescriptionRequired'));
+          return;
+        }
+
+        setError(null);
+        setStep('form');
+        return;
+      }
+
       if (!trimmedEgn) {
         setError(t('checkout.validation.egnRequired'));
+        setStep('eprescription');
         return;
       }
 
       if (!/^\d{10}$/.test(trimmedEgn)) {
         setError(t('checkout.validation.egnFormat'));
+        setStep('eprescription');
         return;
       }
 
       if (!trimmedPrescription) {
         setError(t('checkout.validation.prescriptionRequired'));
-        return;
-      }
-
-      if (!/^[A-Za-z0-9]{10,}$/.test(trimmedPrescription)) {
-        setError(t('checkout.validation.prescriptionFormat'));
+        setStep('eprescription');
         return;
       }
     }
@@ -337,15 +350,15 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const SubmitIcon = (() => {
     if (containsPrescription) {
-      return step === 'eprescription' ? CreditCard : ArrowRight;
+      return step === 'eprescription' ? ArrowRight : CheckCircle2;
     }
     return CheckCircle2;
   })();
 
   const submitLabel = containsPrescription
     ? step === 'eprescription'
-      ? t('checkout.actions.confirmCard')
-      : t('checkout.actions.continue')
+      ? t('checkout.actions.continue')
+      : t('checkout.actions.confirmCard')
     : t('checkout.actions.submit');
 
   const summarySection = (
@@ -720,10 +733,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
               )}
 
               <div className="flex flex-col gap-3 pt-2 md:flex-row md:justify-end">
-                {step === 'eprescription' && (
+                {containsPrescription && step === 'form' && (
                   <button
                     type="button"
-                    onClick={() => !isSubmitting && setStep('form')}
+                    onClick={() => !isSubmitting && setStep('eprescription')}
                     className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={isSubmitting}
                   >
