@@ -1,4 +1,5 @@
 import { NewsArticle } from '../types';
+import { generateNewsImage } from '../utils/imageGenerator';
 
 export const newsArticles: NewsArticle[] = [
   {
@@ -23,7 +24,7 @@ export const newsArticles: NewsArticle[] = [
     category: 'Здравни съвети',
     categoryEn: 'Health Tips',
     author: 'Д-р Мария Стоянова',
-    imageUrl: 'https://via.placeholder.com/800x500.png?text=AIPharm+News+1',
+    imageUrl: generateNewsImage('How to Prepare for Flu Season', 'Health Tips'),
     publishedAt: '2024-11-05',
     readTimeMinutes: 4,
   },
@@ -49,7 +50,7 @@ export const newsArticles: NewsArticle[] = [
     category: 'Витамини и добавки',
     categoryEn: 'Vitamins & Supplements',
     author: 'Фармацевт Николай Петров',
-    imageUrl: 'https://via.placeholder.com/800x500.png?text=AIPharm+News+2',
+    imageUrl: generateNewsImage('Benefits of Vitamin D in Winter', 'Vitamins & Supplements'),
     publishedAt: '2024-12-12',
     readTimeMinutes: 5,
   },
@@ -75,7 +76,7 @@ export const newsArticles: NewsArticle[] = [
     category: 'Козметика и грижа',
     categoryEn: 'Skincare & Beauty',
     author: 'Дерматолог Анелия Иванова',
-    imageUrl: 'https://via.placeholder.com/800x500.png?text=AIPharm+News+3',
+    imageUrl: generateNewsImage('Caring for Sensitive Skin in the Cold Months', 'Skincare'),
     publishedAt: '2025-01-08',
     readTimeMinutes: 6,
   },
@@ -100,7 +101,7 @@ export const newsArticles: NewsArticle[] = [
     category: 'Технологии',
     categoryEn: 'Technology',
     author: 'AI Specialist Георги Лазаров',
-    imageUrl: 'https://via.placeholder.com/800x500.png?text=AIPharm+News+4',
+    imageUrl: generateNewsImage('AI Supporting Pharmacists', 'Technology'),
     publishedAt: '2025-01-15',
     readTimeMinutes: 3,
   },
@@ -123,7 +124,7 @@ export const newsArticles: NewsArticle[] = [
     category: 'Детско здраве',
     categoryEn: 'Children’s Health',
     author: 'Педиатър Елена Русева',
-    imageUrl: 'https://via.placeholder.com/800x500.png?text=AIPharm+News+5',
+    imageUrl: generateNewsImage('Children’s Health: Boosting Immunity', "Children's Health"),
     publishedAt: '2025-01-20',
     readTimeMinutes: 5,
   },
@@ -147,7 +148,7 @@ export const newsArticles: NewsArticle[] = [
     category: 'Храносмилане',
     categoryEn: 'Digestive Health',
     author: 'Диетолог Виктор Стоилов',
-    imageUrl: 'https://via.placeholder.com/800x500.png?text=AIPharm+News+6',
+    imageUrl: generateNewsImage('Digestive Comfort During the Holidays', 'Digestive Health'),
     publishedAt: '2025-01-25',
     readTimeMinutes: 4,
   },

@@ -8,6 +8,7 @@ import { CartProvider } from './context/CartContext';
 import { ChatProvider } from './context/ChatContext';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { NewsProvider } from './context/NewsContext';
 import { categories, products, searchProducts, getProductsByCategory } from './data/mockData';
 import { Product } from './types';
 import HomePage from './components/pages/HomePage';
@@ -182,9 +183,11 @@ function App() {
     <AuthProvider>
       <LanguageProvider>
         <CartProvider>
-          <ChatProvider>
-            <AppContent />
-          </ChatProvider>
+          <NewsProvider>
+            <ChatProvider>
+              <AppContent />
+            </ChatProvider>
+          </NewsProvider>
         </CartProvider>
       </LanguageProvider>
     </AuthProvider>

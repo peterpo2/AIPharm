@@ -6,10 +6,13 @@ import {
   CheckCircle2,
   Clock3,
   ClipboardList,
+  FileText,
+  Image,
   Loader2,
   Mail,
   MapPin,
   Package,
+  PlusCircle,
   RefreshCw,
   Search,
   Shield,
@@ -19,7 +22,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNews } from '../../context/NewsContext';
 import type { OrderStatus, PaymentMethod } from '../../types';
+import { generateNewsImage } from '../../utils/imageGenerator';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -48,7 +53,7 @@ interface EditableUserFields {
 
 type ToastState = { type: 'success' | 'error'; text: string } | null;
 
-type AdminView = 'users' | 'orders';
+type AdminView = 'users' | 'orders' | 'news';
 
 interface ManagedOrderItem {
   id: number;
@@ -108,6 +113,22 @@ interface UpdateOrderStatusResponse {
   order?: ManagedOrder;
 }
 
+interface NewsFormState {
+  id: string;
+  title: string;
+  titleEn: string;
+  excerpt: string;
+  excerptEn: string;
+  content: string;
+  contentEn: string;
+  category: string;
+  categoryEn: string;
+  author: string;
+  imageUrl: string;
+  publishedAt: string;
+  readTimeMinutes: string;
+}
+
 const RAW_API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
@@ -156,6 +177,26 @@ const resolveOrderStatusIndex = (status: OrderStatus | number): number => {
 const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const { isAdmin, user } = useAuth();
   const { t } = useLanguage();
+  const { news, addArticle } = useNews();
+  const defaultAuthor = useMemo(
+    () => (user?.fullName?.trim() || user?.email || '').trim(),
+    [user?.email, user?.fullName]
+  );
+  const buildInitialNewsForm = useCallback((): NewsFormState => ({
+    id: '',
+    title: '',
+    titleEn: '',
+    excerpt: '',
+    excerptEn: '',
+    content: '',
+    contentEn: '',
+    category: '',
+    categoryEn: '',
+    author: defaultAuthor,
+    imageUrl: '',
+    publishedAt: new Date().toISOString().split('T')[0],
+    readTimeMinutes: '4',
+  }), [defaultAuthor]);
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -170,6 +211,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [ordersToast, setOrdersToast] = useState<ToastState>(null);
   const [statusUpdates, setStatusUpdates] = useState<Record<number, OrderStatus | null>>({});
+  const [newsForm, setNewsForm] = useState<NewsFormState>(() => buildInitialNewsForm());
+  const [newsErrors, setNewsErrors] = useState<string[]>([]);
+  const [newsToast, setNewsToast] = useState<ToastState>(null);
+  const [newsSubmitting, setNewsSubmitting] = useState(false);
   const PAYMENT_METHODS: PaymentMethod[] = ['CashOnDelivery', 'Card', 'BankTransfer'];
 
   useEffect(() => {
@@ -183,6 +228,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     const timer = setTimeout(() => setOrdersToast(null), 3600);
     return () => clearTimeout(timer);
   }, [ordersToast]);
+
+  useEffect(() => {
+    if (!newsToast) {
+      return;
+    }
+
+    const timer = setTimeout(() => setNewsToast(null), 3600);
+    return () => clearTimeout(timer);
+  }, [newsToast]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -215,8 +269,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     if (!isOpen) {
       setOrdersToast(null);
       setStatusUpdates({});
+      setNewsToast(null);
+      setNewsErrors([]);
+      setNewsSubmitting(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!defaultAuthor) {
+      return;
+    }
+
+    setNewsForm((previous) => {
+      if (previous.author.trim().length > 0) {
+        return previous;
+      }
+
+      return { ...previous, author: defaultAuthor };
+    });
+  }, [defaultAuthor]);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -392,6 +463,123 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     },
     [t]
   );
+
+  const handleNewsFieldChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.target;
+    setNewsForm((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const handleGenerateNewsImage = () => {
+    setNewsForm((previous) => {
+      const titleSource = previous.titleEn.trim() || previous.title.trim() || t('admin.news.form.generatedTitleFallback');
+      const categorySource =
+        previous.categoryEn.trim() || previous.category.trim() || t('admin.news.form.generatedCategoryFallback');
+      const generated = generateNewsImage(titleSource, categorySource);
+      setNewsToast({ type: 'success', text: t('admin.news.messages.imageGenerated') });
+      return { ...previous, imageUrl: generated };
+    });
+  };
+
+  const handleResetNewsForm = useCallback(() => {
+    setNewsForm(buildInitialNewsForm());
+    setNewsErrors([]);
+    setNewsToast(null);
+  }, [buildInitialNewsForm]);
+
+  const handleCreateNews = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (newsSubmitting) {
+      return;
+    }
+
+    setNewsErrors([]);
+    setNewsToast(null);
+
+    const trimmed = {
+      id: newsForm.id.trim(),
+      title: newsForm.title.trim(),
+      titleEn: newsForm.titleEn.trim(),
+      excerpt: newsForm.excerpt.trim(),
+      excerptEn: newsForm.excerptEn.trim(),
+      content: newsForm.content.trim(),
+      contentEn: newsForm.contentEn.trim(),
+      category: newsForm.category.trim(),
+      categoryEn: newsForm.categoryEn.trim(),
+      author: newsForm.author.trim(),
+      imageUrl: newsForm.imageUrl.trim(),
+      publishedAt: newsForm.publishedAt.trim(),
+      readTimeMinutes: newsForm.readTimeMinutes.trim(),
+    };
+
+    const errors: string[] = [];
+
+    if (!trimmed.title) errors.push(t('admin.news.errors.title'));
+    if (!trimmed.titleEn) errors.push(t('admin.news.errors.titleEn'));
+    if (!trimmed.excerpt) errors.push(t('admin.news.errors.excerpt'));
+    if (!trimmed.excerptEn) errors.push(t('admin.news.errors.excerptEn'));
+    if (!trimmed.content) errors.push(t('admin.news.errors.content'));
+    if (!trimmed.contentEn) errors.push(t('admin.news.errors.contentEn'));
+    if (!trimmed.category) errors.push(t('admin.news.errors.category'));
+    if (!trimmed.categoryEn) errors.push(t('admin.news.errors.categoryEn'));
+    if (!trimmed.author) errors.push(t('admin.news.errors.author'));
+    if (!trimmed.imageUrl) errors.push(t('admin.news.errors.imageUrl'));
+
+    let formattedDate = trimmed.publishedAt;
+    if (!trimmed.publishedAt) {
+      errors.push(t('admin.news.errors.publishedAt'));
+    } else {
+      const parsedDate = new Date(trimmed.publishedAt);
+      if (Number.isNaN(parsedDate.getTime())) {
+        errors.push(t('admin.news.errors.publishedAt'));
+      } else {
+        formattedDate = parsedDate.toISOString().split('T')[0];
+      }
+    }
+
+    const readTime = Number.parseInt(trimmed.readTimeMinutes, 10);
+    if (!Number.isFinite(readTime) || readTime < 1) {
+      errors.push(t('admin.news.errors.readTime'));
+    } else if (readTime > 60) {
+      errors.push(t('admin.news.errors.readTimeRange'));
+    }
+
+    if (errors.length) {
+      setNewsErrors(errors);
+      setNewsToast({ type: 'error', text: t('admin.news.errors.general') });
+      return;
+    }
+
+    setNewsSubmitting(true);
+
+    try {
+      addArticle({
+        id: trimmed.id || undefined,
+        title: trimmed.title,
+        titleEn: trimmed.titleEn,
+        excerpt: trimmed.excerpt,
+        excerptEn: trimmed.excerptEn,
+        content: trimmed.content,
+        contentEn: trimmed.contentEn,
+        category: trimmed.category,
+        categoryEn: trimmed.categoryEn,
+        author: trimmed.author,
+        imageUrl: trimmed.imageUrl,
+        publishedAt: formattedDate,
+        readTimeMinutes: readTime,
+      });
+
+      setNewsErrors([]);
+      setNewsToast({ type: 'success', text: t('admin.news.messages.created') });
+      setNewsForm(buildInitialNewsForm());
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('admin.news.errors.general');
+      setNewsToast({ type: 'error', text: message });
+    } finally {
+      setNewsSubmitting(false);
+    }
+  };
 
   const filteredUsers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -656,6 +844,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
               }`}
             >
               {t('admin.panel.tabs.orders')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('news')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeView === 'news'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'text-slate-500 hover:text-emerald-600'
+              }`}
+            >
+              {t('admin.panel.tabs.news')}
             </button>
           </div>
 
@@ -1156,6 +1355,319 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   })}
                 </div>
               )}
+            </div>
+          )}
+          {activeView === 'news' && (
+            <div className="grid min-h-[420px] border-b border-slate-100 md:grid-cols-[360px,1fr]">
+              <div className="space-y-5 p-6">
+                <div className="space-y-1">
+                  <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                    <FileText className="h-5 w-5 text-emerald-600" />
+                    {t('admin.news.listTitle')}
+                  </h3>
+                  <p className="text-sm text-slate-500">{t('admin.news.listSubtitle')}</p>
+                </div>
+                <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+                  {news.length ? (
+                    news.map((article) => (
+                      <div
+                        key={article.id}
+                        className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm"
+                      >
+                        <div className="aspect-video w-full overflow-hidden bg-slate-100">
+                          <img
+                            src={article.imageUrl}
+                            alt={article.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="space-y-2 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <span className="inline-flex items-center space-x-1">
+                              <Calendar className="h-4 w-4 text-slate-400" />
+                              <span>{formatDate(article.publishedAt)}</span>
+                            </span>
+                            <span className="inline-flex items-center space-x-1 text-emerald-600">
+                              <Clock3 className="h-4 w-4" />
+                              <span>{t('news.readTime', { minutes: article.readTimeMinutes })}</span>
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                              {article.category}
+                            </p>
+                            <h4 className="text-base font-semibold text-slate-900">{article.title}</h4>
+                            <p className="text-sm text-slate-500">{article.excerpt}</p>
+                            <p className="text-xs font-medium text-slate-400">
+                              {t('admin.news.article.author', { author: article.author })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
+                      <FileText className="h-10 w-10 text-slate-400" />
+                      <p className="text-sm font-semibold">{t('admin.news.empty')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-5 border-t border-slate-100 bg-slate-50 p-6 md:border-l md:border-t-0">
+                <div className="space-y-1">
+                  <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                    <PlusCircle className="h-5 w-5 text-emerald-600" />
+                    {t('admin.news.createTitle')}
+                  </h3>
+                  <p className="text-sm text-slate-500">{t('admin.news.createSubtitle')}</p>
+                </div>
+                {newsToast && (
+                  <div
+                    className={`flex items-start space-x-2 rounded-2xl border px-4 py-3 text-sm ${
+                      newsToast.type === 'success'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-rose-200 bg-rose-50 text-rose-700'
+                    }`}
+                  >
+                    {newsToast.type === 'success' ? (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4" />
+                    ) : (
+                      <Ban className="mt-0.5 h-4 w-4" />
+                    )}
+                    <span>{newsToast.text}</span>
+                  </div>
+                )}
+                {newsErrors.length > 0 && (
+                  <div className="space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                    <p className="font-semibold">{t('admin.news.errors.listTitle')}</p>
+                    <ul className="list-disc space-y-1 pl-5">
+                      {newsErrors.map((message, index) => (
+                        <li key={`${message}-${index}`}>{message}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <form onSubmit={handleCreateNews} className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-id">
+                      {t('admin.news.form.identifierLabel')}
+                    </label>
+                    <input
+                      id="admin-news-id"
+                      name="id"
+                      type="text"
+                      value={newsForm.id}
+                      onChange={handleNewsFieldChange}
+                      placeholder={t('admin.news.form.identifierPlaceholder')}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">{t('admin.news.form.identifierHelp')}</p>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-title">
+                        {t('admin.news.form.titleBg')}
+                      </label>
+                      <input
+                        id="admin-news-title"
+                        name="title"
+                        value={newsForm.title}
+                        onChange={handleNewsFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-titleEn">
+                        {t('admin.news.form.titleEn')}
+                      </label>
+                      <input
+                        id="admin-news-titleEn"
+                        name="titleEn"
+                        value={newsForm.titleEn}
+                        onChange={handleNewsFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-excerpt">
+                        {t('admin.news.form.excerptBg')}
+                      </label>
+                      <textarea
+                        id="admin-news-excerpt"
+                        name="excerpt"
+                        value={newsForm.excerpt}
+                        onChange={handleNewsFieldChange}
+                        rows={3}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-excerptEn">
+                        {t('admin.news.form.excerptEn')}
+                      </label>
+                      <textarea
+                        id="admin-news-excerptEn"
+                        name="excerptEn"
+                        value={newsForm.excerptEn}
+                        onChange={handleNewsFieldChange}
+                        rows={3}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-content">
+                        {t('admin.news.form.contentBg')}
+                      </label>
+                      <textarea
+                        id="admin-news-content"
+                        name="content"
+                        value={newsForm.content}
+                        onChange={handleNewsFieldChange}
+                        rows={5}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-contentEn">
+                        {t('admin.news.form.contentEn')}
+                      </label>
+                      <textarea
+                        id="admin-news-contentEn"
+                        name="contentEn"
+                        value={newsForm.contentEn}
+                        onChange={handleNewsFieldChange}
+                        rows={5}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-category">
+                        {t('admin.news.form.categoryBg')}
+                      </label>
+                      <input
+                        id="admin-news-category"
+                        name="category"
+                        value={newsForm.category}
+                        onChange={handleNewsFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-categoryEn">
+                        {t('admin.news.form.categoryEn')}
+                      </label>
+                      <input
+                        id="admin-news-categoryEn"
+                        name="categoryEn"
+                        value={newsForm.categoryEn}
+                        onChange={handleNewsFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-author">
+                      {t('admin.news.form.author')}
+                    </label>
+                    <input
+                      id="admin-news-author"
+                      name="author"
+                      value={newsForm.author}
+                      onChange={handleNewsFieldChange}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-imageUrl">
+                      {t('admin.news.form.imageUrl')}
+                    </label>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        id="admin-news-imageUrl"
+                        name="imageUrl"
+                        value={newsForm.imageUrl}
+                        onChange={handleNewsFieldChange}
+                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleGenerateNewsImage}
+                        className="inline-flex items-center justify-center rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                      >
+                        <Image className="mr-2 h-4 w-4" />
+                        {t('admin.news.form.generateImage')}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">{t('admin.news.form.imageUrlHelp')}</p>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-publishedAt">
+                        {t('admin.news.form.publishedAt')}
+                      </label>
+                      <input
+                        id="admin-news-publishedAt"
+                        name="publishedAt"
+                        type="date"
+                        value={newsForm.publishedAt}
+                        onChange={handleNewsFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-readTime">
+                        {t('admin.news.form.readTime')}
+                      </label>
+                      <input
+                        id="admin-news-readTime"
+                        name="readTimeMinutes"
+                        type="number"
+                        min={1}
+                        max={60}
+                        value={newsForm.readTimeMinutes}
+                        onChange={handleNewsFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleResetNewsForm}
+                      className="inline-flex items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                    >
+                      {t('admin.news.form.reset')}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={newsSubmitting}
+                      className={`inline-flex items-center space-x-2 rounded-full px-5 py-2 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-emerald-200 ${
+                        newsSubmitting
+                          ? 'cursor-not-allowed bg-emerald-400 opacity-70'
+                          : 'bg-emerald-600 hover:bg-emerald-700'
+                      }`}
+                    >
+                      {newsSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>{t('admin.news.form.submitting')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <PlusCircle className="h-4 w-4" />
+                          <span>{t('admin.news.form.submit')}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
         </div>

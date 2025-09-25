@@ -1,22 +1,23 @@
 import React, { useMemo, useState } from 'react';
 import { Calendar, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { newsArticles } from '../../data/news';
+import { useNews } from '../../context/NewsContext';
 
 const News: React.FC = () => {
   const { language, t } = useLanguage();
+  const { news } = useNews();
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
 
   const articles = useMemo(
     () =>
-      newsArticles.map((article) => ({
+      news.map((article) => ({
         ...article,
         title: language === 'bg' ? article.title : article.titleEn,
         excerpt: language === 'bg' ? article.excerpt : article.excerptEn,
         content: language === 'bg' ? article.content : article.contentEn,
         category: language === 'bg' ? article.category : article.categoryEn,
       })),
-    [language]
+    [language, news]
   );
 
   const formatDate = (value: string) => {
