@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, Star, MessageCircle, Shield, Heart, Package } from 'lucide-react';
+import { ShoppingCart, MessageCircle, Shield, Heart, Package } from 'lucide-react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { useChat } from '../context/ChatContext';
@@ -15,8 +15,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
   const { askAssistant } = useChat();
   const { language, t } = useLanguage();
 
-  const rating = Math.min(5, Math.max(0, product.rating ?? 0));
-  const reviewCount = product.reviewCount ?? 0;
   const promotion = product.promotion;
   const hasPromotion = Boolean(promotion);
   const displayPrice = hasPromotion ? promotion!.promoPrice : product.price;
@@ -157,24 +155,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
 
       {/* Content */}
       <div className="p-5">
-        {product.rating !== undefined && (
-          <div className="mb-3 flex items-center space-x-1">
-            <div className="flex items-center">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Star
-                  key={index}
-                  className={`h-4 w-4 ${
-                    index < Math.floor(rating)
-                      ? 'fill-current text-yellow-400'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-gray-500">({reviewCount})</span>
-          </div>
-        )}
-
         {/* Title */}
         <button
           type="button"

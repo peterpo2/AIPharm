@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
   CreditCard,
+  ArrowRight,
+  FileText,
   Loader2,
   MapPin,
   Mail,
@@ -58,7 +60,7 @@ interface CreateOrderResponse {
   order?: ApiOrder;
 }
 
-type CheckoutStep = 'form' | 'success';
+type CheckoutStep = 'form' | 'eprescription' | 'success';
 
 const RAW_API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -98,6 +100,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const { user } = useAuth();
   const { t } = useLanguage();
 
+  const containsPrescription = useMemo(
+    () => items.some((item) => item.product.requiresPrescription),
+    [items],
+  );
+
   const [step, setStep] = useState<CheckoutStep>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +119,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     country: 'Bulgaria',
     paymentMethod: 'CashOnDelivery' as PaymentMethod,
     notes: '',
+    egn: '',
+    prescriptionCode: '',
   });
 
   const deliveryFee = useMemo(
@@ -129,7 +138,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
-    setStep('form');
+    setStep(containsPrescription ? 'eprescription' : 'form');
     setIsSubmitting(false);
     setError(null);
     setCreatedOrder(null);
@@ -141,10 +150,20 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       city: '',
       postalCode: '',
       country: 'Bulgaria',
-      paymentMethod: 'CashOnDelivery',
+      paymentMethod: containsPrescription ? 'Card' : 'CashOnDelivery',
       notes: '',
+      egn: '',
+      prescriptionCode: '',
     });
-  }, [isOpen, user]);
+  }, [containsPrescription, isOpen, user]);
+
+  useEffect(() => {
+    if (!containsPrescription) {
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, paymentMethod: 'Card' }));
+  }, [containsPrescription]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -181,6 +200,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   const handlePaymentChange = (value: PaymentMethod) => {
+    if (containsPrescription && value !== 'Card') {
+      return;
+    }
     setFormData((prev) => ({ ...prev, paymentMethod: value }));
   };
 
@@ -189,6 +211,50 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     if (!items.length) {
       setError(t('checkout.validation.noItems'));
       return;
+    }
+
+    const trimmedEgn = formData.egn.trim();
+    const trimmedPrescription = formData.prescriptionCode.trim();
+
+    if (containsPrescription) {
+      if (step === 'eprescription') {
+        if (!trimmedEgn) {
+          setError(t('checkout.validation.egnRequired'));
+          return;
+        }
+
+        if (!/^\d{10}$/.test(trimmedEgn)) {
+          setError(t('checkout.validation.egnFormat'));
+          return;
+        }
+
+        if (!trimmedPrescription) {
+          setError(t('checkout.validation.prescriptionRequired'));
+          return;
+        }
+
+        setError(null);
+        setStep('form');
+        return;
+      }
+
+      if (!trimmedEgn) {
+        setError(t('checkout.validation.egnRequired'));
+        setStep('eprescription');
+        return;
+      }
+
+      if (!/^\d{10}$/.test(trimmedEgn)) {
+        setError(t('checkout.validation.egnFormat'));
+        setStep('eprescription');
+        return;
+      }
+
+      if (!trimmedPrescription) {
+        setError(t('checkout.validation.prescriptionRequired'));
+        setStep('eprescription');
+        return;
+      }
     }
 
     const token =
@@ -201,6 +267,22 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setIsSubmitting(true);
     setError(null);
 
+    const paymentMethod = containsPrescription
+      ? 'Card'
+      : formData.paymentMethod;
+
+    const customerNotes = formData.notes.trim();
+    const prescriptionNotes = containsPrescription
+      ? [
+          `ePrescription EGN: ${trimmedEgn}`,
+          `ePrescription code: ${trimmedPrescription}`,
+        ].join(' | ')
+      : '';
+    const combinedNotes = [customerNotes, prescriptionNotes]
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .join('\n');
+
     const payload = {
       customerName: formData.fullName.trim() || undefined,
       customerEmail: formData.email.trim() || undefined,
@@ -209,8 +291,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       city: formData.city.trim() || undefined,
       postalCode: formData.postalCode.trim() || undefined,
       country: formData.country.trim() || undefined,
-      notes: formData.notes.trim() || undefined,
-      paymentMethod: formData.paymentMethod,
+      notes: combinedNotes || undefined,
+      paymentMethod,
       items: items.map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,
@@ -265,6 +347,59 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
   };
 
+  const SubmitIcon = (() => {
+    if (containsPrescription) {
+      return step === 'eprescription' ? ArrowRight : CheckCircle2;
+    }
+    return CheckCircle2;
+  })();
+
+  const submitLabel = containsPrescription
+    ? step === 'eprescription'
+      ? t('checkout.actions.continue')
+      : t('checkout.actions.confirmCard')
+    : t('checkout.actions.submit');
+
+  const summarySection = (
+    <section className="space-y-4">
+      <h3 className="text-lg font-semibold text-slate-900">
+        {t('checkout.section.summary')}
+      </h3>
+      <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+        <div className="space-y-2">
+          {items.map((item) => (
+            <div key={item.id} className="flex items-center justify-between text-sm">
+              <span className="text-slate-600">
+                {item.product.name} × {item.quantity}
+              </span>
+              <span className="font-medium text-slate-900">
+                {formatCurrency(item.unitPrice * item.quantity)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-slate-200 pt-3 text-sm">
+          <div className="flex items-center justify-between text-slate-600">
+            <span>{t('checkout.summary.subtotal')}</span>
+            <span>{formatCurrency(total)}</span>
+          </div>
+          <div className="flex items-center justify-between text-slate-600">
+            <span>{t('checkout.summary.delivery')}</span>
+            <span>
+              {deliveryFee > 0
+                ? formatCurrency(deliveryFee)
+                : t('checkout.summary.free')}
+            </span>
+          </div>
+          <div className="mt-2 flex items-center justify-between text-base font-semibold text-slate-900">
+            <span>{t('checkout.summary.total')}</span>
+            <span>{formatCurrency(grandTotal)}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <div className="fixed inset-0 z-[70]" onClick={handleBackdropClick}>
       <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" />
@@ -305,240 +440,294 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
           )}
 
-          {step === 'form' ? (
+          {step !== 'success' ? (
             <form onSubmit={handleSubmit} className="space-y-6 p-6 md:px-8 md:py-6">
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {t('checkout.section.personal')}
-                </h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-fullName"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.fullName')}
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="checkout-fullName"
-                        name="fullName"
-                        type="text"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-email"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.email')}
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="checkout-email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-phone"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.phone')}
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="checkout-phone"
-                        name="phoneNumber"
-                        type="tel"
-                        value={formData.phoneNumber}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {t('checkout.section.delivery')}
-                </h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-address"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.address')}
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="checkout-address"
-                        name="address"
-                        type="text"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="checkout-city"
-                        className="text-sm font-medium text-slate-600"
-                      >
-                        {t('checkout.field.city')}
-                      </label>
-                      <input
-                        id="checkout-city"
-                        name="city"
-                        type="text"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="checkout-postal"
-                        className="text-sm font-medium text-slate-600"
-                      >
-                        {t('checkout.field.postalCode')}
-                      </label>
-                      <input
-                        id="checkout-postal"
-                        name="postalCode"
-                        type="text"
-                        value={formData.postalCode}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="checkout-country"
-                        className="text-sm font-medium text-slate-600"
-                      >
-                        {t('checkout.field.country')}
-                      </label>
-                      <input
-                        id="checkout-country"
-                        name="country"
-                        type="text"
-                        value={formData.country}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-notes"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.notes')}
-                    </label>
-                    <textarea
-                      id="checkout-notes"
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                    />
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {t('checkout.section.payment')}
-                </h3>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {PAYMENT_METHODS.map((method) => {
-                    const label = resolvedPaymentLabel(method);
-                    const isActive = formData.paymentMethod === method;
-                    return (
-                      <button
-                        key={method}
-                        type="button"
-                        onClick={() => handlePaymentChange(method)}
-                        className={`rounded-2xl border px-4 py-3 text-sm transition ${
-                          isActive
-                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-slate-500">
-                  {t('checkout.paymentUnavailable')}
-                </p>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {t('checkout.section.summary')}
-                </h3>
-                <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                  <div className="space-y-2">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between text-sm">
-                        <span className="text-slate-600">
-                          {item.product.name} × {item.quantity}
-                        </span>
-                        <span className="font-medium text-slate-900">
-                          {formatCurrency(item.unitPrice * item.quantity)}
-                        </span>
+              {step === 'form' ? (
+                <>
+                  <section className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      {t('checkout.section.personal')}
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="checkout-fullName"
+                          className="text-sm font-medium text-slate-600"
+                        >
+                          {t('checkout.field.fullName')}
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <input
+                            id="checkout-fullName"
+                            name="fullName"
+                            type="text"
+                            value={formData.fullName}
+                            onChange={handleInputChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="border-t border-slate-200 pt-3 text-sm">
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>{t('checkout.summary.subtotal')}</span>
-                      <span>{formatCurrency(total)}</span>
+
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="checkout-email"
+                          className="text-sm font-medium text-slate-600"
+                        >
+                          {t('checkout.field.email')}
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <input
+                            id="checkout-email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="checkout-phone"
+                          className="text-sm font-medium text-slate-600"
+                        >
+                          {t('checkout.field.phone')}
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <input
+                            id="checkout-phone"
+                            name="phoneNumber"
+                            type="tel"
+                            value={formData.phoneNumber}
+                            onChange={handleInputChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>{t('checkout.summary.delivery')}</span>
-                      <span>
-                        {deliveryFee > 0
-                          ? formatCurrency(deliveryFee)
-                          : t('checkout.summary.free')}
-                      </span>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      {t('checkout.section.delivery')}
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="checkout-address"
+                          className="text-sm font-medium text-slate-600"
+                        >
+                          {t('checkout.field.address')}
+                        </label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <input
+                            id="checkout-address"
+                            name="address"
+                            type="text"
+                            value={formData.address}
+                            onChange={handleInputChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="checkout-city"
+                            className="text-sm font-medium text-slate-600"
+                          >
+                            {t('checkout.field.city')}
+                          </label>
+                          <input
+                            id="checkout-city"
+                            name="city"
+                            type="text"
+                            value={formData.city}
+                            onChange={handleInputChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="checkout-postal"
+                            className="text-sm font-medium text-slate-600"
+                          >
+                            {t('checkout.field.postalCode')}
+                          </label>
+                          <input
+                            id="checkout-postal"
+                            name="postalCode"
+                            type="text"
+                            value={formData.postalCode}
+                            onChange={handleInputChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="checkout-country"
+                            className="text-sm font-medium text-slate-600"
+                          >
+                            {t('checkout.field.country')}
+                          </label>
+                          <input
+                            id="checkout-country"
+                            name="country"
+                            type="text"
+                            value={formData.country}
+                            onChange={handleInputChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="checkout-notes"
+                          className="text-sm font-medium text-slate-600"
+                        >
+                          {t('checkout.field.notes')}
+                        </label>
+                        <textarea
+                          id="checkout-notes"
+                          name="notes"
+                          value={formData.notes}
+                          onChange={handleInputChange}
+                          rows={3}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
                     </div>
-                    <div className="mt-2 flex items-center justify-between text-base font-semibold text-slate-900">
-                      <span>{t('checkout.summary.total')}</span>
-                      <span>{formatCurrency(grandTotal)}</span>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      {t('checkout.section.payment')}
+                    </h3>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      {PAYMENT_METHODS.map((method) => {
+                        const label = resolvedPaymentLabel(method);
+                        const isActive = formData.paymentMethod === method;
+                        const isDisabled = containsPrescription && method !== 'Card';
+                        const baseClasses = isActive
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700';
+                        const disabledClasses = isDisabled
+                          ? 'cursor-not-allowed opacity-60 hover:border-slate-200 hover:text-slate-600'
+                          : '';
+                        return (
+                          <button
+                            key={method}
+                            type="button"
+                            onClick={() => handlePaymentChange(method)}
+                            disabled={isDisabled}
+                            className={`rounded-2xl border px-4 py-3 text-sm transition ${baseClasses} ${disabledClasses}`.trim()}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>
-                </div>
-              </section>
+                    <div className="space-y-1 text-xs text-slate-500">
+                      <p>{t('checkout.paymentUnavailable')}</p>
+                      {containsPrescription && (
+                        <p className="text-amber-600">
+                          {t('checkout.prescription.cardOnly')}
+                        </p>
+                      )}
+                    </div>
+                  </section>
+
+                  {summarySection}
+                </>
+              ) : (
+                <>
+                  <section className="space-y-4">
+                    <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
+                      <FileText className="mt-0.5 h-5 w-5" />
+                      <div>
+                        <h3 className="text-base font-semibold">
+                          {t('checkout.prescription.stepTitle')}
+                        </h3>
+                        <p className="text-sm">
+                          {t('checkout.prescription.stepSubtitle')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="checkout-egn"
+                          className="text-sm font-medium text-slate-600"
+                        >
+                          {t('checkout.prescription.egn')}
+                        </label>
+                        <input
+                          id="checkout-egn"
+                          name="egn"
+                          value={formData.egn}
+                          onChange={handleInputChange}
+                          inputMode="numeric"
+                          maxLength={10}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="checkout-prescription"
+                          className="text-sm font-medium text-slate-600"
+                        >
+                          {t('checkout.prescription.code')}
+                        </label>
+                        <input
+                          id="checkout-prescription"
+                          name="prescriptionCode"
+                          value={formData.prescriptionCode}
+                          onChange={handleInputChange}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="space-y-3">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      {t('checkout.section.payment')}
+                    </h3>
+                    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-slate-700">
+                      <CreditCard className="h-5 w-5 text-emerald-600" />
+                      <div>
+                        <p className="font-medium">{t('checkout.payment.card')}</p>
+                        <p className="text-sm text-slate-500">
+                          {t('checkout.prescription.cardOnly')}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+
+                  {summarySection}
+                </>
+              )}
 
               <div className="flex flex-col gap-3 pt-2 md:flex-row md:justify-end">
+                {containsPrescription && step === 'form' && (
+                  <button
+                    type="button"
+                    onClick={() => !isSubmitting && setStep('eprescription')}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isSubmitting}
+                  >
+                    {t('checkout.actions.back')}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => !isSubmitting && onClose()}
@@ -555,9 +744,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   {isSubmitting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    <SubmitIcon className="mr-2 h-4 w-4" />
                   )}
-                  <span>{t('checkout.actions.submit')}</span>
+                  <span>{submitLabel}</span>
                 </button>
               </div>
             </form>
