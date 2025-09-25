@@ -7,6 +7,7 @@ export type CreateNewsArticleInput = Omit<NewsArticle, 'id'> & { id?: string };
 interface NewsContextValue {
   news: NewsArticle[];
   addArticle: (article: CreateNewsArticleInput) => NewsArticle;
+  deleteArticle: (id: string) => void;
 }
 
 const STORAGE_KEY = 'aipharm.news';
@@ -80,7 +81,14 @@ export const NewsProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     return article;
   }, []);
 
-  const value = useMemo<NewsContextValue>(() => ({ news, addArticle }), [news, addArticle]);
+  const deleteArticle = useCallback((id: string) => {
+    setNews((previous) => previous.filter((item) => item.id !== id));
+  }, []);
+
+  const value = useMemo<NewsContextValue>(
+    () => ({ news, addArticle, deleteArticle }),
+    [news, addArticle, deleteArticle]
+  );
 
   return <NewsContext.Provider value={value}>{children}</NewsContext.Provider>;
 };

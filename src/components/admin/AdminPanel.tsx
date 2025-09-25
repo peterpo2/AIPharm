@@ -11,11 +11,14 @@ import {
   Loader2,
   Mail,
   MapPin,
+  Pencil,
   Package,
   PlusCircle,
   RefreshCw,
+  Save,
   Search,
   Shield,
+  Trash2,
   Truck,
   User,
   X,
@@ -23,7 +26,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNews } from '../../context/NewsContext';
-import type { OrderStatus, PaymentMethod } from '../../types';
+import type { NewsArticle, OrderStatus, PaymentMethod } from '../../types';
 import { generateNewsImage } from '../../utils/imageGenerator';
 
 interface AdminPanelProps {
@@ -129,6 +132,22 @@ interface NewsFormState {
   readTimeMinutes: string;
 }
 
+const mapArticleToFormState = (article: NewsArticle): NewsFormState => ({
+  id: article.id,
+  title: article.title,
+  titleEn: article.titleEn,
+  excerpt: article.excerpt,
+  excerptEn: article.excerptEn,
+  content: article.content,
+  contentEn: article.contentEn,
+  category: article.category,
+  categoryEn: article.categoryEn,
+  author: article.author,
+  imageUrl: article.imageUrl,
+  publishedAt: article.publishedAt,
+  readTimeMinutes: article.readTimeMinutes.toString(),
+});
+
 const RAW_API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
@@ -177,7 +196,7 @@ const resolveOrderStatusIndex = (status: OrderStatus | number): number => {
 const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const { isAdmin, user } = useAuth();
   const { t } = useLanguage();
-  const { news, addArticle } = useNews();
+  const { news, addArticle, deleteArticle } = useNews();
   const defaultAuthor = useMemo(
     () => (user?.fullName?.trim() || user?.email || '').trim(),
     [user?.email, user?.fullName]
@@ -215,6 +234,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const [newsErrors, setNewsErrors] = useState<string[]>([]);
   const [newsToast, setNewsToast] = useState<ToastState>(null);
   const [newsSubmitting, setNewsSubmitting] = useState(false);
+  const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
+  const [articleToDelete, setArticleToDelete] = useState<NewsArticle | null>(null);
+  const isEditingNews = editingArticleId !== null;
   const PAYMENT_METHODS: PaymentMethod[] = ['CashOnDelivery', 'Card', 'BankTransfer'];
 
   useEffect(() => {
@@ -483,12 +505,74 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   };
 
   const handleResetNewsForm = useCallback(() => {
+    if (editingArticleId) {
+      const existingArticle = news.find((item) => item.id === editingArticleId);
+      if (existingArticle) {
+        setNewsForm(mapArticleToFormState(existingArticle));
+      } else {
+        setNewsForm(buildInitialNewsForm());
+        setEditingArticleId(null);
+      }
+    } else {
+      setNewsForm(buildInitialNewsForm());
+    }
+
+    setNewsErrors([]);
+    setNewsToast(null);
+    setArticleToDelete(null);
+  }, [buildInitialNewsForm, editingArticleId, news]);
+
+  const handleEditArticle = useCallback((article: NewsArticle) => {
+    setEditingArticleId(article.id);
+    setNewsForm(mapArticleToFormState(article));
+    setNewsErrors([]);
+    setNewsToast(null);
+    setArticleToDelete(null);
+  }, []);
+
+  const handleNewsCardKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>, article: NewsArticle) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleEditArticle(article);
+      }
+    },
+    [handleEditArticle]
+  );
+
+  const handleRequestDeleteArticle = useCallback((article: NewsArticle) => {
+    setArticleToDelete(article);
+  }, []);
+
+  const handleCancelDeleteArticle = useCallback(() => {
+    setArticleToDelete(null);
+  }, []);
+
+  const handleConfirmDeleteArticle = useCallback(() => {
+    if (!articleToDelete) {
+      return;
+    }
+
+    deleteArticle(articleToDelete.id);
+    if (editingArticleId === articleToDelete.id) {
+      setNewsForm(buildInitialNewsForm());
+      setEditingArticleId(null);
+    }
+
+    setNewsErrors([]);
+    setNewsToast({ type: 'success', text: t('admin.news.messages.deleted') });
+    setArticleToDelete(null);
+  }, [articleToDelete, buildInitialNewsForm, deleteArticle, editingArticleId, t]);
+
+  const handleStartNewArticle = useCallback(() => {
+    setEditingArticleId(null);
     setNewsForm(buildInitialNewsForm());
     setNewsErrors([]);
     setNewsToast(null);
+    setArticleToDelete(null);
   }, [buildInitialNewsForm]);
 
-  const handleCreateNews = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitNews = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (newsSubmitting) {
       return;
@@ -554,7 +638,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     setNewsSubmitting(true);
 
     try {
-      addArticle({
+      const isUpdateAction = Boolean(
+        editingArticleId || (trimmed.id ? news.some((article) => article.id === trimmed.id) : false)
+      );
+      const previousEditingId = editingArticleId;
+
+      if (previousEditingId && (!trimmed.id || trimmed.id !== previousEditingId)) {
+        deleteArticle(previousEditingId);
+      }
+
+      const savedArticle = addArticle({
         id: trimmed.id || undefined,
         title: trimmed.title,
         titleEn: trimmed.titleEn,
@@ -571,8 +664,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
       });
 
       setNewsErrors([]);
-      setNewsToast({ type: 'success', text: t('admin.news.messages.created') });
-      setNewsForm(buildInitialNewsForm());
+      setArticleToDelete(null);
+
+      if (isUpdateAction) {
+        setEditingArticleId(savedArticle.id);
+        setNewsForm(mapArticleToFormState(savedArticle));
+        setNewsToast({ type: 'success', text: t('admin.news.messages.updated') });
+      } else {
+        setEditingArticleId(null);
+        setNewsForm(buildInitialNewsForm());
+        setNewsToast({ type: 'success', text: t('admin.news.messages.created') });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : t('admin.news.errors.general');
       setNewsToast({ type: 'error', text: message });
@@ -1369,42 +1471,89 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 </div>
                 <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
                   {news.length ? (
-                    news.map((article) => (
-                      <div
-                        key={article.id}
-                        className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm"
-                      >
-                        <div className="aspect-video w-full overflow-hidden bg-slate-100">
-                          <img
-                            src={article.imageUrl}
-                            alt={article.title}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="space-y-2 p-4">
-                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            <span className="inline-flex items-center space-x-1">
-                              <Calendar className="h-4 w-4 text-slate-400" />
-                              <span>{formatDate(article.publishedAt)}</span>
-                            </span>
-                            <span className="inline-flex items-center space-x-1 text-emerald-600">
-                              <Clock3 className="h-4 w-4" />
-                              <span>{t('news.readTime', { minutes: article.readTimeMinutes })}</span>
-                            </span>
+                    news.map((article) => {
+                      const isActive = editingArticleId === article.id;
+                      return (
+                        <div
+                          key={article.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleEditArticle(article)}
+                          onKeyDown={(event) => handleNewsCardKeyDown(event, article)}
+                          aria-pressed={isActive}
+                          aria-label={t('admin.news.actions.openForEditing', { title: article.title })}
+                          className={`group relative cursor-pointer overflow-hidden rounded-2xl border bg-white shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${
+                            isActive
+                              ? 'border-emerald-300 ring-2 ring-emerald-200'
+                              : 'border-slate-100 hover:border-emerald-200 hover:shadow-md'
+                          }`}
+                        >
+                          <div className="absolute right-3 top-3 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleEditArticle(article);
+                              }}
+                              className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-200 ${
+                                isActive
+                                  ? 'border-emerald-200 bg-emerald-600 text-white shadow-sm'
+                                  : 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
+                              }`}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              <span>{t('admin.news.actions.edit')}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleRequestDeleteArticle(article);
+                              }}
+                              className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>{t('admin.news.actions.delete')}</span>
+                            </button>
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-                              {article.category}
-                            </p>
-                            <h4 className="text-base font-semibold text-slate-900">{article.title}</h4>
-                            <p className="text-sm text-slate-500">{article.excerpt}</p>
-                            <p className="text-xs font-medium text-slate-400">
-                              {t('admin.news.article.author', { author: article.author })}
-                            </p>
+                          <div className="aspect-video w-full overflow-hidden bg-slate-100">
+                            <img
+                              src={article.imageUrl}
+                              alt={article.title}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div className="space-y-2 p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              <span className="inline-flex items-center space-x-1">
+                                <Calendar className="h-4 w-4 text-slate-400" />
+                                <span>{formatDate(article.publishedAt)}</span>
+                              </span>
+                              <span className="inline-flex items-center space-x-1 text-emerald-600">
+                                <Clock3 className="h-4 w-4" />
+                                <span>{t('news.readTime', { minutes: article.readTimeMinutes })}</span>
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                                {article.category}
+                              </p>
+                              <h4 className="text-base font-semibold text-slate-900">{article.title}</h4>
+                              <p className="text-sm text-slate-500">{article.excerpt}</p>
+                              <p className="text-xs font-medium text-slate-400">
+                                {t('admin.news.article.author', { author: article.author })}
+                              </p>
+                              {isActive && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                  <Pencil className="h-3.5 w-3.5" />
+                                  <span>{t('admin.news.actions.editing')}</span>
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
                       <FileText className="h-10 w-10 text-slate-400" />
@@ -1414,12 +1563,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
               <div className="space-y-5 border-t border-slate-100 bg-slate-50 p-6 md:border-l md:border-t-0">
-                <div className="space-y-1">
-                  <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                    <PlusCircle className="h-5 w-5 text-emerald-600" />
-                    {t('admin.news.createTitle')}
-                  </h3>
-                  <p className="text-sm text-slate-500">{t('admin.news.createSubtitle')}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                      {isEditingNews ? (
+                        <Pencil className="h-5 w-5 text-emerald-600" />
+                      ) : (
+                        <PlusCircle className="h-5 w-5 text-emerald-600" />
+                      )}
+                      {isEditingNews ? t('admin.news.editTitle') : t('admin.news.createTitle')}
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      {isEditingNews ? t('admin.news.editSubtitle') : t('admin.news.createSubtitle')}
+                    </p>
+                  </div>
+                  {isEditingNews && (
+                    <button
+                      type="button"
+                      onClick={handleStartNewArticle}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      <span>{t('admin.news.actions.new')}</span>
+                    </button>
+                  )}
                 </div>
                 {newsToast && (
                   <div
@@ -1447,7 +1614,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     </ul>
                   </div>
                 )}
-                <form onSubmit={handleCreateNews} className="space-y-4">
+                {articleToDelete && (
+                  <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="mt-0.5 h-5 w-5" />
+                      <div className="space-y-1">
+                        <p className="font-semibold">{t('admin.news.delete.title')}</p>
+                        <p>{t('admin.news.delete.description', { title: articleToDelete.title })}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={handleConfirmDeleteArticle}
+                        className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>{t('admin.news.delete.confirm')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelDeleteArticle}
+                        className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        <X className="h-4 w-4" />
+                        <span>{t('admin.news.delete.cancel')}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <form onSubmit={handleSubmitNews} className="space-y-4">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-news-id">
                       {t('admin.news.form.identifierLabel')}
@@ -1637,17 +1833,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 pt-2">
+                    {isEditingNews && (
+                      <button
+                        type="button"
+                        onClick={handleStartNewArticle}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-rose-300 hover:text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        <X className="h-4 w-4" />
+                        <span>{t('admin.news.actions.cancelEdit')}</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={handleResetNewsForm}
-                      className="inline-flex items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                     >
-                      {t('admin.news.form.reset')}
+                      <RefreshCw className="h-4 w-4" />
+                      <span>{isEditingNews ? t('admin.news.form.resetEditing') : t('admin.news.form.reset')}</span>
                     </button>
                     <button
                       type="submit"
                       disabled={newsSubmitting}
-                      className={`inline-flex items-center space-x-2 rounded-full px-5 py-2 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-emerald-200 ${
+                      className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-emerald-200 ${
                         newsSubmitting
                           ? 'cursor-not-allowed bg-emerald-400 opacity-70'
                           : 'bg-emerald-600 hover:bg-emerald-700'
@@ -1660,8 +1867,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                         </>
                       ) : (
                         <>
-                          <PlusCircle className="h-4 w-4" />
-                          <span>{t('admin.news.form.submit')}</span>
+                          {isEditingNews ? <Save className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}
+                          <span>
+                            {isEditingNews ? t('admin.news.form.submitUpdate') : t('admin.news.form.submit')}
+                          </span>
                         </>
                       )}
                     </button>
