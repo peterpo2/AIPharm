@@ -222,17 +222,17 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
             </div>
 
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('products.category')}</p>
                 <button
                   type="button"
                   onClick={() => onCategoryChange(null)}
-                  className="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-600 transition hover:text-emerald-700"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-emerald-50 px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-emerald-700 transition hover:border-emerald-200 hover:bg-white"
                 >
                   {t('products.viewAll')}
                 </button>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {categorySummaries.map((category) => {
                   const IconComponent = getCategoryIcon(category.icon);
                   const isSelected = selectedCategory === category.id;
@@ -241,17 +241,20 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
                     <button
                       key={category.id}
                       type="button"
+                      title={category.translatedName}
                       onClick={() => onCategoryChange(isSelected ? null : category.id)}
-                      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-semibold transition ${
+                      className={`group inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-left text-[0.7rem] font-semibold transition ${
                         isSelected
                           ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm'
                           : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-emerald-200 hover:bg-white hover:text-emerald-700'
                       }`}
                     >
-                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-emerald-600">
-                        <IconComponent className="h-4 w-4" />
+                      <span className={`flex h-6 w-6 items-center justify-center rounded-full text-emerald-600 ${
+                        isSelected ? 'bg-emerald-100' : 'bg-white'
+                      }`}>
+                        <IconComponent className="h-3.5 w-3.5" />
                       </span>
-                      <span className="flex-1 truncate">{category.translatedName}</span>
+                      <span className="truncate">{category.translatedName}</span>
                     </button>
                   );
                 })}
