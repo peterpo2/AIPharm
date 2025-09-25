@@ -2,10 +2,12 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export type Language = 'bg' | 'en';
 
+type TranslationParams = Record<string, string | number>;
+
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: TranslationParams) => string;
 }
 
 const translations = {
@@ -1104,8 +1106,20 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('bg');
 
-  const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations['bg']] || key;
+  const t = (key: string, params?: TranslationParams): string => {
+    const template =
+      translations[language][key as keyof (typeof translations)['bg']] ||
+      translations.bg[key as keyof (typeof translations)['bg']] ||
+      key;
+
+    if (!params) {
+      return template;
+    }
+
+    return Object.entries(params).reduce((result, [paramKey, value]) => {
+      const pattern = new RegExp(`{${paramKey}}`, 'g');
+      return result.replace(pattern, String(value));
+    }, template);
   };
 
   return (
