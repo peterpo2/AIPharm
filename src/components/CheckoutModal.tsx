@@ -8,7 +8,6 @@ import {
   MapPin,
   Mail,
   Phone,
-  ShieldCheck,
   User,
   X,
 } from 'lucide-react';
@@ -445,20 +444,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <form onSubmit={handleSubmit} className="space-y-6 p-6 md:px-8 md:py-6">
               {step === 'form' ? (
                 <>
-                  {containsPrescription && (
-                    <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
-                      <ShieldCheck className="mt-0.5 h-5 w-5" />
-                      <div>
-                        <p className="font-semibold">
-                          {t('checkout.prescription.title')}
-                        </p>
-                        <p className="text-sm">
-                          {t('checkout.prescription.description')}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
                   <section className="space-y-4">
                     <h3 className="text-lg font-semibold text-slate-900">
                       {t('checkout.section.personal')}
