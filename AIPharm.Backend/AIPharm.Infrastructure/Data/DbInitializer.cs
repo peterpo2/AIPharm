@@ -14,9 +14,10 @@ namespace AIPharm.Infrastructure.Data
             if (dropAndRecreate)
             {
                 await context.Database.EnsureDeletedAsync(ct);
+                Console.WriteLine("✅ Existing database dropped.");
             }
 
-            await context.Database.MigrateAsync(ct);
+            await EnsureDatabaseSchemaAsync(context, ct);
 
             await EnsureAdminTwoFactorDisabledAsync(context, ct);
 
@@ -437,6 +438,39 @@ namespace AIPharm.Infrastructure.Data
                 await context.Users.AddRangeAsync(newUsers, ct);
                 await context.SaveChangesAsync(ct);
                 Console.WriteLine($"✅ Seeded {newUsers.Count} demo user(s).");
+            }
+        }
+
+        private static async Task EnsureDatabaseSchemaAsync(AIPharmDbContext context, CancellationToken ct)
+        {
+            var migrations = await context.Database.GetMigrationsAsync(ct);
+
+            if (migrations.Any())
+            {
+                var pendingMigrations = await context.Database.GetPendingMigrationsAsync(ct);
+
+                if (pendingMigrations.Any())
+                {
+                    await context.Database.MigrateAsync(ct);
+                    Console.WriteLine($"✅ Applied {pendingMigrations.Count()} pending migration(s).");
+                }
+                else
+                {
+                    Console.WriteLine("ℹ️ Database schema already up to date (migrations).");
+                }
+
+                return;
+            }
+
+            var created = await context.Database.EnsureCreatedAsync(ct);
+
+            if (created)
+            {
+                Console.WriteLine("✅ Database schema created via EnsureCreated (no migrations detected).");
+            }
+            else
+            {
+                Console.WriteLine("ℹ️ Database already exists; EnsureCreated skipped (no migrations detected).");
             }
         }
 
