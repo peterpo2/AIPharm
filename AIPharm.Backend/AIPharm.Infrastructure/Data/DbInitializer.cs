@@ -4,6 +4,8 @@ using System.Linq;
 using AIPharm.Core.Security;
 using AIPharm.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AIPharm.Infrastructure.Data
 {
@@ -445,24 +447,63 @@ namespace AIPharm.Infrastructure.Data
         {
             var migrations = context.Database.GetMigrations().ToList();
 
-            if (migrations.Any())
+            try
             {
-                await context.Database.MigrateAsync(ct);
+                if (migrations.Any())
+                {
+                    await context.Database.MigrateAsync(ct);
 
-                var applied = await context.Database.GetAppliedMigrationsAsync(ct);
-                Console.WriteLine($"ℹ️ Database schema ensured via migrations. Applied migrations: {string.Join(", ", applied)}");
-                return;
+                    var applied = await context.Database.GetAppliedMigrationsAsync(ct);
+                    Console.WriteLine($"ℹ️ Database schema ensured via migrations. Applied migrations: {string.Join(", ", applied)}");
+                }
+                else
+                {
+                    var created = await context.Database.EnsureCreatedAsync(ct);
+
+                    if (created)
+                    {
+                        Console.WriteLine("✅ Database schema created via EnsureCreated (no migrations detected).");
+                    }
+                    else
+                    {
+                        Console.WriteLine("ℹ️ Database already exists; EnsureCreated skipped (no migrations detected).");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Migration pipeline failed ({ex.GetType().Name}: {ex.Message}). Falling back to EnsureCreated.");
+
+                var created = await context.Database.EnsureCreatedAsync(ct);
+                Console.WriteLine(created
+                    ? "✅ Database schema created via EnsureCreated fallback."
+                    : "ℹ️ Database already existed during EnsureCreated fallback.");
             }
 
-            var created = await context.Database.EnsureCreatedAsync(ct);
+            await EnsureTablesExistAsync(context, ct);
+        }
 
-            if (created)
+        private static async Task EnsureTablesExistAsync(AIPharmDbContext context, CancellationToken ct)
+        {
+            try
             {
-                Console.WriteLine("✅ Database schema created via EnsureCreated (no migrations detected).");
+                var databaseCreator = context.Database.GetService<IRelationalDatabaseCreator>();
+
+                if (!await databaseCreator.ExistsAsync(ct))
+                {
+                    await databaseCreator.CreateAsync(ct);
+                    Console.WriteLine("ℹ️ Database created via relational database creator fallback.");
+                }
+
+                if (!await databaseCreator.HasTablesAsync(ct))
+                {
+                    await databaseCreator.CreateTablesAsync(ct);
+                    Console.WriteLine("✅ Database tables created explicitly via CreateTablesAsync fallback.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("ℹ️ Database already exists; EnsureCreated skipped (no migrations detected).");
+                Console.WriteLine($"⚠️ Failed to verify database tables ({ex.GetType().Name}: {ex.Message}).");
             }
         }
 
