@@ -443,7 +443,7 @@ namespace AIPharm.Infrastructure.Data
 
         private static async Task EnsureDatabaseSchemaAsync(AIPharmDbContext context, CancellationToken ct)
         {
-            var migrations = await context.Database.GetMigrationsAsync(ct);
+            var migrations = context.Database.GetMigrations().ToList();
 
             if (migrations.Any())
             {
