@@ -447,18 +447,10 @@ namespace AIPharm.Infrastructure.Data
 
             if (migrations.Any())
             {
-                var pendingMigrations = await context.Database.GetPendingMigrationsAsync(ct);
+                await context.Database.MigrateAsync(ct);
 
-                if (pendingMigrations.Any())
-                {
-                    await context.Database.MigrateAsync(ct);
-                    Console.WriteLine($"✅ Applied {pendingMigrations.Count()} pending migration(s).");
-                }
-                else
-                {
-                    Console.WriteLine("ℹ️ Database schema already up to date (migrations).");
-                }
-
+                var applied = await context.Database.GetAppliedMigrationsAsync(ct);
+                Console.WriteLine($"ℹ️ Database schema ensured via migrations. Applied migrations: {string.Join(", ", applied)}");
                 return;
             }
 
