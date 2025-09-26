@@ -121,7 +121,7 @@ namespace AIPharm.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasQueryFilter(c => EF.Property<bool>(c, "IsDeleted") == false);
+                    b.HasQueryFilter((AIPharm.Domain.Entities.Category c) => EF.Property<bool>(c, "IsDeleted") == false);
 
                     b.ToTable("Categories", "dbo");
                 });
@@ -402,7 +402,7 @@ namespace AIPharm.Infrastructure.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasQueryFilter(p => EF.Property<bool>(p, "IsDeleted") == false);
+                    b.HasQueryFilter((AIPharm.Domain.Entities.Product p) => EF.Property<bool>(p, "IsDeleted") == false);
 
                     b.ToTable("Products", "dbo");
                 });
