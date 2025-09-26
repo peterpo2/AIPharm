@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -12,7 +13,7 @@ namespace AIPharm.Core.Services
     {
         private readonly IRepository<Product> _productRepository;
         private readonly ChatClient _chatClient;
-        private static readonly ConcurrentDictionary<string, List<AssistantResponseDto>> _conversations = new();
+        private static readonly ConcurrentDictionary<Guid, List<AssistantResponseDto>> _conversations = new();
 
         public AssistantService(IRepository<Product> productRepository, IConfiguration config)
         {
@@ -81,7 +82,7 @@ namespace AIPharm.Core.Services
             return response;
         }
 
-        public async Task<IEnumerable<AssistantResponseDto>> GetConversationHistoryAsync(string userId)
+        public async Task<IEnumerable<AssistantResponseDto>> GetConversationHistoryAsync(Guid userId)
         {
             await Task.CompletedTask;
             return _conversations.TryGetValue(userId, out var history)
@@ -89,14 +90,14 @@ namespace AIPharm.Core.Services
                 : Enumerable.Empty<AssistantResponseDto>();
         }
 
-        public async Task SaveConversationAsync(string userId, AssistantResponseDto response)
+        public async Task SaveConversationAsync(Guid userId, AssistantResponseDto response)
         {
             var history = _conversations.GetOrAdd(userId, _ => new List<AssistantResponseDto>());
             lock (history) history.Add(response);
             await Task.CompletedTask;
         }
 
-        public async Task ClearConversationHistoryAsync(string userId)
+        public async Task ClearConversationHistoryAsync(Guid userId)
         {
             _conversations.TryRemove(userId, out _);
             await Task.CompletedTask;

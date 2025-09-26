@@ -4,13 +4,13 @@ const API_BASE = RAW_BASE.replace(/\/+$/, "");
 
 // ---------- Types ----------
 export interface ApiProduct {
-    id: number;
+    id: string;
     name: string;
     description?: string;
     price: number;
     stockQuantity: number;
     imageUrl?: string;
-    categoryId: number;
+    categoryId: string;
     categoryName?: string;
     requiresPrescription: boolean;
     activeIngredient?: string;
@@ -21,7 +21,7 @@ export interface ApiProduct {
 }
 
 export interface ApiCategory {
-    id: number;
+    id: string;
     name: string;
     description?: string;
     icon: string;
@@ -29,8 +29,8 @@ export interface ApiCategory {
 }
 
 export interface ApiCartItem {
-    id: number;
-    productId: number;
+    id: string;
+    productId: string;
     productName: string;
     imageUrl?: string;
     activeIngredient?: string;
@@ -40,7 +40,7 @@ export interface ApiCartItem {
 }
 
 export interface ApiCart {
-    id: string | number;
+    id: string;
     userId: string;
     items: ApiCartItem[];
     total: number;
@@ -60,7 +60,7 @@ export interface ApiPagedResult<T> {
 }
 
 export interface ProductFilter {
-    categoryId?: number;
+    categoryId?: string;
     minPrice?: number;
     maxPrice?: number;
     searchTerm?: string;
@@ -69,11 +69,11 @@ export interface ProductFilter {
     pageSize?: number;
 }
 
-export interface AssistantRequest { question: string; productId?: number; }
+export interface AssistantRequest { question: string; productId?: string; }
 export interface AssistantResponse {
     question: string;
     answer: string;
-    productId?: number;
+    productId?: string;
     timestamp: string;
     disclaimer: string;
 }
@@ -92,7 +92,7 @@ function getErrorMessage(e: unknown): string | undefined {
 // ---------- Client ----------
 class ApiClient {
     private baseUrl: string;
-    private userId = "demo-user";
+    private userId = "11111111-1111-1111-1111-111111111111";
 
     constructor(baseUrl: string) {
         this.baseUrl = baseUrl.replace(/\/+$/, "");
@@ -167,7 +167,7 @@ class ApiClient {
         return this.request<ApiPagedResult<ApiProduct>>(`/products${qs ? `?${qs}` : ""}`);
     }
 
-    getProduct(id: number) {
+    getProduct(id: string) {
         return this.request<ApiProduct>(`/products/${id}`);
     }
 
@@ -181,7 +181,7 @@ class ApiClient {
         return this.request<ApiCategory[]>("/categories");
     }
 
-    getCategory(id: number) {
+    getCategory(id: string) {
         return this.request<ApiCategory>(`/categories/${id}`);
     }
 
@@ -190,21 +190,21 @@ class ApiClient {
         return this.request<ApiCart>("/cart");
     }
 
-    addToCart(productId: number, quantity = 1) {
+    addToCart(productId: string, quantity = 1) {
         return this.request<ApiCart>("/cart/items", {
             method: "POST",
             body: JSON.stringify({ productId, quantity }),
         });
     }
 
-    updateCartItem(cartItemId: number, quantity: number) {
+    updateCartItem(cartItemId: string, quantity: number) {
         return this.request<ApiCart>(`/cart/items/${cartItemId}`, {
             method: "PUT",
             body: JSON.stringify({ quantity }),
         });
     }
 
-    removeFromCart(cartItemId: number) {
+    removeFromCart(cartItemId: string) {
         return this.request<ApiCart>(`/cart/items/${cartItemId}`, { method: "DELETE" });
     }
 
@@ -213,7 +213,7 @@ class ApiClient {
     }
 
     // ----- Assistant -----
-    askAssistant(question: string, productId?: number) {
+    askAssistant(question: string, productId?: string) {
         return this.request<AssistantResponse>("/assistant/ask", {
             method: "POST",
             body: JSON.stringify({ question, productId }),
@@ -230,14 +230,14 @@ export const apiClient = new ApiClient(API_BASE);
 
 // Convenience wrappers (keep `this` intact)
 export function getProducts(filter?: ProductFilter) { return apiClient.getProducts(filter ?? {}); }
-export function getProduct(id: number) { return apiClient.getProduct(id); }
+export function getProduct(id: string) { return apiClient.getProduct(id); }
 export function searchProducts(searchTerm: string) { return apiClient.searchProducts(searchTerm); }
 export function getCategories() { return apiClient.getCategories(); }
-export function getCategory(id: number) { return apiClient.getCategory(id); }
+export function getCategory(id: string) { return apiClient.getCategory(id); }
 export function getCart() { return apiClient.getCart(); }
-export function addToCart(productId: number, quantity = 1) { return apiClient.addToCart(productId, quantity); }
-export function updateCartItem(cartItemId: number, quantity: number) { return apiClient.updateCartItem(cartItemId, quantity); }
-export function removeFromCart(cartItemId: number) { return apiClient.removeFromCart(cartItemId); }
+export function addToCart(productId: string, quantity = 1) { return apiClient.addToCart(productId, quantity); }
+export function updateCartItem(cartItemId: string, quantity: number) { return apiClient.updateCartItem(cartItemId, quantity); }
+export function removeFromCart(cartItemId: string) { return apiClient.removeFromCart(cartItemId); }
 export function clearCart() { return apiClient.clearCart(); }
-export function askAssistant(question: string, productId?: number) { return apiClient.askAssistant(question, productId); }
+export function askAssistant(question: string, productId?: string) { return apiClient.askAssistant(question, productId); }
 export function healthCheck() { return apiClient.healthCheck(); }

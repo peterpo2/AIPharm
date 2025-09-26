@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -30,7 +31,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<CategoryDto>> GetCategory(int id)
+        public async Task<ActionResult<CategoryDto>> GetCategory(Guid id)
         {
             try
             {
@@ -62,7 +63,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<CategoryDto>> UpdateCategory(int id, [FromBody] UpdateCategoryDto updateCategoryDto)
+        public async Task<ActionResult<CategoryDto>> UpdateCategory(Guid id, [FromBody] UpdateCategoryDto updateCategoryDto)
         {
             try
             {
@@ -80,7 +81,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategory(int id)
+        public async Task<IActionResult> DeleteCategory(Guid id)
         {
             try
             {

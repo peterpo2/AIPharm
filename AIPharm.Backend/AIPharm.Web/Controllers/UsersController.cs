@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
@@ -38,12 +39,13 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetUserById(string id)
+        public async Task<IActionResult> GetUserById(Guid id)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = Guid.TryParse(currentUserIdClaim, out var parsedCurrentUser) ? parsedCurrentUser : Guid.Empty;
             var isAdmin = User.IsInRole("Admin");
 
-            if (!isAdmin && !string.Equals(currentUserId, id, StringComparison.Ordinal))
+            if (!isAdmin && currentUserId != id)
             {
                 return Forbid();
             }
@@ -62,7 +64,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserRequest request)
+        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request)
         {
             if (!ModelState.IsValid)
             {
@@ -80,10 +82,11 @@ namespace AIPharm.Web.Controllers
                 return NotFound(new { success = false, message = "User not found" });
             }
 
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = Guid.TryParse(currentUserIdClaim, out var parsedCurrentUser) ? parsedCurrentUser : Guid.Empty;
             var isAdmin = User.IsInRole("Admin");
 
-            if (!isAdmin && !string.Equals(currentUserId, id, StringComparison.Ordinal))
+            if (!isAdmin && currentUserId != id)
             {
                 return Forbid();
             }

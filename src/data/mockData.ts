@@ -1,7 +1,7 @@
 import { Category, Product } from '../types';
 import { generateProductImage } from '../utils/imageGenerator';
 
-export const categories: Category[] = [
+const rawCategories = [
   {
     id: 1,
     name: 'Обезболяващи',
@@ -40,7 +40,12 @@ export const categories: Category[] = [
   },
 ];
 
-export const products: Product[] = [
+export const categories: Category[] = rawCategories.map((category) => ({
+  ...category,
+  id: String(category.id),
+}));
+
+const rawProducts = [
   {
     id: 1,
     name: 'Парацетамол 500мг',
@@ -1128,15 +1133,21 @@ export const products: Product[] = [
   },
 ];
 
-export const getProductById = (id: number): Product | undefined => {
+export const products: Product[] = rawProducts.map((product) => ({
+  ...product,
+  id: String(product.id),
+  categoryId: String(product.categoryId),
+}));
+
+export const getProductById = (id: string): Product | undefined => {
   return products.find((p) => p.id === id);
 };
 
-export const getProductsByCategory = (categoryId: number): Product[] => {
+export const getProductsByCategory = (categoryId: string): Product[] => {
   return products.filter((p) => p.categoryId === categoryId);
 };
 
-export const getCategoryById = (id: number): Category | undefined => {
+export const getCategoryById = (id: string): Category | undefined => {
   return categories.find((c) => c.id === id);
 };
 

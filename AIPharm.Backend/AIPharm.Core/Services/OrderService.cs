@@ -29,9 +29,12 @@ namespace AIPharm.Core.Services
             _userRepository = userRepository;
         }
 
-        public async Task<OrderDto> CreateOrderAsync(string userId, CreateOrderDto orderDto)
+        public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderDto orderDto)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentException("User ID must be a valid GUID.", nameof(userId));
+            }
             ArgumentNullException.ThrowIfNull(orderDto);
 
             if (orderDto.Items == null || orderDto.Items.Count == 0)
@@ -167,9 +170,12 @@ namespace AIPharm.Core.Services
             return MapOrder(createdOrder);
         }
 
-        public async Task<IEnumerable<OrderDto>> GetOrdersForUserAsync(string userId)
+        public async Task<IEnumerable<OrderDto>> GetOrdersForUserAsync(Guid userId)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentException("User ID must be a valid GUID.", nameof(userId));
+            }
 
             var orders = await _orderRepository.Query()
                 .Where(o => o.UserId == userId)
@@ -194,9 +200,9 @@ namespace AIPharm.Core.Services
             return orders.Select(MapOrder).ToList();
         }
 
-        public async Task<OrderDto> UpdateOrderStatusAsync(int orderId, OrderStatus status)
+        public async Task<OrderDto> UpdateOrderStatusAsync(Guid orderId, OrderStatus status)
         {
-            if (orderId <= 0)
+            if (orderId == Guid.Empty)
             {
                 throw new ArgumentOutOfRangeException(nameof(orderId));
             }

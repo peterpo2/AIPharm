@@ -1,5 +1,5 @@
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   icon: string;
@@ -18,7 +18,7 @@ export interface ProductPromotion {
 }
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   nameEn: string;
   description?: string;
@@ -26,7 +26,7 @@ export interface Product {
   price: number;
   stockQuantity: number;
   imageUrl: string;
-  categoryId: number;
+  categoryId: string;
   category?: Category;
   requiresPrescription: boolean;
   activeIngredient?: string;
@@ -41,7 +41,7 @@ export interface Product {
 }
 
 export interface CartItem {
-  id: number;
+  id: string;
   product: Product;
   quantity: number;
   unitPrice: number;
@@ -58,8 +58,8 @@ export type OrderStatus =
   | 'Cancelled';
 
 export interface OrderItemSummary {
-  id: number;
-  productId: number;
+  id: string;
+  productId: string;
   productName: string;
   productDescription?: string;
   quantity: number;
@@ -71,7 +71,7 @@ export interface OrderItemSummary {
 }
 
 export interface NhifPrescriptionSummary {
-  id: number;
+  id: string;
   prescriptionNumber: string;
   personalIdentificationNumber: string;
   prescribedDate: string;
@@ -85,7 +85,7 @@ export interface NhifPrescriptionSummary {
 }
 
 export interface OrderSummary {
-  id: number;
+  id: string;
   orderNumber: string;
   orderKey?: string;
   status: OrderStatus | number;
@@ -115,7 +115,7 @@ export interface OrderSummary {
 }
 
 export interface ShoppingCart {
-  id: number;
+  id: string;
   userId: string;
   items: CartItem[];
   total: number;
@@ -136,7 +136,7 @@ export interface User {
 }
 
 export interface ProductFilter {
-  categoryId?: number;
+  categoryId?: string;
   minPrice?: number;
   maxPrice?: number;
   searchTerm?: string;
@@ -150,13 +150,13 @@ export interface ChatMessage {
   content: string;
   isUser: boolean;
   timestamp: Date;
-  productId?: number;
+  productId?: string;
 }
 
 export interface AssistantResponse {
   question: string;
   answer: string;
-  productId?: number;
+  productId?: string;
   timestamp: Date;
   disclaimer: string;
 }

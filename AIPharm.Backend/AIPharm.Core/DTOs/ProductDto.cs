@@ -1,10 +1,11 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace AIPharm.Core.DTOs
 {
     public class ProductDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [StringLength(200, ErrorMessage = "Name cannot exceed 200 characters.")]
         public string Name { get; set; } = string.Empty;
@@ -20,8 +21,8 @@ namespace AIPharm.Core.DTOs
         public int StockQuantity { get; set; }
         [StringLength(500, ErrorMessage = "ImageUrl cannot exceed 500 characters.")]
         public string? ImageUrl { get; set; }
-        [Range(1, int.MaxValue, ErrorMessage = "CategoryId must be a positive integer.")]
-        public int CategoryId { get; set; }
+        [Required]
+        public Guid CategoryId { get; set; }
         public string? CategoryName { get; set; }
         public bool RequiresPrescription { get; set; }
         [StringLength(200, ErrorMessage = "ActiveIngredient cannot exceed 200 characters.")]
@@ -58,8 +59,8 @@ namespace AIPharm.Core.DTOs
         public int StockQuantity { get; set; }
         [StringLength(500, ErrorMessage = "ImageUrl cannot exceed 500 characters.")]
         public string? ImageUrl { get; set; }
-        [Range(1, int.MaxValue, ErrorMessage = "CategoryId must be a positive integer.")]
-        public int CategoryId { get; set; }
+        [Required(ErrorMessage = "CategoryId is required.")]
+        public Guid CategoryId { get; set; }
         public bool RequiresPrescription { get; set; }
         [StringLength(200, ErrorMessage = "ActiveIngredient cannot exceed 200 characters.")]
         public string? ActiveIngredient { get; set; }
@@ -91,8 +92,7 @@ namespace AIPharm.Core.DTOs
         public int? StockQuantity { get; set; }
         [StringLength(500, ErrorMessage = "ImageUrl cannot exceed 500 characters.")]
         public string? ImageUrl { get; set; }
-        [Range(1, int.MaxValue, ErrorMessage = "CategoryId must be a positive integer.")]
-        public int? CategoryId { get; set; }
+        public Guid? CategoryId { get; set; }
         public bool? RequiresPrescription { get; set; }
         [StringLength(200, ErrorMessage = "ActiveIngredient cannot exceed 200 characters.")]
         public string? ActiveIngredient { get; set; }
@@ -110,8 +110,7 @@ namespace AIPharm.Core.DTOs
 
     public class ProductFilterDto
     {
-        [Range(1, int.MaxValue, ErrorMessage = "CategoryId must be a positive integer.")]
-        public int? CategoryId { get; set; }
+        public Guid? CategoryId { get; set; }
         [Range(typeof(decimal), "0", "99999999.99", ErrorMessage = "MinPrice must be non-negative.")]
         public decimal? MinPrice { get; set; }
         [Range(typeof(decimal), "0", "99999999.99", ErrorMessage = "MaxPrice must be non-negative.")]

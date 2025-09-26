@@ -6,7 +6,7 @@ namespace AIPharm.Domain.Entities
 {
     public class NhifPrescription
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Required]
         [MaxLength(50)]
@@ -21,14 +21,14 @@ namespace AIPharm.Domain.Entities
         public DateTime PurchaseDate { get; set; }
 
         [Required]
-        public int OrderId { get; set; }
+        public Guid OrderId { get; set; }
 
         [Required]
         [MaxLength(100)]
         public string OrderNumber { get; set; } = string.Empty;
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
 
         [Column(TypeName = "decimal(10,2)")]
         public decimal PatientPaidAmount { get; set; }

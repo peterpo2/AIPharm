@@ -27,7 +27,8 @@ namespace AIPharm.Infrastructure.Data
                   {
                         entity.ToTable("AssistantMessages", "dbo");
                         entity.HasKey(e => e.Id);
-                        entity.Property(e => e.Id).UseIdentityColumn();
+                        entity.Property(e => e.Id)
+                              .HasDefaultValueSql("NEWID()");
                         entity.Property(e => e.Content).IsRequired();
                   });
                   // ===== USERS =====
@@ -37,7 +38,7 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();   // auto increment
+                              .HasDefaultValueSql("NEWID()");
 
                         entity.HasIndex(e => e.Email).IsUnique();
                         entity.Property(e => e.Email).IsRequired();
@@ -52,7 +53,7 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                              .HasDefaultValueSql("NEWID()");
 
                         entity.Property(e => e.Name)
                         .IsRequired()
@@ -72,7 +73,7 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                              .HasDefaultValueSql("NEWID()");
 
                         entity.Property(e => e.Name)
                         .IsRequired()
@@ -102,7 +103,7 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                              .HasDefaultValueSql("NEWID()");
 
                         entity.HasOne(e => e.User)
                         .WithMany(u => u.ShoppingCarts)
@@ -117,7 +118,7 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                              .HasDefaultValueSql("NEWID()");
 
                         entity.Property(e => e.UnitPrice)
                         .HasColumnType("decimal(10,2)");
@@ -140,7 +141,7 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                              .HasDefaultValueSql("NEWID()");
 
                         entity.Property(e => e.OrderNumber)
                         .IsRequired()
@@ -193,7 +194,7 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                              .HasDefaultValueSql("NEWID()");
 
                         entity.Property(e => e.UnitPrice)
                         .HasColumnType("decimal(10,2)");
@@ -223,7 +224,8 @@ namespace AIPharm.Infrastructure.Data
                   {
                         entity.ToTable("NhifPrescriptions", "dbo");
                         entity.HasKey(e => e.Id);
-                        entity.Property(e => e.Id).UseIdentityColumn();
+                        entity.Property(e => e.Id)
+                              .HasDefaultValueSql("NEWID()");
                         entity.Property(e => e.PrescriptionNumber)
                               .IsRequired()
                               .HasMaxLength(50);

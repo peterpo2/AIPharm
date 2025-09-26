@@ -1,3 +1,4 @@
+using System;
 using AutoMapper;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -35,7 +36,7 @@ namespace AIPharm.Core.Services
             return categoryDtos;
         }
 
-        public async Task<CategoryDto?> GetCategoryByIdAsync(int id)
+        public async Task<CategoryDto?> GetCategoryByIdAsync(Guid id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null) return null;
@@ -59,7 +60,7 @@ namespace AIPharm.Core.Services
             return categoryDto;
         }
 
-        public async Task<CategoryDto> UpdateCategoryAsync(int id, UpdateCategoryDto updateCategoryDto)
+        public async Task<CategoryDto> UpdateCategoryAsync(Guid id, UpdateCategoryDto updateCategoryDto)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
@@ -75,7 +76,7 @@ namespace AIPharm.Core.Services
             return categoryDto;
         }
 
-        public async Task DeleteCategoryAsync(int id)
+        public async Task DeleteCategoryAsync(Guid id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
