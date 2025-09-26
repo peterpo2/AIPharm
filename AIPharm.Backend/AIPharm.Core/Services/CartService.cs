@@ -1,3 +1,4 @@
+using System;
 using AutoMapper;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -24,7 +25,7 @@ namespace AIPharm.Core.Services
             _mapper = mapper;
         }
 
-        public async Task<CartDto> GetCartAsync(string userId)
+        public async Task<CartDto> GetCartAsync(Guid userId)
         {
             var cart = await _cartRepository.FirstOrDefaultAsync(c => c.UserId == userId);
             if (cart == null)
@@ -67,7 +68,7 @@ namespace AIPharm.Core.Services
             return cartDto;
         }
 
-        public async Task<CartDto> AddToCartAsync(string userId, AddToCartDto addToCartDto)
+        public async Task<CartDto> AddToCartAsync(Guid userId, AddToCartDto addToCartDto)
         {
             var product = await _productRepository.GetByIdAsync(addToCartDto.ProductId);
             if (product == null)
@@ -117,7 +118,7 @@ namespace AIPharm.Core.Services
             return await GetCartAsync(userId);
         }
 
-        public async Task<CartDto> UpdateCartItemAsync(string userId, int cartItemId, UpdateCartItemDto updateCartItemDto)
+        public async Task<CartDto> UpdateCartItemAsync(Guid userId, Guid cartItemId, UpdateCartItemDto updateCartItemDto)
         {
             var cartItem = await _cartItemRepository.GetByIdAsync(cartItemId);
             if (cartItem == null)
@@ -148,7 +149,7 @@ namespace AIPharm.Core.Services
             return await GetCartAsync(userId);
         }
 
-        public async Task<CartDto> RemoveFromCartAsync(string userId, int cartItemId)
+        public async Task<CartDto> RemoveFromCartAsync(Guid userId, Guid cartItemId)
         {
             var cartItem = await _cartItemRepository.GetByIdAsync(cartItemId);
             if (cartItem == null)
@@ -166,7 +167,7 @@ namespace AIPharm.Core.Services
             return await GetCartAsync(userId);
         }
 
-        public async Task<CartDto> ClearCartAsync(string userId)
+        public async Task<CartDto> ClearCartAsync(Guid userId)
         {
             var cart = await _cartRepository.FirstOrDefaultAsync(c => c.UserId == userId);
             if (cart != null)

@@ -11,10 +11,10 @@ interface ChatContextType {
   messages: ChatMessage[];
   isOpen: boolean;
   isLoading: boolean;
-  addMessage: (content: string, isUser: boolean, productId?: number) => void;
+  addMessage: (content: string, isUser: boolean, productId?: string) => void;
   toggleChat: () => void;
   setIsOpen: (open: boolean) => void;
-  askAssistant: (question: string, productId?: number) => Promise<void>;
+  askAssistant: (question: string, productId?: string) => Promise<void>;
   clearChat: () => Promise<void>;
 }
 
@@ -67,7 +67,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   const addMessage = (
     content: string,
     isUser: boolean,
-    productId?: number
+    productId?: string
   ) => {
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -79,7 +79,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
     setMessages((prev) => [...prev, newMessage]);
   };
 
-  const askAssistant = async (question: string, productId?: number) => {
+  const askAssistant = async (question: string, productId?: string) => {
     setIsLoading(true);
     addMessage(question, true, productId);
 

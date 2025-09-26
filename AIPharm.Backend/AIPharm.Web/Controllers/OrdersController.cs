@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -23,8 +24,8 @@ namespace AIPharm.Web.Controllers
         [HttpGet("mine")]
         public async Task<IActionResult> GetMyOrders()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(userId))
+            var userId = ResolveUserId();
+            if (userId == Guid.Empty)
             {
                 return Unauthorized(new { success = false, message = "User context missing." });
             }
@@ -57,8 +58,8 @@ namespace AIPharm.Web.Controllers
                 });
             }
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(userId))
+            var userId = ResolveUserId();
+            if (userId == Guid.Empty)
             {
                 return Unauthorized(new { success = false, message = "User context missing." });
             }
@@ -92,9 +93,9 @@ namespace AIPharm.Web.Controllers
             }
         }
 
-        [HttpPatch("{orderId:int}/status")]
+        [HttpPatch("{orderId:guid}/status")]
         [Authorize(Roles = "Admin,Staff")]
-        public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromBody] UpdateOrderStatusDto request)
+        public async Task<IActionResult> UpdateOrderStatus(Guid orderId, [FromBody] UpdateOrderStatusDto request)
         {
             if (!ModelState.IsValid)
             {
@@ -136,6 +137,12 @@ namespace AIPharm.Web.Controllers
                     error = ex.Message
                 });
             }
+        }
+
+        private Guid ResolveUserId()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
         }
     }
 }

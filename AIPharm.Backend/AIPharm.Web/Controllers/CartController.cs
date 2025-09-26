@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -8,6 +10,7 @@ namespace AIPharm.Web.Controllers
     [Route("api/[controller]")]
     public class CartController : ControllerBase
     {
+        private static readonly Guid DemoUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         private readonly ICartService _cartService;
 
         public CartController(ICartService cartService)
@@ -15,11 +18,14 @@ namespace AIPharm.Web.Controllers
             _cartService = cartService;
         }
 
-        private string GetUserId()
+        private Guid GetUserId()
         {
             // In a real application, this would get the user ID from the JWT token
             // For demo purposes, we'll use a header or default to demo user
-            return Request.Headers["X-User-Id"].FirstOrDefault() ?? "demo-user";
+            var rawUserId = Request.Headers["X-User-Id"].FirstOrDefault();
+            return Guid.TryParse(rawUserId, out var parsed) && parsed != Guid.Empty
+                ? parsed
+                : DemoUserId;
         }
 
         [HttpGet]
@@ -61,7 +67,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpPut("items/{cartItemId}")]
-        public async Task<ActionResult<CartDto>> UpdateCartItem(int cartItemId, [FromBody] UpdateCartItemDto updateCartItemDto)
+        public async Task<ActionResult<CartDto>> UpdateCartItem(Guid cartItemId, [FromBody] UpdateCartItemDto updateCartItemDto)
         {
             try
             {
@@ -88,7 +94,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpDelete("items/{cartItemId}")]
-        public async Task<ActionResult<CartDto>> RemoveFromCart(int cartItemId)
+        public async Task<ActionResult<CartDto>> RemoveFromCart(Guid cartItemId)
         {
             try
             {

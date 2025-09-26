@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -30,7 +31,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ProductDto>> GetProduct(int id)
+        public async Task<ActionResult<ProductDto>> GetProduct(Guid id)
         {
             try
             {
@@ -85,7 +86,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ProductDto>> UpdateProduct(int id, [FromBody] UpdateProductDto updateProductDto)
+        public async Task<ActionResult<ProductDto>> UpdateProduct(Guid id, [FromBody] UpdateProductDto updateProductDto)
         {
             try
             {
@@ -107,7 +108,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        public async Task<IActionResult> DeleteProduct(Guid id)
         {
             try
             {

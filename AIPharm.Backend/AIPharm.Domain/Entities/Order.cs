@@ -23,11 +23,11 @@ namespace AIPharm.Domain.Entities
 
     public class Order
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Required]
         [Column("OrderUser")]
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
 
         [Required]
         [MaxLength(100)]

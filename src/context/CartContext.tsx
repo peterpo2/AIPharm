@@ -10,8 +10,8 @@ interface CartState {
 
 type CartAction =
   | { type: 'ADD_ITEM'; payload: Product }
-  | { type: 'REMOVE_ITEM'; payload: number }
-  | { type: 'UPDATE_QUANTITY'; payload: { id: number; quantity: number } }
+  | { type: 'REMOVE_ITEM'; payload: string }
+  | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' }
   | { type: 'TOGGLE_CART' }
   | { type: 'SET_CART_OPEN'; payload: boolean };
@@ -50,8 +50,12 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
             : item,
         );
       } else {
+        const newItemId =
+          typeof crypto !== 'undefined' && 'randomUUID' in crypto
+            ? crypto.randomUUID()
+            : Date.now().toString();
         const newItem: CartItem = {
-          id: Date.now(),
+          id: newItemId,
           product: action.payload,
           quantity: 1,
           unitPrice: action.payload.promotion?.promoPrice ?? action.payload.price,

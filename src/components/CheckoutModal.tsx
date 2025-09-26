@@ -28,8 +28,8 @@ interface CheckoutModalProps {
 }
 
 interface ApiOrderItem {
-  id: number;
-  productId: number;
+  id: string;
+  productId: string;
   productName: string;
   productDescription?: string;
   quantity: number;
@@ -38,7 +38,7 @@ interface ApiOrderItem {
 }
 
 interface ApiNhifPrescription {
-  id: number;
+  id: string;
   prescriptionNumber: string;
   personalIdentificationNumber: string;
   prescribedDate: string;
@@ -52,7 +52,7 @@ interface ApiNhifPrescription {
 }
 
 interface ApiOrder {
-  id: number;
+  id: string;
   orderNumber: string;
   status: number;
   paymentMethod: PaymentMethod | number;

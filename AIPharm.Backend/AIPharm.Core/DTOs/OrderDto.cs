@@ -7,7 +7,7 @@ namespace AIPharm.Core.DTOs
 {
     public class OrderDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
         public string OrderKey => OrderNumber;
         public OrderStatus Status { get; set; }
@@ -29,7 +29,7 @@ namespace AIPharm.Core.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime OrderDate => CreatedAt;
         public DateTime UpdatedAt { get; set; }
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
         public string? UserEmail { get; set; }
         public string? UserFullName { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
@@ -38,8 +38,8 @@ namespace AIPharm.Core.DTOs
 
     public class OrderItemDto
     {
-        public int Id { get; set; }
-        public int ProductId { get; set; }
+        public Guid Id { get; set; }
+        public Guid ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public string? ProductDescription { get; set; }
         public int Quantity { get; set; }
@@ -52,8 +52,8 @@ namespace AIPharm.Core.DTOs
 
     public class CreateOrderItemDto
     {
-        [Range(1, int.MaxValue)]
-        public int ProductId { get; set; }
+        [Required]
+        public Guid ProductId { get; set; }
 
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; }
@@ -98,13 +98,13 @@ namespace AIPharm.Core.DTOs
 
     public class NhifPrescriptionDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string PrescriptionNumber { get; set; } = string.Empty;
         public string PersonalIdentificationNumber { get; set; } = string.Empty;
         public DateTime PrescribedDate { get; set; }
         public DateTime PurchaseDate { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
         public decimal PatientPaidAmount { get; set; }
         public decimal NhifPaidAmount { get; set; }
         public decimal? OtherCoverageAmount { get; set; }

@@ -1,3 +1,4 @@
+using System;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
 using AIPharm.Web.Controllers;
@@ -21,7 +22,7 @@ public class ProductsControllerTests
     [Fact]
     public async Task CreateProduct_WhenCategoryIsInvalid_ReturnsBadRequest()
     {
-        var dto = new CreateProductDto { CategoryId = 99 };
+        var dto = new CreateProductDto { CategoryId = Guid.NewGuid() };
 
         _productServiceMock
             .Setup(service => service.CreateProductAsync(It.IsAny<CreateProductDto>()))
@@ -36,8 +37,10 @@ public class ProductsControllerTests
     [Fact]
     public async Task CreateProduct_WhenSuccessful_ReturnsCreatedAtAction()
     {
-        var dto = new CreateProductDto { Name = "Painkiller", CategoryId = 1 };
-        var product = new ProductDto { Id = 10, Name = dto.Name, CategoryId = dto.CategoryId };
+        var categoryId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var dto = new CreateProductDto { Name = "Painkiller", CategoryId = categoryId };
+        var product = new ProductDto { Id = productId, Name = dto.Name, CategoryId = dto.CategoryId };
 
         _productServiceMock
             .Setup(service => service.CreateProductAsync(It.IsAny<CreateProductDto>()))
@@ -52,13 +55,13 @@ public class ProductsControllerTests
     [Fact]
     public async Task UpdateProduct_WhenCategoryIsInvalid_ReturnsBadRequest()
     {
-        var dto = new UpdateProductDto { CategoryId = 5 };
+        var dto = new UpdateProductDto { CategoryId = Guid.NewGuid() };
 
         _productServiceMock
-            .Setup(service => service.UpdateProductAsync(It.IsAny<int>(), It.IsAny<UpdateProductDto>()))
+            .Setup(service => service.UpdateProductAsync(It.IsAny<Guid>(), It.IsAny<UpdateProductDto>()))
             .ThrowsAsync(new ArgumentException("Category not found"));
 
-        var result = await _controller.UpdateProduct(1, dto);
+        var result = await _controller.UpdateProduct(Guid.NewGuid(), dto);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Contains("Category", badRequest.Value?.ToString());
@@ -68,10 +71,10 @@ public class ProductsControllerTests
     public async Task UpdateProduct_WhenProductIsMissing_ReturnsNotFound()
     {
         _productServiceMock
-            .Setup(service => service.UpdateProductAsync(It.IsAny<int>(), It.IsAny<UpdateProductDto>()))
+            .Setup(service => service.UpdateProductAsync(It.IsAny<Guid>(), It.IsAny<UpdateProductDto>()))
             .ThrowsAsync(new KeyNotFoundException("Product not found"));
 
-        var result = await _controller.UpdateProduct(1, new UpdateProductDto());
+        var result = await _controller.UpdateProduct(Guid.NewGuid(), new UpdateProductDto());
 
         var notFound = Assert.IsType<NotFoundObjectResult>(result.Result);
         Assert.Contains("Product", notFound.Value?.ToString());
@@ -81,10 +84,10 @@ public class ProductsControllerTests
     public async Task DeleteProduct_WhenProductIsMissing_ReturnsNotFound()
     {
         _productServiceMock
-            .Setup(service => service.DeleteProductAsync(It.IsAny<int>()))
+            .Setup(service => service.DeleteProductAsync(It.IsAny<Guid>()))
             .ThrowsAsync(new KeyNotFoundException("Product not found"));
 
-        var result = await _controller.DeleteProduct(1);
+        var result = await _controller.DeleteProduct(Guid.NewGuid());
 
         var notFound = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Contains("Product", notFound.Value?.ToString());

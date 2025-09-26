@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -5,10 +6,10 @@ namespace AIPharm.Domain.Entities
 {
     public class ShoppingCart
     {
-        public int Id { get; set; }
-        
+        public Guid Id { get; set; } = Guid.NewGuid();
+
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

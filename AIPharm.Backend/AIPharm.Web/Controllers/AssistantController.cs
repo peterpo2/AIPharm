@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AIPharm.Core.DTOs;
@@ -100,18 +102,24 @@ namespace AIPharm.Web.Controllers
         /// Helper method to extract the user ID.
         /// Priority: JWT claim "sub" > Request header "X-User-Id" > fallback "demo-user".
         /// </summary>
-        private string GetUserId()
+        private Guid GetUserId()
         {
             if (User?.Identity?.IsAuthenticated == true)
             {
                 var userId = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-                if (!string.IsNullOrEmpty(userId))
+                if (Guid.TryParse(userId, out var parsed) && parsed != Guid.Empty)
                 {
-                    return userId;
+                    return parsed;
                 }
             }
 
-            return Request.Headers["X-User-Id"].FirstOrDefault() ?? "demo-user";
+            var headerValue = Request.Headers["X-User-Id"].FirstOrDefault();
+            if (Guid.TryParse(headerValue, out var headerId) && headerId != Guid.Empty)
+            {
+                return headerId;
+            }
+
+            return Guid.Parse("22222222-2222-2222-2222-222222222222");
         }
     }
 }

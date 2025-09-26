@@ -131,10 +131,8 @@ if (!app.Environment.IsEnvironment("Testing"))
         if (drop)
         {
             Console.WriteLine("⚠️ Dropping and recreating database...");
-            await ctx.Database.EnsureDeletedAsync();
         }
 
-        await ctx.Database.MigrateAsync();
         await DbInitializer.InitializeAsync(ctx, drop);
 
         Console.WriteLine("✅ Database migrated and seeded.");
