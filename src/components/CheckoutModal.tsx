@@ -1,4 +1,5 @@
 /* cspell:word nhif */
+/* cspell:word nhif */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
@@ -9,6 +10,7 @@ import {
   MapPin,
   Mail,
   Phone,
+  Fingerprint,
   Fingerprint,
   User,
   X,
@@ -49,6 +51,20 @@ interface ApiNhifPrescription {
   createdAt: string;
 }
 
+interface ApiNhifPrescription {
+  id: number;
+  prescriptionNumber: string;
+  personalIdentificationNumber: string;
+  prescribedDate: string;
+  purchaseDate: string;
+  orderNumber: string;
+  userId: string;
+  patientPaidAmount: number;
+  nhifPaidAmount: number;
+  otherCoverageAmount?: number | null;
+  createdAt: string;
+}
+
 interface ApiOrder {
   id: number;
   orderNumber: string;
@@ -68,6 +84,7 @@ interface ApiOrder {
   createdAt: string;
   updatedAt: string;
   items: ApiOrderItem[];
+  nhifPrescriptions?: ApiNhifPrescription[];
   nhifPrescriptions?: ApiNhifPrescription[];
 }
 
@@ -122,6 +139,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     [items]
   );
 
+  const requiresPrescription = useMemo(
+    () => items.some((item) => item.product.requiresPrescription),
+    [items]
+  );
+
   const [step, setStep] = useState<CheckoutStep>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,6 +182,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
+    setStep(requiresPrescription ? 'prescription' : 'form');
     setStep(requiresPrescription ? 'prescription' : 'form');
     setIsSubmitting(false);
     setError(null);
@@ -225,11 +248,37 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setPrescriptionData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handlePrescriptionInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = event.target;
+    setPrescriptionData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handlePaymentChange = (value: PaymentMethod) => {
     if (containsPrescription && value !== 'Card') {
       return;
     }
     setFormData((prev) => ({ ...prev, paymentMethod: value }));
+  };
+
+  const handlePrescriptionSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const personalId = prescriptionData.personalIdentificationNumber.trim();
+    const prescriptionNumber = prescriptionData.prescriptionNumber.trim();
+
+    if (!personalId || !prescriptionNumber) {
+      setPrescriptionError(t('checkout.validation.prescriptionRequired'));
+      return;
+    }
+
+    if (!/^\d{10}$/.test(personalId)) {
+      setPrescriptionError(t('checkout.validation.personalId'));
+      return;
+    }
+
+    setPrescriptionError(null);
+    setStep('form');
   };
 
   const handlePrescriptionSubmit = (event: React.FormEvent) => {
@@ -328,6 +377,22 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         ]
       : undefined;
 
+    const timestampIso = new Date().toISOString();
+
+    const nhifPrescriptions = requiresPrescription
+      ? [
+          {
+            prescriptionNumber: prescriptionData.prescriptionNumber.trim(),
+            personalIdentificationNumber:
+              prescriptionData.personalIdentificationNumber.trim(),
+            prescribedDate: timestampIso,
+            purchaseDate: timestampIso,
+            patientPaidAmount: grandTotal,
+            nhifPaidAmount: 0,
+          },
+        ]
+      : undefined;
+
     const payload = {
       customerName: formData.fullName.trim() || undefined,
       customerEmail: formData.email.trim() || undefined,
@@ -342,6 +407,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         productId: item.product.id,
         quantity: item.quantity,
       })),
+      nhifPrescriptions,
       nhifPrescriptions,
     };
 
@@ -486,6 +552,92 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
           )}
 
+          {step === 'prescription' ? (
+            <form
+              onSubmit={handlePrescriptionSubmit}
+              className="space-y-6 p-6 md:px-8 md:py-6"
+            >
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {t('checkout.section.prescription')}
+                </h3>
+                <p className="text-sm text-slate-600">
+                  {t('checkout.prescription.subtitle')}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {t('checkout.prescription.privacy')}
+                </p>
+                {prescriptionError && (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    {prescriptionError}
+                  </div>
+                )}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="checkout-personal-id"
+                      className="text-sm font-medium text-slate-600"
+                    >
+                      {t('checkout.field.personalId')}
+                    </label>
+                    <div className="relative">
+                      <Fingerprint className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="checkout-personal-id"
+                        name="personalIdentificationNumber"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={10}
+                        autoComplete="off"
+                        value={prescriptionData.personalIdentificationNumber}
+                        onChange={handlePrescriptionInputChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="checkout-prescription-number"
+                      className="text-sm font-medium text-slate-600"
+                    >
+                      {t('checkout.field.prescriptionNumber')}
+                    </label>
+                    <div className="relative">
+                      <ClipboardList className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="checkout-prescription-number"
+                        name="prescriptionNumber"
+                        type="text"
+                        autoComplete="off"
+                        value={prescriptionData.prescriptionNumber}
+                        onChange={handlePrescriptionInputChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <div className="flex flex-col gap-3 pt-2 md:flex-row md:justify-end">
+                <button
+                  type="button"
+                  onClick={() => !isSubmitting && onClose()}
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                >
+                  {t('checkout.actions.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                >
+                  {t('checkout.actions.prescriptionContinue')}
+                </button>
+              </div>
+            </form>
+          ) : step === 'form' ? (
           {step === 'prescription' ? (
             <form
               onSubmit={handlePrescriptionSubmit}
