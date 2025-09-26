@@ -270,6 +270,16 @@ const translations = {
     'profile.readonlyEmail': 'Имейл адресът не може да бъде променян.',
     'profile.adminBadge': 'Администратор',
     'profile.staffBadge': 'Служител',
+    'profile.prescriptionFeaturesTitle': 'Рецептурни услуги',
+    'profile.prescriptionFeaturesDescription':
+      'Контролирайте достъпа до продукти с рецепта и подаването на е-рецепти.',
+    'profile.prescriptionFeaturesStatusEnabled':
+      'Потребителите виждат продуктите с рецепта и могат да завършват е-рецепти.',
+    'profile.prescriptionFeaturesStatusDisabled':
+      'Продуктите с рецепта и е-рецепциите са скрити за всички потребители.',
+    'profile.prescriptionFeaturesToggle': 'Управление на рецептурните услуги',
+    'profile.prescriptionFeaturesEnabled': 'Вкл.',
+    'profile.prescriptionFeaturesDisabled': 'Изкл.',
     'profile.fullName': 'Пълно име',
     'profile.fullNamePlaceholder': 'Иван Иванов',
     'profile.phoneNumber': 'Телефон',
@@ -868,6 +878,16 @@ const translations = {
     'profile.readonlyEmail': 'The email address cannot be changed.',
     'profile.adminBadge': 'Administrator',
     'profile.staffBadge': 'Staff member',
+    'profile.prescriptionFeaturesTitle': 'Prescription services',
+    'profile.prescriptionFeaturesDescription':
+      'Control the availability of prescription-only products and e-prescriptions.',
+    'profile.prescriptionFeaturesStatusEnabled':
+      'Customers can see prescription medicines and submit e-prescriptions.',
+    'profile.prescriptionFeaturesStatusDisabled':
+      'Prescription medicines and e-prescriptions are hidden for all customers.',
+    'profile.prescriptionFeaturesToggle': 'Toggle prescription services',
+    'profile.prescriptionFeaturesEnabled': 'On',
+    'profile.prescriptionFeaturesDisabled': 'Off',
     'profile.fullName': 'Full name',
     'profile.fullNamePlaceholder': 'John Doe',
     'profile.phoneNumber': 'Phone number',

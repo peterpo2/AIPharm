@@ -4,6 +4,7 @@ import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { useChat } from '../context/ChatContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useFeatureToggles } from '../context/FeatureToggleContext';
 
 interface ProductCardProps {
   product: Product;
@@ -14,6 +15,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
   const { dispatch } = useCart();
   const { askAssistant } = useChat();
   const { language, t } = useLanguage();
+  const { prescriptionFeaturesEnabled } = useFeatureToggles();
 
   const promotion = product.promotion;
   const hasPromotion = Boolean(promotion);
@@ -108,7 +110,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute left-3 top-3 flex flex-col space-y-2">
-          {product.requiresPrescription && (
+          {product.requiresPrescription && prescriptionFeaturesEnabled && (
             <div className="flex items-center space-x-1 rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-white">
               <Shield className="h-3 w-3" />
               <span>{t('products.prescription')}</span>

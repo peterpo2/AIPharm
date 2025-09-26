@@ -9,6 +9,7 @@ import { ChatProvider } from './context/ChatContext';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { NewsProvider } from './context/NewsContext';
+import { FeatureToggleProvider, useFeatureToggles } from './context/FeatureToggleContext';
 import { categories, products, searchProducts, getProductsByCategory } from './data/mockData';
 import { Product } from './types';
 import HomePage from './components/pages/HomePage';
@@ -23,6 +24,7 @@ import FAQ from './components/pages/FAQ';
 import AdminDashboard from './components/pages/AdminDashboard';
 
 function AppContent() {
+  const { prescriptionFeaturesEnabled } = useFeatureToggles();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -40,17 +42,33 @@ function AppContent() {
   }, [location.pathname]);
 
   // Filter products based on search and category
-  const filteredProducts = useMemo(() => {
-    let result: Product[] = products;
-
+  const baseProducts = useMemo(() => {
     if (searchTerm.trim()) {
-      result = searchProducts(searchTerm);
-    } else if (selectedCategory) {
-      result = getProductsByCategory(selectedCategory);
+      return searchProducts(searchTerm);
     }
 
-    return result;
+    if (selectedCategory) {
+      return getProductsByCategory(selectedCategory);
+    }
+
+    return products;
   }, [searchTerm, selectedCategory]);
+
+  const filteredProducts = useMemo(() => {
+    if (prescriptionFeaturesEnabled) {
+      return baseProducts;
+    }
+
+    return baseProducts.filter((product) => !product.requiresPrescription);
+  }, [baseProducts, prescriptionFeaturesEnabled]);
+
+  const availableProducts = useMemo(() => {
+    if (prescriptionFeaturesEnabled) {
+      return products;
+    }
+
+    return products.filter((product) => !product.requiresPrescription);
+  }, [prescriptionFeaturesEnabled]);
 
   const isDefaultView = !searchTerm.trim() && !selectedCategory;
 
@@ -135,7 +153,7 @@ function AppContent() {
                 filteredProducts={filteredProducts}
                 categories={categories}
                 showHero={showHero}
-                allProducts={products}
+                allProducts={availableProducts}
               />
             )}
           />
@@ -144,7 +162,7 @@ function AppContent() {
             element={(
               <CategoriesPage
                 categories={categories}
-                products={products}
+                products={availableProducts}
                 onCategorySelect={handleCategoryChange}
               />
             )}
@@ -158,7 +176,7 @@ function AppContent() {
                 onCategoryChange={handleCategoryChange}
                 filteredProducts={filteredProducts}
                 categories={categories}
-                allProducts={products}
+                allProducts={availableProducts}
               />
             )}
           />
@@ -184,13 +202,15 @@ function App() {
   return (
     <AuthProvider>
       <LanguageProvider>
-        <CartProvider>
-          <NewsProvider>
-            <ChatProvider>
-              <AppContent />
-            </ChatProvider>
-          </NewsProvider>
-        </CartProvider>
+        <FeatureToggleProvider>
+          <CartProvider>
+            <NewsProvider>
+              <ChatProvider>
+                <AppContent />
+              </ChatProvider>
+            </NewsProvider>
+          </CartProvider>
+        </FeatureToggleProvider>
       </LanguageProvider>
     </AuthProvider>
   );

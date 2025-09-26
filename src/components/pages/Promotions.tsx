@@ -3,14 +3,20 @@ import { Tag, Clock, Gift, Percent } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { products } from '../../data/mockData';
 import ProductGrid from '../ProductGrid';
+import { useFeatureToggles } from '../../context/FeatureToggleContext';
 
 const Promotions: React.FC = () => {
   const { t } = useLanguage();
+  const { prescriptionFeaturesEnabled } = useFeatureToggles();
 
   const promotedProducts = useMemo(
     () =>
       products
-        .filter((product) => Boolean(product.promotion))
+        .filter(
+          (product) =>
+            Boolean(product.promotion) &&
+            (prescriptionFeaturesEnabled || !product.requiresPrescription)
+        )
         .sort((a, b) => {
           const timeA = a.promotion?.validUntil
             ? new Date(a.promotion.validUntil).getTime()
@@ -20,7 +26,7 @@ const Promotions: React.FC = () => {
             : Number.POSITIVE_INFINITY;
           return timeA - timeB;
         }),
-    []
+    [prescriptionFeaturesEnabled]
   );
 
   const { count, savings, averageDiscount, highestDiscount } = useMemo(() => {

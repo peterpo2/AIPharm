@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useFeatureToggles } from '../context/FeatureToggleContext';
 import type { CartItem, PaymentMethod } from '../types';
 
 interface CheckoutModalProps {
@@ -133,15 +134,20 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { prescriptionFeaturesEnabled } = useFeatureToggles();
 
   const requiresPrescription = useMemo(
-    () => items.some((item) => item.product.requiresPrescription),
-    [items]
+    () =>
+      prescriptionFeaturesEnabled &&
+      items.some((item) => item.product.requiresPrescription),
+    [items, prescriptionFeaturesEnabled]
   );
 
   const requiresPrescription = useMemo(
-    () => items.some((item) => item.product.requiresPrescription),
-    [items]
+    () =>
+      prescriptionFeaturesEnabled &&
+      items.some((item) => item.product.requiresPrescription),
+    [items, prescriptionFeaturesEnabled]
   );
 
   const [step, setStep] = useState<CheckoutStep>('form');

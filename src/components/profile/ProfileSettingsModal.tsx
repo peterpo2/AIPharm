@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { X, Mail, User, Phone, MapPin, Shield, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useFeatureToggles } from '../../context/FeatureToggleContext';
 
 interface ProfileSettingsModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ type MessageState = { type: 'success' | 'error'; text: string } | null;
 
 const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onClose }) => {
   const { user, updateProfile, isAdmin, isStaff } = useAuth();
+  const { prescriptionFeaturesEnabled, setPrescriptionFeaturesEnabled } = useFeatureToggles();
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -71,6 +73,10 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
       (formData.address ?? '') !== (user.address ?? '')
     );
   }, [formData, user]);
+
+  const handlePrescriptionToggle = () => {
+    setPrescriptionFeaturesEnabled(!prescriptionFeaturesEnabled);
+  };
 
   if (!isOpen) {
     return null;
@@ -190,6 +196,48 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
                     }`}
                   >
                     {message.text}
+                  </div>
+                )}
+
+                {isAdmin && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-amber-800 uppercase tracking-wide">
+                          {t('profile.prescriptionFeaturesTitle')}
+                        </p>
+                        <p className="mt-1 text-sm text-amber-900/80">
+                          {t('profile.prescriptionFeaturesDescription')}
+                        </p>
+                        <p className="mt-2 text-xs font-medium text-amber-700">
+                          {prescriptionFeaturesEnabled
+                            ? t('profile.prescriptionFeaturesStatusEnabled')
+                            : t('profile.prescriptionFeaturesStatusDisabled')}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={prescriptionFeaturesEnabled}
+                        onClick={handlePrescriptionToggle}
+                        className={`relative inline-flex h-10 w-20 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 ${
+                          prescriptionFeaturesEnabled ? 'bg-emerald-500' : 'bg-amber-200'
+                        }`}
+                      >
+                        <span className="sr-only">{t('profile.prescriptionFeaturesToggle')}</span>
+                        <span
+                          aria-hidden="true"
+                          className={`pointer-events-none inline-block h-8 w-8 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                            prescriptionFeaturesEnabled ? 'translate-x-10' : 'translate-x-0'
+                          }`}
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold uppercase text-white">
+                          {prescriptionFeaturesEnabled
+                            ? t('profile.prescriptionFeaturesEnabled')
+                            : t('profile.prescriptionFeaturesDisabled')}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 )}
 

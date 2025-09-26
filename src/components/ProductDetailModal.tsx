@@ -12,6 +12,7 @@ import { Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { useCart } from '../context/CartContext';
 import { useChat } from '../context/ChatContext';
+import { useFeatureToggles } from '../context/FeatureToggleContext';
 
 interface ProductDetailModalProps {
   product: Product;
@@ -22,6 +23,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
   const { t, language } = useLanguage();
   const { dispatch } = useCart();
   const { askAssistant } = useChat();
+  const { prescriptionFeaturesEnabled } = useFeatureToggles();
 
   const getProductName = () => (language === 'bg' ? product.name : product.nameEn);
   const getDescription = () =>
@@ -105,7 +107,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
             alt={getProductName()}
             className="h-full w-full object-cover"
           />
-          {product.requiresPrescription && (
+          {product.requiresPrescription && prescriptionFeaturesEnabled && (
             <div className="absolute left-4 top-4 flex items-center space-x-2 rounded-full bg-red-500/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
               <Shield className="h-3.5 w-3.5" />
               <span>{t('products.prescription')}</span>
@@ -170,14 +172,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                 <p className="mt-1 font-medium text-gray-900">{getManufacturer()}</p>
               </div>
             )}
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                {t('products.prescriptionRequiredLabel')}
-              </p>
-              <p className="mt-1 font-medium text-gray-900">
-                {product.requiresPrescription ? t('products.prescription') : t('products.overTheCounter')}
-              </p>
-            </div>
+            {prescriptionFeaturesEnabled && (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t('products.prescriptionRequiredLabel')}
+                </p>
+                <p className="mt-1 font-medium text-gray-900">
+                  {product.requiresPrescription ? t('products.prescription') : t('products.overTheCounter')}
+                </p>
+              </div>
+            )}
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 {t('products.stockStatus')}
