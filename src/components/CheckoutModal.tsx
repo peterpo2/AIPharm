@@ -1,17 +1,16 @@
 /* cspell:word nhif */
-/* cspell:word nhif */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ArrowRight,
   CheckCircle2,
+  ClipboardList,
   CreditCard,
-  ClipboardList,
-  ClipboardList,
+  FileText,
+  Fingerprint,
   Loader2,
-  MapPin,
   Mail,
+  MapPin,
   Phone,
-  Fingerprint,
-  Fingerprint,
   User,
   X,
 } from 'lucide-react';
@@ -52,20 +51,6 @@ interface ApiNhifPrescription {
   createdAt: string;
 }
 
-interface ApiNhifPrescription {
-  id: number;
-  prescriptionNumber: string;
-  personalIdentificationNumber: string;
-  prescribedDate: string;
-  purchaseDate: string;
-  orderNumber: string;
-  userId: string;
-  patientPaidAmount: number;
-  nhifPaidAmount: number;
-  otherCoverageAmount?: number | null;
-  createdAt: string;
-}
-
 interface ApiOrder {
   id: number;
   orderNumber: string;
@@ -86,7 +71,6 @@ interface ApiOrder {
   updatedAt: string;
   items: ApiOrderItem[];
   nhifPrescriptions?: ApiNhifPrescription[];
-  nhifPrescriptions?: ApiNhifPrescription[];
 }
 
 interface CreateOrderResponse {
@@ -95,7 +79,7 @@ interface CreateOrderResponse {
   order?: ApiOrder;
 }
 
-type CheckoutStep = 'prescription' | 'form' | 'success';
+type CheckoutStep = 'prescription' | 'form' | 'eprescription' | 'success';
 
 const RAW_API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
@@ -136,19 +120,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const { t } = useLanguage();
   const { prescriptionFeaturesEnabled } = useFeatureToggles();
 
-  const requiresPrescription = useMemo(
-    () =>
-      prescriptionFeaturesEnabled &&
-      items.some((item) => item.product.requiresPrescription),
-    [items, prescriptionFeaturesEnabled]
+  const hasPrescriptionItems = useMemo(
+    () => items.some((item) => item.product.requiresPrescription),
+    [items],
   );
-
-  const requiresPrescription = useMemo(
-    () =>
-      prescriptionFeaturesEnabled &&
-      items.some((item) => item.product.requiresPrescription),
-    [items, prescriptionFeaturesEnabled]
-  );
+  const requiresPrescription = prescriptionFeaturesEnabled && hasPrescriptionItems;
 
   const [step, setStep] = useState<CheckoutStep>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -164,23 +140,23 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     country: 'Bulgaria',
     paymentMethod: 'CashOnDelivery' as PaymentMethod,
     notes: '',
+    egn: '',
+    prescriptionCode: '',
   });
   const [prescriptionData, setPrescriptionData] = useState({
     personalIdentificationNumber: '',
     prescriptionNumber: '',
   });
-  const [prescriptionError, setPrescriptionError] = useState<string | null>(
-    null
-  );
+  const [prescriptionError, setPrescriptionError] = useState<string | null>(null);
 
   const deliveryFee = useMemo(
     () => (total >= DELIVERY_THRESHOLD ? 0 : STANDARD_DELIVERY_FEE),
-    [total]
+    [total],
   );
 
   const grandTotal = useMemo(
     () => total + deliveryFee,
-    [total, deliveryFee]
+    [total, deliveryFee],
   );
 
   useEffect(() => {
@@ -188,7 +164,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
-    setStep(requiresPrescription ? 'prescription' : 'form');
     setStep(requiresPrescription ? 'prescription' : 'form');
     setIsSubmitting(false);
     setError(null);
@@ -206,7 +181,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       city: '',
       postalCode: '',
       country: 'Bulgaria',
-      paymentMethod: containsPrescription ? 'Card' : 'CashOnDelivery',
+      paymentMethod: requiresPrescription ? 'Card' : 'CashOnDelivery',
       notes: '',
       egn: '',
       prescriptionCode: '',
@@ -241,50 +216,24 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePrescriptionInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = event.target;
-    setPrescriptionData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePrescriptionInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const { name, value } = event.target;
     setPrescriptionData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePaymentChange = (value: PaymentMethod) => {
-    if (containsPrescription && value !== 'Card') {
+    if (requiresPrescription && value !== 'Card') {
       return;
     }
     setFormData((prev) => ({ ...prev, paymentMethod: value }));
-  };
-
-  const handlePrescriptionSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    const personalId = prescriptionData.personalIdentificationNumber.trim();
-    const prescriptionNumber = prescriptionData.prescriptionNumber.trim();
-
-    if (!personalId || !prescriptionNumber) {
-      setPrescriptionError(t('checkout.validation.prescriptionRequired'));
-      return;
-    }
-
-    if (!/^\d{10}$/.test(personalId)) {
-      setPrescriptionError(t('checkout.validation.personalId'));
-      return;
-    }
-
-    setPrescriptionError(null);
-    setStep('form');
   };
 
   const handlePrescriptionSubmit = (event: React.FormEvent) => {
@@ -314,9 +263,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
 
     const trimmedEgn = formData.egn.trim();
-    const trimmedPrescription = formData.prescriptionCode.trim();
+    const trimmedPrescriptionCode = formData.prescriptionCode.trim();
 
-    if (containsPrescription) {
+    if (requiresPrescription) {
       if (step === 'eprescription') {
         if (!trimmedEgn) {
           setError(t('checkout.validation.egnRequired'));
@@ -328,32 +277,28 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           return;
         }
 
-        if (!trimmedPrescription) {
+        if (!trimmedPrescriptionCode) {
           setError(t('checkout.validation.prescriptionRequired'));
           return;
         }
+      } else {
+        if (!trimmedEgn) {
+          setError(t('checkout.validation.egnRequired'));
+          setStep('eprescription');
+          return;
+        }
 
-        setError(null);
-        setStep('form');
-        return;
-      }
+        if (!/^\d{10}$/.test(trimmedEgn)) {
+          setError(t('checkout.validation.egnFormat'));
+          setStep('eprescription');
+          return;
+        }
 
-      if (!trimmedEgn) {
-        setError(t('checkout.validation.egnRequired'));
-        setStep('eprescription');
-        return;
-      }
-
-      if (!/^\d{10}$/.test(trimmedEgn)) {
-        setError(t('checkout.validation.egnFormat'));
-        setStep('eprescription');
-        return;
-      }
-
-      if (!trimmedPrescription) {
-        setError(t('checkout.validation.prescriptionRequired'));
-        setStep('eprescription');
-        return;
+        if (!trimmedPrescriptionCode) {
+          setError(t('checkout.validation.prescriptionRequired'));
+          setStep('eprescription');
+          return;
+        }
       }
     }
 
@@ -383,21 +328,19 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         ]
       : undefined;
 
-    const timestampIso = new Date().toISOString();
+    const paymentMethod = mapPaymentMethod(formData.paymentMethod);
 
-    const nhifPrescriptions = requiresPrescription
-      ? [
-          {
-            prescriptionNumber: prescriptionData.prescriptionNumber.trim(),
-            personalIdentificationNumber:
-              prescriptionData.personalIdentificationNumber.trim(),
-            prescribedDate: timestampIso,
-            purchaseDate: timestampIso,
-            patientPaidAmount: grandTotal,
-            nhifPaidAmount: 0,
-          },
-        ]
-      : undefined;
+    const combinedNotes = [
+      formData.notes.trim(),
+      requiresPrescription
+        ? `${t('checkout.prescription.egn')}: ${trimmedEgn}`
+        : '',
+      requiresPrescription
+        ? `${t('checkout.prescription.code')}: ${trimmedPrescriptionCode}`
+        : '',
+    ]
+      .filter((value) => Boolean(value))
+      .join('\n');
 
     const payload = {
       customerName: formData.fullName.trim() || undefined,
@@ -413,7 +356,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         productId: item.product.id,
         quantity: item.quantity,
       })),
-      nhifPrescriptions,
       nhifPrescriptions,
     };
 
@@ -466,13 +408,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   const SubmitIcon = (() => {
-    if (containsPrescription) {
+    if (requiresPrescription) {
       return step === 'eprescription' ? ArrowRight : CheckCircle2;
     }
     return CheckCircle2;
   })();
 
-  const submitLabel = containsPrescription
+  const submitLabel = requiresPrescription
     ? step === 'eprescription'
       ? t('checkout.actions.continue')
       : t('checkout.actions.confirmCard')
@@ -559,96 +501,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
           )}
 
           {step === 'prescription' ? (
-            <form
-              onSubmit={handlePrescriptionSubmit}
-              className="space-y-6 p-6 md:px-8 md:py-6"
-            >
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {t('checkout.section.prescription')}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {t('checkout.prescription.subtitle')}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {t('checkout.prescription.privacy')}
-                </p>
-                {prescriptionError && (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                    {prescriptionError}
-                  </div>
-                )}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-personal-id"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.personalId')}
-                    </label>
-                    <div className="relative">
-                      <Fingerprint className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="checkout-personal-id"
-                        name="personalIdentificationNumber"
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={10}
-                        autoComplete="off"
-                        value={prescriptionData.personalIdentificationNumber}
-                        onChange={handlePrescriptionInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-prescription-number"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.prescriptionNumber')}
-                    </label>
-                    <div className="relative">
-                      <ClipboardList className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="checkout-prescription-number"
-                        name="prescriptionNumber"
-                        type="text"
-                        autoComplete="off"
-                        value={prescriptionData.prescriptionNumber}
-                        onChange={handlePrescriptionInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <div className="flex flex-col gap-3 pt-2 md:flex-row md:justify-end">
-                <button
-                  type="button"
-                  onClick={() => !isSubmitting && onClose()}
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSubmitting}
-                >
-                  {t('checkout.actions.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSubmitting}
-                >
-                  {t('checkout.actions.prescriptionContinue')}
-                </button>
-              </div>
-            </form>
-          ) : step === 'form' ? (
-          {step === 'prescription' ? (
-            <form
-              onSubmit={handlePrescriptionSubmit}
-              className="space-y-6 p-6 md:px-8 md:py-6"
-            >
+            <form onSubmit={handlePrescriptionSubmit} className="space-y-6 p-6 md:px-8 md:py-6">
               <section className="space-y-4">
                 <h3 className="text-lg font-semibold text-slate-900">
                   {t('checkout.section.prescription')}
@@ -731,98 +584,16 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </form>
           ) : step === 'form' ? (
             <form onSubmit={handleSubmit} className="space-y-6 p-6 md:px-8 md:py-6">
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {t('checkout.section.prescription')}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {t('checkout.prescription.subtitle')}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {t('checkout.prescription.privacy')}
-                </p>
-                {prescriptionError && (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                    {prescriptionError}
-                  </div>
-                )}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-personal-id"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.personalId')}
-                    </label>
-                    <div className="relative">
-                      <Fingerprint className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="checkout-personal-id"
-                        name="personalIdentificationNumber"
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={10}
-                        autoComplete="off"
-                        value={prescriptionData.personalIdentificationNumber}
-                        onChange={handlePrescriptionInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="checkout-prescription-number"
-                      className="text-sm font-medium text-slate-600"
-                    >
-                      {t('checkout.field.prescriptionNumber')}
-                    </label>
-                    <div className="relative">
-                      <ClipboardList className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="checkout-prescription-number"
-                        name="prescriptionNumber"
-                        type="text"
-                        autoComplete="off"
-                        value={prescriptionData.prescriptionNumber}
-                        onChange={handlePrescriptionInputChange}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <div className="flex flex-col gap-3 pt-2 md:flex-row md:justify-end">
-                <button
-                  type="button"
-                  onClick={() => !isSubmitting && onClose()}
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSubmitting}
-                >
-                  {t('checkout.actions.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSubmitting}
-                >
-                  {t('checkout.actions.prescriptionContinue')}
-                </button>
-              </div>
-            </form>
-          ) : step === 'form' ? (
-            <form onSubmit={handleSubmit} className="space-y-6 p-6 md:px-8 md:py-6">
-              {step === 'form' ? (
-                <>
+              <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+                <section className="space-y-6">
                   <section className="space-y-4">
                     <h3 className="text-lg font-semibold text-slate-900">
-                      {t('checkout.section.personal')}
+                      {t('checkout.section.contact')}
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <label
-                          htmlFor="checkout-fullName"
+                          htmlFor="checkout-name"
                           className="text-sm font-medium text-slate-600"
                         >
                           {t('checkout.field.fullName')}
@@ -830,9 +601,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                           <input
-                            id="checkout-fullName"
+                            id="checkout-name"
                             name="fullName"
-                            type="text"
                             value={formData.fullName}
                             onChange={handleInputChange}
                             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
@@ -899,7 +669,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           <input
                             id="checkout-address"
                             name="address"
-                            type="text"
                             value={formData.address}
                             onChange={handleInputChange}
                             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
@@ -918,7 +687,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           <input
                             id="checkout-city"
                             name="city"
-                            type="text"
                             value={formData.city}
                             onChange={handleInputChange}
                             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
@@ -935,7 +703,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           <input
                             id="checkout-postal"
                             name="postalCode"
-                            type="text"
                             value={formData.postalCode}
                             onChange={handleInputChange}
                             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
@@ -952,32 +719,86 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           <input
                             id="checkout-country"
                             name="country"
-                            type="text"
                             value={formData.country}
                             onChange={handleInputChange}
                             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                           />
                         </div>
                       </div>
-
-                      <div className="space-y-2">
-                        <label
-                          htmlFor="checkout-notes"
-                          className="text-sm font-medium text-slate-600"
-                        >
-                          {t('checkout.field.notes')}
-                        </label>
-                        <textarea
-                          id="checkout-notes"
-                          name="notes"
-                          value={formData.notes}
-                          onChange={handleInputChange}
-                          rows={3}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                        />
-                      </div>
                     </div>
                   </section>
+
+                  <section className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      {t('checkout.section.notes')}
+                    </h3>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="checkout-notes"
+                        className="text-sm font-medium text-slate-600"
+                      >
+                        {t('checkout.field.notes')}
+                      </label>
+                      <textarea
+                        id="checkout-notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </section>
+
+                  {requiresPrescription && (
+                    <section className="space-y-3">
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {t('checkout.prescription.stepTitle')}
+                      </h3>
+                      <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
+                        <FileText className="mt-0.5 h-5 w-5" />
+                        <div>
+                          <p className="text-sm">
+                            {t('checkout.prescription.stepSubtitle')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="checkout-egn"
+                            className="text-sm font-medium text-slate-600"
+                          >
+                            {t('checkout.prescription.egn')}
+                          </label>
+                          <input
+                            id="checkout-egn"
+                            name="egn"
+                            value={formData.egn}
+                            onChange={handleInputChange}
+                            inputMode="numeric"
+                            maxLength={10}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="checkout-prescription"
+                            className="text-sm font-medium text-slate-600"
+                          >
+                            {t('checkout.prescription.code')}
+                          </label>
+                          <input
+                            id="checkout-prescription"
+                            name="prescriptionCode"
+                            value={formData.prescriptionCode}
+                            onChange={handleInputChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                        </div>
+                      </div>
+                    </section>
+                  )}
 
                   <section className="space-y-4">
                     <h3 className="text-lg font-semibold text-slate-900">
@@ -987,7 +808,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       {PAYMENT_METHODS.map((method) => {
                         const label = resolvedPaymentLabel(method);
                         const isActive = formData.paymentMethod === method;
-                        const isDisabled = containsPrescription && method !== 'Card';
+                        const isDisabled = requiresPrescription && method !== 'Card';
                         const baseClasses = isActive
                           ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700';
@@ -1009,87 +830,20 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     </div>
                     <div className="space-y-1 text-xs text-slate-500">
                       <p>{t('checkout.paymentUnavailable')}</p>
-                      {containsPrescription && (
+                      {requiresPrescription && (
                         <p className="text-amber-600">
                           {t('checkout.prescription.cardOnly')}
                         </p>
                       )}
                     </div>
                   </section>
+                </section>
 
-                  {summarySection}
-                </>
-              ) : (
-                <>
-                  <section className="space-y-4">
-                    <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
-                      <FileText className="mt-0.5 h-5 w-5" />
-                      <div>
-                        <h3 className="text-base font-semibold">
-                          {t('checkout.prescription.stepTitle')}
-                        </h3>
-                        <p className="text-sm">
-                          {t('checkout.prescription.stepSubtitle')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <label
-                          htmlFor="checkout-egn"
-                          className="text-sm font-medium text-slate-600"
-                        >
-                          {t('checkout.prescription.egn')}
-                        </label>
-                        <input
-                          id="checkout-egn"
-                          name="egn"
-                          value={formData.egn}
-                          onChange={handleInputChange}
-                          inputMode="numeric"
-                          maxLength={10}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label
-                          htmlFor="checkout-prescription"
-                          className="text-sm font-medium text-slate-600"
-                        >
-                          {t('checkout.prescription.code')}
-                        </label>
-                        <input
-                          id="checkout-prescription"
-                          name="prescriptionCode"
-                          value={formData.prescriptionCode}
-                          onChange={handleInputChange}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                        />
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className="space-y-3">
-                    <h3 className="text-lg font-semibold text-slate-900">
-                      {t('checkout.section.payment')}
-                    </h3>
-                    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-slate-700">
-                      <CreditCard className="h-5 w-5 text-emerald-600" />
-                      <div>
-                        <p className="font-medium">{t('checkout.payment.card')}</p>
-                        <p className="text-sm text-slate-500">
-                          {t('checkout.prescription.cardOnly')}
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-
-                  {summarySection}
-                </>
-              )}
+                <div className="space-y-6">{summarySection}</div>
+              </div>
 
               <div className="flex flex-col gap-3 pt-2 md:flex-row md:justify-end">
-                {containsPrescription && step === 'form' && (
+                {requiresPrescription && (
                   <button
                     type="button"
                     onClick={() => !isSubmitting && setStep('eprescription')}
@@ -1099,6 +853,106 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     {t('checkout.actions.back')}
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => !isSubmitting && onClose()}
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                >
+                  {t('checkout.actions.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <SubmitIcon className="mr-2 h-4 w-4" />
+                  )}
+                  <span>{submitLabel}</span>
+                </button>
+              </div>
+            </form>
+          ) : step === 'eprescription' ? (
+            <form onSubmit={handleSubmit} className="space-y-6 p-6 md:px-8 md:py-6">
+              <section className="space-y-3">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {t('checkout.prescription.stepTitle')}
+                </h3>
+                <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
+                  <FileText className="mt-0.5 h-5 w-5" />
+                  <div>
+                    <p className="text-sm">
+                      {t('checkout.prescription.stepSubtitle')}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="checkout-egn-confirm"
+                      className="text-sm font-medium text-slate-600"
+                    >
+                      {t('checkout.prescription.egn')}
+                    </label>
+                    <input
+                      id="checkout-egn-confirm"
+                      name="egn"
+                      value={formData.egn}
+                      onChange={handleInputChange}
+                      inputMode="numeric"
+                      maxLength={10}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="checkout-prescription-confirm"
+                      className="text-sm font-medium text-slate-600"
+                    >
+                      {t('checkout.prescription.code')}
+                    </label>
+                    <input
+                      id="checkout-prescription-confirm"
+                      name="prescriptionCode"
+                      value={formData.prescriptionCode}
+                      onChange={handleInputChange}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {t('checkout.section.payment')}
+                </h3>
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-slate-700">
+                  <CreditCard className="h-5 w-5 text-emerald-600" />
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {t('checkout.prescription.cardOnly')}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {t('checkout.prescription.cardDisclaimer')}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {summarySection}
+
+              <div className="flex flex-col gap-3 pt-2 md:flex-row md:justify-end">
+                <button
+                  type="button"
+                  onClick={() => !isSubmitting && setStep('form')}
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                >
+                  {t('checkout.actions.back')}
+                </button>
                 <button
                   type="button"
                   onClick={() => !isSubmitting && onClose()}
@@ -1156,7 +1010,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       </p>
                       <p className="text-sm text-slate-900">
                         {formatCurrency(
-                          (createdOrder.grandTotal ?? createdOrder.total + createdOrder.deliveryFee)
+                          createdOrder.grandTotal ??
+                            createdOrder.total + createdOrder.deliveryFee,
                         )}
                       </p>
                     </div>
@@ -1205,5 +1060,4 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   );
 };
 
-export type { ApiOrder };
 export default CheckoutModal;
