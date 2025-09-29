@@ -133,11 +133,9 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
               {t('products.productDetails')}
             </p>
             <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">{getProductName()}</h2>
-            {product.rating !== undefined && (
-              <div className="mt-3 flex items-center space-x-2 text-sm text-gray-500">
-                <span className="font-semibold text-emerald-600">{product.rating.toFixed(1)}</span>
-                <span>•</span>
-                <span>{product.reviewCount ?? 0} {t('products.reviews')}</span>
+            {product.reviewCount !== undefined && product.reviewCount > 0 && (
+              <div className="mt-3 text-sm text-gray-500">
+                <span>{product.reviewCount} {t('products.reviews')}</span>
               </div>
             )}
           </div>

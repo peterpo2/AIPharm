@@ -587,9 +587,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
                 <section className="space-y-6">
                   <section className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900">
-                      {t('checkout.section.contact')}
-                    </h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <label
@@ -729,9 +726,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </section>
 
                   <section className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900">
-                      {t('checkout.section.notes')}
-                    </h3>
                     <div className="space-y-2">
                       <label
                         htmlFor="checkout-notes"
