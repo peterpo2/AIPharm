@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Search,
@@ -50,6 +50,7 @@ const Header: React.FC<HeaderProps> = ({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const canAccessAdmin = isAdmin || isStaff;
 
@@ -83,6 +84,24 @@ const Header: React.FC<HeaderProps> = ({
     setShowUserMenu(false);
     setShowOrdersModal(true);
   };
+
+  useEffect(() => {
+    if (!showUserMenu) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [showUserMenu]);
 
   const navigationItems = [
     {
@@ -207,7 +226,7 @@ const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* User */}
-            <div className="relative">
+            <div className="relative" ref={userMenuRef}>
               <button 
                 onClick={() => isAuthenticated ? setShowUserMenu(!showUserMenu) : setShowLoginModal(true)}
                 className={`p-3 rounded-full transition-all duration-200 ${
