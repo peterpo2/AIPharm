@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Calendar,
   Info,
   MessageCircle,
@@ -47,10 +46,6 @@ const ProductMoreInfoPage: React.FC = () => {
       ? currentProduct.manufacturer
       : currentProduct.manufacturerEn ?? currentProduct.manufacturer;
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const handleAddToCart = (currentProduct: Product) => {
     dispatch({ type: 'ADD_ITEM', payload: currentProduct });
   };
@@ -78,14 +73,6 @@ const ProductMoreInfoPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="mx-auto flex w-full max-w-3xl flex-col items-center px-4 py-16 text-center">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="mb-8 inline-flex items-center space-x-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-emerald-600 shadow-sm transition hover:scale-[1.02] hover:bg-emerald-50"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>{t('common.back')}</span>
-          </button>
           <Info className="h-12 w-12 text-emerald-500" />
           <h1 className="mt-4 text-3xl font-bold text-gray-900">{t('products.moreInfoNotFoundTitle')}</h1>
           <p className="mt-3 max-w-xl text-gray-600">{t('products.moreInfoNotFoundDescription')}</p>
@@ -108,18 +95,13 @@ const ProductMoreInfoPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="inline-flex items-center space-x-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-emerald-600 shadow-sm transition hover:scale-[1.02] hover:bg-emerald-50"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>{t('common.back')}</span>
-        </button>
-
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
-          <div className="overflow-hidden rounded-3xl bg-white shadow-xl">
-            <img src={product.imageUrl} alt={getProductName(product)} className="h-full w-full object-cover" />
+          <div className="flex items-center justify-center overflow-hidden rounded-3xl bg-white p-6 shadow-xl">
+            <img
+              src={product.imageUrl}
+              alt={getProductName(product)}
+              className="max-h-[28rem] w-full max-w-[28rem] rounded-2xl object-cover"
+            />
           </div>
 
           <div className="flex flex-col space-y-6">
