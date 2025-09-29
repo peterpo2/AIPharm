@@ -1,6 +1,4 @@
-// Normalize base URL (remove trailing slash)
-const RAW_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
-const API_BASE = RAW_BASE.replace(/\/+$/, "");
+import { API_BASE } from "../utils/api";
 
 // ---------- Types ----------
 export interface ApiProduct {

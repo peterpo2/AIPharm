@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { buildApiUrl } from "../utils/api";
 
 interface User {
   id: string;
@@ -84,17 +85,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 🔑 Environment-based API base (normalized)
-const RAW_API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_URL_DOCKER ||
-  "http://localhost:8080/api";
-
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
-
-const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, "")}`;
-
 type JsonObject = Record<string, unknown>;
 
 const toJsonObject = (value: unknown): JsonObject | null =>
@@ -165,7 +155,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return;
       }
 
-      const response = await fetch(buildUrl("auth/me"), {
+      const response = await fetch(buildApiUrl("auth/me"), {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -192,7 +182,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     rememberMe: boolean = false
   ): Promise<AuthActionResult> => {
     try {
-      const response = await fetch(buildUrl("auth/login"), {
+      const response = await fetch(buildApiUrl("auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, rememberMe }),
@@ -256,7 +246,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     rememberMe: boolean = false
   ): Promise<AuthActionResult> => {
     try {
-      const response = await fetch(buildUrl("auth/verify-2fa"), {
+      const response = await fetch(buildApiUrl("auth/verify-2fa"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, twoFactorToken, code }),
@@ -310,7 +300,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     twoFactorToken: string
   ): Promise<AuthActionResult> => {
     try {
-      const response = await fetch(buildUrl("auth/resend-2fa"), {
+      const response = await fetch(buildApiUrl("auth/resend-2fa"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, twoFactorToken }),
@@ -342,7 +332,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const register = async (registerData: RegisterData) => {
     try {
-      const response = await fetch(buildUrl("auth/register"), {
+      const response = await fetch(buildApiUrl("auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(registerData),
@@ -362,7 +352,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = async () => {
     try {
-      await fetch(buildUrl("auth/logout"), {
+      await fetch(buildApiUrl("auth/logout"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${
@@ -393,7 +383,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     try {
-      const response = await fetch(buildUrl(`users/${user.id}`), {
+      const response = await fetch(buildApiUrl(`users/${user.id}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -6,6 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 import { ChatMessage } from "../types";
+import { buildApiUrl } from "../utils/api";
 
 interface ChatContextType {
   messages: ChatMessage[];
@@ -19,17 +20,6 @@ interface ChatContextType {
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
-
-// 🔑 Get API base from environment
-const RAW_API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_URL_DOCKER ||
-  "http://localhost:8080/api";
-
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
-
-const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, "")}`;
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -51,7 +41,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
     if (isOpen) {
       (async () => {
         try {
-          const res = await fetch(buildUrl("assistant/history"));
+          const res = await fetch(buildApiUrl("assistant/history"));
           if (!res.ok) return;
           const history: ChatMessage[] = await res.json();
           if (history.length > 0) {
@@ -84,7 +74,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
     addMessage(question, true, productId);
 
     try {
-      const res = await fetch(buildUrl("assistant/ask"), {
+      const res = await fetch(buildApiUrl("assistant/ask"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
@@ -114,7 +104,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({
 
   const clearChat = async () => {
     try {
-      await fetch(buildUrl("assistant/history"), { method: "DELETE" });
+      await fetch(buildApiUrl("assistant/history"), { method: "DELETE" });
       setMessages([
         {
           id: "welcome",

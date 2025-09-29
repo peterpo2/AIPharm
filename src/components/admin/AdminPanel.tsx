@@ -28,6 +28,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useNews } from '../../context/NewsContext';
 import type { NewsArticle, OrderStatus, PaymentMethod } from '../../types';
 import { generateNewsImage } from '../../utils/imageGenerator';
+import { buildApiUrl } from '../../utils/api';
 
 interface AdminPanelProps {
   isOpen?: boolean;
@@ -150,16 +151,6 @@ const mapArticleToFormState = (article: NewsArticle): NewsFormState => ({
   publishedAt: article.publishedAt,
   readTimeMinutes: article.readTimeMinutes.toString(),
 });
-
-const RAW_API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_URL_DOCKER ||
-  'http://localhost:8080/api';
-
-const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
-
-const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, '')}`;
 
 const ORDER_STATUSES: OrderStatus[] = [
   'Pending',
@@ -377,7 +368,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     }
 
     try {
-      const response = await fetch(buildUrl('users'), {
+      const response = await fetch(buildApiUrl('users'), {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -431,7 +422,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     }
 
     try {
-      const response = await fetch(buildUrl('orders'), {
+      const response = await fetch(buildApiUrl('orders'), {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -493,7 +484,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       setOrdersToast(null);
 
       try {
-        const response = await fetch(buildUrl(`orders/${orderId}/status`), {
+        const response = await fetch(buildApiUrl(`orders/${orderId}/status`), {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -924,7 +915,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         isDeleted: editData.isDeleted,
       };
 
-      const response = await fetch(buildUrl(`users/${selectedUser.id}`), {
+      const response = await fetch(buildApiUrl(`users/${selectedUser.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
