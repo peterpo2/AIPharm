@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Search,
@@ -42,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { state, dispatch } = useCart();
   const { user, isAuthenticated, isAdmin, isStaff, logout } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -50,6 +50,7 @@ const Header: React.FC<HeaderProps> = ({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState(() => new Date());
 
   const canAccessAdmin = isAdmin || isStaff;
 
@@ -66,6 +67,36 @@ const Header: React.FC<HeaderProps> = ({
       window.removeEventListener('aiPharm:openLoginModal', handleOpenLoginModal);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  const locale = language === 'bg' ? 'bg-BG' : 'en-GB';
+
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'full',
+      }).format(currentDateTime),
+    [currentDateTime, locale]
+  );
+
+  const formattedTime = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        timeStyle: 'medium',
+      }).format(currentDateTime),
+    [currentDateTime, locale]
+  );
 
   const handleLogout = async () => {
     await logout();
@@ -126,6 +157,11 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="flex items-center space-x-6">
             <LanguageSwitcher />
+            <div className="flex items-center space-x-2 text-emerald-700 font-medium">
+              <span>{formattedDate}</span>
+              <span className="text-gray-300">•</span>
+              <span>{formattedTime}</span>
+            </div>
             {isAuthenticated && canAccessAdmin && (
               <Link
                 to="/admin"
