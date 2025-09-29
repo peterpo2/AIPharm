@@ -191,7 +191,7 @@ const Header: React.FC<HeaderProps> = ({
                 ) : (
                   <Settings className="h-4 w-4" />
                 )}
-                <span>{t('header.adminPanel')}</span>
+                <span>{t(isAdmin ? 'header.adminPanel' : 'header.staffPanel')}</span>
               </Link>
             )}
             {isAuthenticated && (
@@ -338,7 +338,7 @@ const Header: React.FC<HeaderProps> = ({
                         ) : (
                           <Settings className="w-4 h-4" />
                         )}
-                        <span>{t('header.adminPanel')}</span>
+                        <span>{t(isAdmin ? 'header.adminPanel' : 'header.staffPanel')}</span>
                       </Link>
                     )}
                     <button 

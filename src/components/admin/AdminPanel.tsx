@@ -209,9 +209,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const canAccessAdmin = isAdmin || isStaffUser;
   const isPanelOpen = isModal ? isOpen : true;
   const canManageOrders = canAccessAdmin;
-  const canManageUsers = isAdmin;
-  const canManageNews = isAdmin;
+  const canManageUsers = canAccessAdmin;
+  const canManageNews = canAccessAdmin;
   const canManagePermissions = isAdmin;
+  const PanelIcon = isAdmin ? Shield : ClipboardList;
+  const panelTitleKey = isAdmin ? 'admin.panel.title' : 'admin.panel.staffTitle';
+  const panelSubtitleKey = isAdmin
+    ? 'admin.panel.subtitle'
+    : 'admin.panel.staffSubtitle';
+  const panelDescriptionKey = isAdmin
+    ? 'admin.panel.description'
+    : 'admin.panel.staffDescription';
   const defaultAuthor = useMemo(
     () => (user?.fullName?.trim() || user?.email || '').trim(),
     [user?.email, user?.fullName]
@@ -792,6 +800,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       if (!prev) return prev;
 
       if (type === 'checkbox') {
+        if (
+          !canManagePermissions &&
+          (name === 'isAdmin' || name === 'isStaff' || name === 'isDeleted')
+        ) {
+          return prev;
+        }
         return { ...prev, [name]: checked };
       }
 
@@ -1952,16 +1966,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5 md:px-8">
           <div>
             <div className="flex items-center space-x-2 text-emerald-600">
-              <Shield className="h-5 w-5" />
+              <PanelIcon className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-wide">
-                {t('admin.panel.title')}
+                {t(panelTitleKey)}
               </span>
             </div>
             <h2 className="mt-1 text-2xl font-display font-semibold text-slate-900">
-              {t('admin.panel.subtitle')}
+              {t(panelSubtitleKey)}
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">
-              {t('admin.panel.description')}
+              {t(panelDescriptionKey)}
             </p>
           </div>
           {isModal && onClose && (
