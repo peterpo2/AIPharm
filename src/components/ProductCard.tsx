@@ -90,9 +90,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
   };
 
   return (
-    <div className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
         {onProductClick && (
           <button
             type="button"
@@ -156,7 +156,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
       </div>
 
       {/* Content */}
-      <div className="p-5">
+      <div className="flex flex-1 flex-col p-4">
         {/* Title */}
         <button
           type="button"
@@ -164,81 +164,84 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
             event.stopPropagation();
             handleProductClick();
           }}
-          className="mb-2 line-clamp-2 w-full text-left font-bold text-gray-900 transition-colors duration-300 group-hover:text-emerald-600"
+          className="mb-2 line-clamp-2 w-full text-left text-sm font-semibold text-gray-900 transition-colors duration-300 group-hover:text-emerald-600"
         >
           {getProductName()}
         </button>
 
-        {/* Details */}
-        <div className="mb-4 space-y-1 text-sm text-gray-600">
-          {getActiveIngredient() && (
-            <p>
-              <span className="font-medium">{t('products.activeIngredient')}:</span>{' '}
-              {getActiveIngredient()}
-            </p>
-          )}
-          {getDosage() && (
-            <p>
-              <span className="font-medium">{t('products.dosage')}:</span>{' '}
-              {getDosage()}
-            </p>
-          )}
-          {getManufacturer() && (
-            <p>
-              <span className="font-medium">{t('products.manufacturer')}:</span>{' '}
-              {getManufacturer()}
-            </p>
-          )}
-        </div>
-
         {/* Price */}
-        <div className="mb-4">
+        <div className="mb-3">
           {hasPromotion ? (
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-500 line-through">
+                <span className="text-xs text-gray-500 line-through">
                   €{product.price.toFixed(2)}
                 </span>
                 {discountPercentage > 0 && (
-                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-600">
+                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
                     -{discountPercentage}%
                   </span>
                 )}
               </div>
-              <span className="text-2xl font-bold text-emerald-600">
+              <span className="text-xl font-bold text-emerald-600">
                 €{displayPrice.toFixed(2)}
               </span>
             </div>
           ) : (
-            <span className="text-2xl font-bold text-emerald-600">
+            <span className="text-xl font-bold text-emerald-600">
               €{displayPrice.toFixed(2)}
             </span>
           )}
         </div>
 
-        {hasPromotion && (
-          <div className="mb-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">
-            <p className="font-semibold">{promotionTitle}</p>
-            {promotionDescription && (
-              <p className="mt-1 text-xs text-emerald-600 line-clamp-2">
-                {promotionDescription}
-              </p>
-            )}
-            {promotion?.validUntil && (
-              <p className="mt-2 text-xs font-medium text-emerald-500">
-                {t('promotions.validUntil')}: {formatPromotionDate(promotion.validUntil)}
-              </p>
+        <div className="flex-1 overflow-hidden">
+          <div className="flex h-full flex-col gap-3 overflow-y-auto pr-1 text-sm text-gray-600">
+            <div className="space-y-1">
+              {getActiveIngredient() && (
+                <p>
+                  <span className="font-medium">{t('products.activeIngredient')}:</span>{' '}
+                  {getActiveIngredient()}
+                </p>
+              )}
+              {getDosage() && (
+                <p>
+                  <span className="font-medium">{t('products.dosage')}:</span>{' '}
+                  {getDosage()}
+                </p>
+              )}
+              {getManufacturer() && (
+                <p>
+                  <span className="font-medium">{t('products.manufacturer')}:</span>{' '}
+                  {getManufacturer()}
+                </p>
+              )}
+            </div>
+
+            {hasPromotion && (
+              <div className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700">
+                <p className="font-semibold">{promotionTitle}</p>
+                {promotionDescription && (
+                  <p className="mt-1 text-[11px] text-emerald-600">
+                    {promotionDescription}
+                  </p>
+                )}
+                {promotion?.validUntil && (
+                  <p className="mt-2 text-[11px] font-medium text-emerald-500">
+                    {t('promotions.validUntil')}: {formatPromotionDate(promotion.validUntil)}
+                  </p>
+                )}
+              </div>
             )}
           </div>
-        )}
+        </div>
 
         {/* Actions */}
-        <div className="flex space-x-2">
+        <div className="mt-4 flex space-x-2">
           <button
             onClick={handleAddToCart}
             disabled={product.stockQuantity === 0}
             type="button"
-            className="group/btn flex flex-1 items-center justify-center space-x-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            className="group/btn flex flex-1 items-center justify-center space-x-2 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
           >
             <ShoppingCart className="h-4 w-4 transition-transform duration-300 group-hover/btn:scale-110" />
             <span>{t('products.add')}</span>
