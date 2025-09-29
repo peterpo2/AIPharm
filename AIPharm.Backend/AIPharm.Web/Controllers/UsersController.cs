@@ -85,6 +85,11 @@ namespace AIPharm.Web.Controllers
             var isStaff = User.IsInRole("Staff");
             var isSelf = string.Equals(currentUserId, id, StringComparison.Ordinal);
 
+            if (!isAdmin && user.IsAdmin)
+            {
+                return Forbid();
+            }
+
             if (!isAdmin)
             {
                 if (!isStaff && !isSelf)

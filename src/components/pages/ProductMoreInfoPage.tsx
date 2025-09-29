@@ -10,12 +10,12 @@ import {
   ShoppingCart,
   Tag,
 } from 'lucide-react';
-import { products } from '../../data/mockData';
-import { Product } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { useFeatureToggles } from '../../context/FeatureToggleContext';
 import { useCart } from '../../context/CartContext';
 import { useChat } from '../../context/ChatContext';
+import { useInventory } from '../../context/InventoryContext';
+import { Product } from '../../types';
 
 const ProductMoreInfoPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -24,10 +24,22 @@ const ProductMoreInfoPage: React.FC = () => {
   const { prescriptionFeaturesEnabled } = useFeatureToggles();
   const { dispatch } = useCart();
   const { askAssistant } = useChat();
+  const { getProductById } = useInventory();
 
   const product: Product | undefined = useMemo(
-    () => products.find((item) => item.id === Number(productId)),
-    [productId],
+    () => {
+      if (!productId) {
+        return undefined;
+      }
+
+      const id = Number(productId);
+      if (Number.isNaN(id)) {
+        return undefined;
+      }
+
+      return getProductById(id);
+    },
+    [getProductById, productId],
   );
 
   const getProductName = (currentProduct: Product) =>

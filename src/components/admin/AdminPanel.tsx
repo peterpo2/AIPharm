@@ -13,11 +13,14 @@ import {
   MapPin,
   Pencil,
   Package,
+  Tag,
+  Percent,
   PlusCircle,
   RefreshCw,
   Save,
   Search,
   Shield,
+  ShoppingBag,
   Trash2,
   Truck,
   User,
@@ -26,7 +29,15 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNews } from '../../context/NewsContext';
-import type { NewsArticle, OrderStatus, PaymentMethod } from '../../types';
+import { useInventory, type CreateProductInput, type UpdateProductInput } from '../../context/InventoryContext';
+import type {
+  Category,
+  NewsArticle,
+  OrderStatus,
+  PaymentMethod,
+  Product,
+  ProductPromotion,
+} from '../../types';
 import { generateNewsImage } from '../../utils/imageGenerator';
 import { buildApiUrl } from '../../utils/api';
 
@@ -60,7 +71,38 @@ interface EditableUserFields {
 
 type ToastState = { type: 'success' | 'error'; text: string } | null;
 
-type AdminView = 'users' | 'orders' | 'news' | 'permissions';
+type AdminView = 'users' | 'orders' | 'news' | 'permissions' | 'products';
+
+type ProductBadgeColor = NonNullable<ProductPromotion['badgeColor']>;
+
+interface ProductFormState {
+  id: number | null;
+  name: string;
+  nameEn: string;
+  description: string;
+  descriptionEn: string;
+  price: string;
+  stockQuantity: string;
+  imageUrl: string;
+  categoryId: number | '';
+  requiresPrescription: boolean;
+  activeIngredient: string;
+  activeIngredientEn: string;
+  dosage: string;
+  dosageEn: string;
+  manufacturer: string;
+  manufacturerEn: string;
+  promotionEnabled: boolean;
+  promotionId: string;
+  promotionTitle: string;
+  promotionTitleEn: string;
+  promotionDescription: string;
+  promotionDescriptionEn: string;
+  promotionPrice: string;
+  promotionDiscountPercentage: string;
+  promotionValidUntil: string;
+  promotionBadgeColor: ProductBadgeColor;
+}
 
 interface ManagedOrderItem {
   id: number;
@@ -161,6 +203,114 @@ const ORDER_STATUSES: OrderStatus[] = [
   'Cancelled',
 ];
 
+const PRODUCT_BADGE_COLORS: ProductBadgeColor[] = ['emerald', 'blue', 'purple', 'orange', 'pink'];
+
+const createEmptyProductForm = (categories: Category[]): ProductFormState => ({
+  id: null,
+  name: '',
+  nameEn: '',
+  description: '',
+  descriptionEn: '',
+  price: '',
+  stockQuantity: '0',
+  imageUrl: '',
+  categoryId: categories[0]?.id ?? '',
+  requiresPrescription: false,
+  activeIngredient: '',
+  activeIngredientEn: '',
+  dosage: '',
+  dosageEn: '',
+  manufacturer: '',
+  manufacturerEn: '',
+  promotionEnabled: false,
+  promotionId: '',
+  promotionTitle: '',
+  promotionTitleEn: '',
+  promotionDescription: '',
+  promotionDescriptionEn: '',
+  promotionPrice: '',
+  promotionDiscountPercentage: '',
+  promotionValidUntil: '',
+  promotionBadgeColor: 'emerald',
+});
+
+const mapProductToFormState = (product: Product): ProductFormState => ({
+  id: product.id,
+  name: product.name,
+  nameEn: product.nameEn ?? product.name,
+  description: product.description ?? '',
+  descriptionEn: product.descriptionEn ?? '',
+  price: product.price.toString(),
+  stockQuantity: product.stockQuantity.toString(),
+  imageUrl: product.imageUrl ?? '',
+  categoryId: product.categoryId,
+  requiresPrescription: product.requiresPrescription,
+  activeIngredient: product.activeIngredient ?? '',
+  activeIngredientEn: product.activeIngredientEn ?? '',
+  dosage: product.dosage ?? '',
+  dosageEn: product.dosageEn ?? '',
+  manufacturer: product.manufacturer ?? '',
+  manufacturerEn: product.manufacturerEn ?? '',
+  promotionEnabled: Boolean(product.promotion),
+  promotionId: product.promotion?.id ?? '',
+  promotionTitle: product.promotion?.title ?? '',
+  promotionTitleEn: product.promotion?.titleEn ?? '',
+  promotionDescription: product.promotion?.description ?? '',
+  promotionDescriptionEn: product.promotion?.descriptionEn ?? '',
+  promotionPrice: product.promotion ? product.promotion.promoPrice.toString() : '',
+  promotionDiscountPercentage:
+    product.promotion?.discountPercentage !== undefined
+      ? product.promotion.discountPercentage.toString()
+      : '',
+  promotionValidUntil: product.promotion?.validUntil ?? '',
+  promotionBadgeColor: product.promotion?.badgeColor ?? 'emerald',
+});
+
+const normalizeProductForm = (form: ProductFormState) => {
+  const parseNumber = (value: string): number => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const parseInteger = (value: string): number => {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  return {
+    name: form.name.trim(),
+    nameEn: form.nameEn.trim(),
+    description: form.description.trim(),
+    descriptionEn: form.descriptionEn.trim(),
+    price: parseNumber(form.price),
+    stockQuantity: parseInteger(form.stockQuantity),
+    imageUrl: form.imageUrl.trim(),
+    categoryId: typeof form.categoryId === 'number' ? form.categoryId : null,
+    requiresPrescription: form.requiresPrescription,
+    activeIngredient: form.activeIngredient.trim(),
+    activeIngredientEn: form.activeIngredientEn.trim(),
+    dosage: form.dosage.trim(),
+    dosageEn: form.dosageEn.trim(),
+    manufacturer: form.manufacturer.trim(),
+    manufacturerEn: form.manufacturerEn.trim(),
+    promotion: form.promotionEnabled
+      ? {
+          id: form.promotionId.trim(),
+          title: form.promotionTitle.trim(),
+          titleEn: form.promotionTitleEn.trim(),
+          description: form.promotionDescription.trim(),
+          descriptionEn: form.promotionDescriptionEn.trim(),
+          promoPrice: parseNumber(form.promotionPrice),
+          discountPercentage: form.promotionDiscountPercentage.trim()
+            ? parseNumber(form.promotionDiscountPercentage)
+            : undefined,
+          validUntil: form.promotionValidUntil.trim(),
+          badgeColor: form.promotionBadgeColor,
+        }
+      : null,
+  };
+};
+
 const mapToEditable = (user: ManagedUser): EditableUserFields => ({
   email: user.email,
   fullName: user.fullName ?? '',
@@ -196,12 +346,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const { isAdmin, user, isStaff: isStaffUser } = useAuth();
   const { t } = useLanguage();
   const { news, addArticle, deleteArticle } = useNews();
+  const { categories: catalogCategories, products: inventoryProducts, addProduct, updateProduct } = useInventory();
   const isModal = variant === 'modal';
   const canAccessAdmin = isAdmin || isStaffUser;
   const isPanelOpen = isModal ? isOpen : true;
   const canManageOrders = canAccessAdmin;
   const canManageUsers = canAccessAdmin;
   const canManageNews = canAccessAdmin;
+  const canManageProducts = canAccessAdmin;
   const canManagePermissions = isAdmin;
   const PanelIcon = isAdmin ? Shield : ClipboardList;
   const panelTitleKey = isAdmin ? 'admin.panel.title' : 'admin.panel.staffTitle';
@@ -249,11 +401,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     if (canManageOrders) {
       items.push('orders');
     }
+    if (canManageProducts) {
+      items.push('products');
+    }
     if (canManageNews) {
       items.push('news');
     }
     return items.length ? items : ['orders'];
-  }, [canManageNews, canManageOrders, canManagePermissions, canManageUsers]);
+  }, [canManageNews, canManageOrders, canManagePermissions, canManageProducts, canManageUsers]);
 
   const [activeView, setActiveView] = useState<AdminView>(availableViews[0] ?? 'orders');
   const [orders, setOrders] = useState<ManagedOrder[]>([]);
@@ -268,6 +423,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [articleToDelete, setArticleToDelete] = useState<NewsArticle | null>(null);
   const isEditingNews = editingArticleId !== null;
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [productForm, setProductForm] = useState<ProductFormState | null>(null);
+  const [productToast, setProductToast] = useState<ToastState>(null);
+  const [productErrors, setProductErrors] = useState<string[]>([]);
+  const [isProductSaving, setIsProductSaving] = useState(false);
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
   const PAYMENT_METHODS: PaymentMethod[] = ['CashOnDelivery', 'Card', 'BankTransfer'];
 
   useEffect(() => {
@@ -296,6 +458,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const timer = setTimeout(() => setNewsToast(null), 3600);
     return () => clearTimeout(timer);
   }, [newsToast]);
+
+  useEffect(() => {
+    if (!productToast) {
+      return;
+    }
+
+    const timer = setTimeout(() => setProductToast(null), 3600);
+    return () => clearTimeout(timer);
+  }, [productToast]);
 
   useEffect(() => {
     if (!isModal || !isPanelOpen || !onClose) {
@@ -338,6 +509,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setNewsToast(null);
     setNewsErrors([]);
     setNewsSubmitting(false);
+    setProductToast(null);
+    setProductErrors([]);
+    setIsProductSaving(false);
+    setIsCreatingProduct(false);
   }, [isPanelOpen]);
 
   useEffect(() => {
@@ -742,6 +917,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       });
   }, [users, searchTerm]);
 
+  const filteredProducts = useMemo(() => {
+    const term = productSearchTerm.trim().toLowerCase();
+    return inventoryProducts
+      .filter((product) => {
+        if (!term) {
+          return true;
+        }
+
+        const values = [
+          product.name,
+          product.nameEn ?? '',
+          product.description ?? '',
+          product.descriptionEn ?? '',
+          product.promotion?.title ?? '',
+          product.promotion?.titleEn ?? '',
+        ];
+
+        return values.some((value) => value.toLowerCase().includes(term));
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [inventoryProducts, productSearchTerm]);
+
   useEffect(() => {
     if (!isPanelOpen || (activeView !== 'users' && activeView !== 'permissions')) {
       return;
@@ -759,6 +956,84 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       setEditData(mapToEditable(firstUser));
     }
   }, [activeView, filteredUsers, isPanelOpen, selectedUserId]);
+
+  useEffect(() => {
+    if (!isPanelOpen || !canManageProducts || activeView !== 'products') {
+      return;
+    }
+
+    if (isCreatingProduct) {
+      setProductForm((previous) => previous ?? createEmptyProductForm(catalogCategories));
+      return;
+    }
+
+    if (!filteredProducts.length) {
+      setSelectedProductId(null);
+      setProductForm(null);
+      return;
+    }
+
+    if (!selectedProductId || !filteredProducts.some((product) => product.id === selectedProductId)) {
+      const firstProduct = filteredProducts[0];
+      setSelectedProductId(firstProduct.id);
+      setProductForm(mapProductToFormState(firstProduct));
+      return;
+    }
+
+    const product = inventoryProducts.find((item) => item.id === selectedProductId);
+    if (product) {
+      setProductForm(mapProductToFormState(product));
+    }
+  }, [
+    activeView,
+    canManageProducts,
+    catalogCategories,
+    filteredProducts,
+    inventoryProducts,
+    isCreatingProduct,
+    isPanelOpen,
+    selectedProductId,
+  ]);
+
+  const selectedUser = selectedUserId
+    ? users.find((item) => item.id === selectedUserId) ?? null
+    : null;
+
+  const canEditSelectedUser = useMemo(() => {
+    if (!selectedUser) {
+      return false;
+    }
+
+    if (!isAdmin && selectedUser.isAdmin) {
+      return false;
+    }
+
+    return true;
+  }, [isAdmin, selectedUser]);
+
+  const selectedProduct = selectedProductId
+    ? inventoryProducts.find((item) => item.id === selectedProductId) ?? null
+    : null;
+
+  const hasProductChanges = useMemo(() => {
+    if (!productForm) {
+      return false;
+    }
+
+    if (isCreatingProduct || productForm.id === null || !selectedProduct) {
+      return Boolean(
+        productForm.name.trim() ||
+          productForm.nameEn.trim() ||
+          productForm.price.trim() ||
+          productForm.description.trim() ||
+          productForm.imageUrl.trim()
+      );
+    }
+
+    const baseline = normalizeProductForm(mapProductToFormState(selectedProduct));
+    const current = normalizeProductForm(productForm);
+    return JSON.stringify(baseline) !== JSON.stringify(current);
+  }, [isCreatingProduct, productForm, selectedProduct]);
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!isModal) {
@@ -783,7 +1058,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   const handleFieldChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!editData) return;
+    if (!editData || !canEditSelectedUser) return;
 
     const { name, value, type, checked } = event.target;
 
@@ -804,12 +1079,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     });
   };
 
-  const selectedUser = selectedUserId
-    ? users.find((item) => item.id === selectedUserId) ?? null
-    : null;
-
   const hasChanges = useMemo(() => {
-    if (!editData || !selectedUser) return false;
+    if (!editData || !selectedUser || !canEditSelectedUser) return false;
 
     const normalized = mapToEditable(selectedUser);
     return (
@@ -821,7 +1092,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       normalized.isStaff !== editData.isStaff ||
       normalized.isDeleted !== editData.isDeleted
     );
-  }, [editData, selectedUser]);
+  }, [canEditSelectedUser, editData, selectedUser]);
 
   const formatDate = (value: string) => {
     const date = new Date(value);
@@ -893,6 +1164,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       return;
     }
 
+    if (!canEditSelectedUser) {
+      setToast({ type: 'error', text: t('admin.users.errors.cannotEditAdmin') });
+      return;
+    }
+
     const token =
       localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 
@@ -957,6 +1233,212 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       setToast({ type: 'error', text: message });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSelectProduct = (productItem: Product) => {
+    setIsCreatingProduct(false);
+    setSelectedProductId(productItem.id);
+    setProductForm(mapProductToFormState(productItem));
+    setProductErrors([]);
+    setProductToast(null);
+  };
+
+  const handleStartCreateProduct = () => {
+    setIsCreatingProduct(true);
+    setSelectedProductId(null);
+    setProductForm(createEmptyProductForm(catalogCategories));
+    setProductErrors([]);
+    setProductToast(null);
+  };
+
+  const handleProductFieldChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    const { name, value, type } = event.target;
+    const checked = (event.target as HTMLInputElement).checked;
+
+    setProductForm((previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      const next: ProductFormState = { ...previous };
+
+      if (type === 'checkbox') {
+        if (name === 'requiresPrescription') {
+          next.requiresPrescription = checked;
+        } else if (name === 'promotionEnabled') {
+          next.promotionEnabled = checked;
+        }
+      } else if (name === 'categoryId') {
+        next.categoryId = value ? Number(value) : '';
+      } else if (name === 'promotionBadgeColor') {
+        next.promotionBadgeColor = (value as ProductBadgeColor) || 'emerald';
+      } else {
+        (next as Record<string, string>)[name] = value;
+      }
+
+      return next;
+    });
+
+    setProductErrors([]);
+    setProductToast(null);
+  };
+
+  const handleProductReset = () => {
+    if (isCreatingProduct || !selectedProduct) {
+      setProductForm(createEmptyProductForm(catalogCategories));
+    } else {
+      setProductForm(mapProductToFormState(selectedProduct));
+    }
+    setProductErrors([]);
+    setProductToast(null);
+  };
+
+  const handleProductSave = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!productForm) {
+      return;
+    }
+
+    const errors: string[] = [];
+    const trimmedName = productForm.name.trim();
+    const trimmedNameEn = productForm.nameEn.trim();
+    const trimmedPrice = productForm.price.trim();
+    const trimmedImageUrl = productForm.imageUrl.trim();
+    const categoryId = typeof productForm.categoryId === 'number' ? productForm.categoryId : null;
+    const priceValue = Number(trimmedPrice);
+    const stockValue = Number.parseInt(productForm.stockQuantity, 10);
+
+    if (!trimmedName) {
+      errors.push(t('admin.products.validation.name'));
+    }
+
+    if (!trimmedPrice || Number.isNaN(priceValue) || priceValue <= 0) {
+      errors.push(t('admin.products.validation.price'));
+    }
+
+    if (Number.isNaN(stockValue) || stockValue < 0) {
+      errors.push(t('admin.products.validation.stock'));
+    }
+
+    if (!categoryId) {
+      errors.push(t('admin.products.validation.category'));
+    }
+
+    if (!trimmedImageUrl) {
+      errors.push(t('admin.products.validation.imageUrl'));
+    }
+
+    if (productForm.promotionEnabled) {
+      const promoTitle = productForm.promotionTitle.trim();
+      const promoPriceValue = Number(productForm.promotionPrice.trim());
+      const promoDiscountRaw = productForm.promotionDiscountPercentage.trim();
+
+      if (!promoTitle) {
+        errors.push(t('admin.products.validation.promotionTitle'));
+      }
+
+      if (Number.isNaN(promoPriceValue) || promoPriceValue <= 0) {
+        errors.push(t('admin.products.validation.promotionPrice'));
+      }
+
+      if (promoDiscountRaw) {
+        const promoDiscountValue = Number(promoDiscountRaw);
+        if (Number.isNaN(promoDiscountValue) || promoDiscountValue < 0 || promoDiscountValue > 100) {
+          errors.push(t('admin.products.validation.promotionDiscount'));
+        }
+      }
+    }
+
+    if (errors.length) {
+      setProductErrors(errors);
+      setProductToast({ type: 'error', text: t('admin.products.errors.validation') });
+      return;
+    }
+
+    setIsProductSaving(true);
+    setProductErrors([]);
+
+    try {
+      const normalizedPrice = Number(priceValue.toFixed(2));
+      const normalizedStock = Number.isNaN(stockValue) ? 0 : stockValue;
+      const promotionId = productForm.promotionId.trim() || `promo-${Date.now().toString(36)}`;
+      const promotionPriceValue = Number(productForm.promotionPrice.trim());
+      const promotionDiscountValue = productForm.promotionDiscountPercentage.trim()
+        ? Number(productForm.promotionDiscountPercentage.trim())
+        : undefined;
+
+      const baseData: CreateProductInput = {
+        name: trimmedName,
+        nameEn: trimmedNameEn || trimmedName,
+        description: productForm.description.trim() || undefined,
+        descriptionEn: productForm.descriptionEn.trim() || undefined,
+        price: normalizedPrice,
+        stockQuantity: normalizedStock,
+        imageUrl: trimmedImageUrl,
+        categoryId: categoryId ?? catalogCategories[0]?.id ?? 1,
+        requiresPrescription: productForm.requiresPrescription,
+        activeIngredient: productForm.activeIngredient.trim() || undefined,
+        activeIngredientEn: productForm.activeIngredientEn.trim() || undefined,
+        dosage: productForm.dosage.trim() || undefined,
+        dosageEn: productForm.dosageEn.trim() || undefined,
+        manufacturer: productForm.manufacturer.trim() || undefined,
+        manufacturerEn: productForm.manufacturerEn.trim() || undefined,
+      };
+
+      if (productForm.promotionEnabled) {
+        baseData.promotion = {
+          id: promotionId,
+          title: productForm.promotionTitle.trim(),
+          titleEn: productForm.promotionTitleEn.trim() || productForm.promotionTitle.trim(),
+          description: productForm.promotionDescription.trim(),
+          descriptionEn:
+            productForm.promotionDescriptionEn.trim() ||
+            productForm.promotionDescription.trim(),
+          promoPrice: Number(promotionPriceValue.toFixed(2)),
+          discountPercentage: promotionDiscountValue,
+          validUntil: productForm.promotionValidUntil.trim() || undefined,
+          badgeColor: productForm.promotionBadgeColor,
+        };
+      } else {
+        baseData.promotion = undefined;
+      }
+
+      let savedProduct: Product | null = null;
+      if (isCreatingProduct || productForm.id === null || !selectedProduct) {
+        savedProduct = addProduct(baseData);
+        setIsCreatingProduct(false);
+      } else {
+        const updatePayload: UpdateProductInput = {
+          ...baseData,
+        };
+        savedProduct = updateProduct(selectedProduct.id, updatePayload);
+      }
+
+      if (!savedProduct) {
+        throw new Error('PRODUCT_SAVE_FAILED');
+      }
+
+      setProductForm(mapProductToFormState(savedProduct));
+      setSelectedProductId(savedProduct.id);
+      setProductToast({
+        type: 'success',
+        text: t(
+          isCreatingProduct || productForm.id === null
+            ? 'admin.products.toast.created'
+            : 'admin.products.toast.updated',
+        ),
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message !== 'PRODUCT_SAVE_FAILED'
+          ? error.message
+          : t('admin.products.errors.saveFailed');
+      setProductToast({ type: 'error', text: message });
+    } finally {
+      setIsProductSaving(false);
     }
   };
 
@@ -1099,6 +1581,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
+              {!canEditSelectedUser && selectedUser.isAdmin && (
+                <div className="flex items-start space-x-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  <Shield className="mt-0.5 h-4 w-4" />
+                  <span>{t('admin.users.errors.cannotEditAdmin')}</span>
+                </div>
+              )}
+
               {toast && (
                 <div
                   className={`flex items-start space-x-2 rounded-2xl border px-4 py-3 text-sm ${
@@ -1129,7 +1618,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       required
                       value={editData.email}
                       onChange={handleFieldChange}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      disabled={!canEditSelectedUser}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
                     />
                   </div>
 
@@ -1144,7 +1634,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       onChange={handleFieldChange}
                       maxLength={150}
                       placeholder={t('admin.users.fields.fullNamePlaceholder')}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      disabled={!canEditSelectedUser}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
                     />
                   </div>
 
@@ -1159,7 +1650,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       onChange={handleFieldChange}
                       maxLength={30}
                       placeholder={t('admin.users.fields.phonePlaceholder')}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      disabled={!canEditSelectedUser}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
                     />
                   </div>
 
@@ -1174,7 +1666,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       onChange={handleFieldChange}
                       maxLength={250}
                       placeholder={t('admin.users.fields.addressPlaceholder')}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      disabled={!canEditSelectedUser}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
                     />
                   </div>
                 </div>
@@ -1195,7 +1688,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         name="isAdmin"
                         checked={editData.isAdmin}
                         onChange={handleFieldChange}
-                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        disabled={!canEditSelectedUser || isSaving}
+                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
                       />
                       <span>{t('admin.permissions.admin')}</span>
                     </label>
@@ -1205,7 +1699,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         name="isStaff"
                         checked={editData.isStaff}
                         onChange={handleFieldChange}
-                        className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        disabled={!canEditSelectedUser || isSaving}
+                        className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
                       />
                       <span>{t('admin.permissions.staff')}</span>
                     </label>
@@ -1215,7 +1710,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         name="isDeleted"
                         checked={editData.isDeleted}
                         onChange={handleFieldChange}
-                        className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                        disabled={!canEditSelectedUser || isSaving}
+                        className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
                       />
                       <span>{t('admin.permissions.deactivate')}</span>
                     </label>
@@ -1248,7 +1744,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                   </button>
                   <button
                     type="submit"
-                    disabled={!hasChanges || isSaving}
+                    disabled={!canEditSelectedUser || !hasChanges || isSaving}
                     className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSaving ? (
@@ -1280,6 +1776,529 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               <p className="text-sm text-slate-500">{t('admin.users.noSelection')}</p>
             </div>
           )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderProductsView = (): JSX.Element | null => {
+    if (activeView !== 'products') {
+      return null;
+    }
+
+    const isNewProduct = isCreatingProduct || productForm?.id === null;
+
+    return (
+      <div className="space-y-6 border-b border-slate-100 p-6 md:px-8">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {t('admin.products.title')}
+            </h3>
+            <p className="text-sm text-slate-500">{t('admin.products.subtitle')}</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              {t('admin.products.count', { count: inventoryProducts.length })}
+            </span>
+            <button
+              type="button"
+              onClick={handleStartCreateProduct}
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>{t('admin.products.actions.new')}</span>
+            </button>
+          </div>
+        </div>
+
+        {productToast && (
+          <div
+            className={`flex items-start space-x-2 rounded-2xl border px-4 py-3 text-sm ${
+              productToast.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-rose-200 bg-rose-50 text-rose-700'
+            }`}
+          >
+            {productToast.type === 'success' ? (
+              <CheckCircle2 className="mt-0.5 h-4 w-4" />
+            ) : (
+              <Ban className="mt-0.5 h-4 w-4" />
+            )}
+            <span>{productToast.text}</span>
+          </div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-slate-600" htmlFor="admin-products-search">
+                {t('admin.products.searchLabel')}
+              </label>
+              <div className="relative mt-2">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="admin-products-search"
+                  type="search"
+                  value={productSearchTerm}
+                  onChange={(event) => setProductSearchTerm(event.target.value)}
+                  placeholder={t('admin.products.searchPlaceholder')}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+              {filteredProducts.length ? (
+                <ul className="max-h-[52vh] divide-y divide-slate-100 overflow-y-auto">
+                  {filteredProducts.map((product) => {
+                    const isActive = !isCreatingProduct && product.id === selectedProductId;
+                    return (
+                      <li key={product.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectProduct(product)}
+                          className={`flex w-full items-center justify-between px-4 py-3 text-left transition ${
+                            isActive
+                              ? 'bg-white font-semibold text-emerald-700 shadow-sm'
+                              : 'text-slate-600 hover:bg-white'
+                          }`}
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm text-slate-900">{product.name}</span>
+                            <span className="text-xs text-slate-500">{product.nameEn}</span>
+                          </div>
+                          <div className="text-sm font-semibold text-emerald-600">
+                            €{product.price.toFixed(2)}
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className="flex flex-col items-center justify-center space-y-3 p-6 text-center text-slate-500">
+                  <ShoppingBag className="h-8 w-8 text-slate-400" />
+                  <p>{t('admin.products.empty')}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            {productForm ? (
+              <form onSubmit={handleProductSave} className="space-y-6">
+                {productErrors.length > 0 && (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                    <p className="font-semibold">{t('admin.products.errors.validation')}</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      {productErrors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <div className="flex items-center space-x-2 text-emerald-600">
+                    <ShoppingBag className="h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      {isNewProduct
+                        ? t('admin.products.form.newProduct')
+                        : t('admin.products.form.editProduct', { id: productForm.id ?? '' })}
+                    </span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-name">
+                        {t('admin.products.fields.name')}
+                      </label>
+                      <input
+                        id="admin-product-name"
+                        name="name"
+                        value={productForm.name}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-nameEn">
+                        {t('admin.products.fields.nameEn')}
+                      </label>
+                      <input
+                        id="admin-product-nameEn"
+                        name="nameEn"
+                        value={productForm.nameEn}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-description">
+                        {t('admin.products.fields.description')}
+                      </label>
+                      <textarea
+                        id="admin-product-description"
+                        name="description"
+                        value={productForm.description}
+                        onChange={handleProductFieldChange}
+                        className="min-h-[96px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-descriptionEn">
+                        {t('admin.products.fields.descriptionEn')}
+                      </label>
+                      <textarea
+                        id="admin-product-descriptionEn"
+                        name="descriptionEn"
+                        value={productForm.descriptionEn}
+                        onChange={handleProductFieldChange}
+                        className="min-h-[96px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-image">
+                        {t('admin.products.fields.imageUrl')}
+                      </label>
+                      <input
+                        id="admin-product-image"
+                        name="imageUrl"
+                        value={productForm.imageUrl}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <h4 className="text-sm font-semibold text-slate-700">
+                    {t('admin.products.form.pricing')}
+                  </h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-price">
+                        {t('admin.products.fields.price')}
+                      </label>
+                      <input
+                        id="admin-product-price"
+                        name="price"
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={productForm.price}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-stock">
+                        {t('admin.products.fields.stockQuantity')}
+                      </label>
+                      <input
+                        id="admin-product-stock"
+                        name="stockQuantity"
+                        type="number"
+                        min={0}
+                        value={productForm.stockQuantity}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-category">
+                        {t('admin.products.fields.category')}
+                      </label>
+                      <select
+                        id="admin-product-category"
+                        name="categoryId"
+                        value={productForm.categoryId}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      >
+                        <option value="">
+                          {t('admin.products.fields.categoryPlaceholder')}
+                        </option>
+                        {catalogCategories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <label className="flex items-center space-x-3 text-sm font-medium text-slate-600">
+                      <input
+                        type="checkbox"
+                        name="requiresPrescription"
+                        checked={productForm.requiresPrescription}
+                        onChange={handleProductFieldChange}
+                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span>{t('admin.products.fields.requiresPrescription')}</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <h4 className="text-sm font-semibold text-slate-700">
+                    {t('admin.products.form.details')}
+                  </h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-ingredient">
+                        {t('admin.products.fields.activeIngredient')}
+                      </label>
+                      <input
+                        id="admin-product-ingredient"
+                        name="activeIngredient"
+                        value={productForm.activeIngredient}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-ingredientEn">
+                        {t('admin.products.fields.activeIngredientEn')}
+                      </label>
+                      <input
+                        id="admin-product-ingredientEn"
+                        name="activeIngredientEn"
+                        value={productForm.activeIngredientEn}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-dosage">
+                        {t('admin.products.fields.dosage')}
+                      </label>
+                      <input
+                        id="admin-product-dosage"
+                        name="dosage"
+                        value={productForm.dosage}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-dosageEn">
+                        {t('admin.products.fields.dosageEn')}
+                      </label>
+                      <input
+                        id="admin-product-dosageEn"
+                        name="dosageEn"
+                        value={productForm.dosageEn}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-manufacturer">
+                        {t('admin.products.fields.manufacturer')}
+                      </label>
+                      <input
+                        id="admin-product-manufacturer"
+                        name="manufacturer"
+                        value={productForm.manufacturer}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-manufacturerEn">
+                        {t('admin.products.fields.manufacturerEn')}
+                      </label>
+                      <input
+                        id="admin-product-manufacturerEn"
+                        name="manufacturerEn"
+                        value={productForm.manufacturerEn}
+                        onChange={handleProductFieldChange}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-slate-700">
+                      <Tag className="h-4 w-4 text-emerald-500" />
+                      <span className="text-sm font-semibold">{t('admin.products.promotion.sectionTitle')}</span>
+                    </div>
+                    <label className="flex items-center space-x-2 text-sm font-medium text-slate-600">
+                      <input
+                        type="checkbox"
+                        name="promotionEnabled"
+                        checked={productForm.promotionEnabled}
+                        onChange={handleProductFieldChange}
+                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span>{t('admin.products.promotion.toggle')}</span>
+                    </label>
+                  </div>
+
+                  {productForm.promotionEnabled && (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-promo-title">
+                          {t('admin.products.promotion.title')}
+                        </label>
+                        <input
+                          id="admin-product-promo-title"
+                          name="promotionTitle"
+                          value={productForm.promotionTitle}
+                          onChange={handleProductFieldChange}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-promo-titleEn">
+                          {t('admin.products.promotion.titleEn')}
+                        </label>
+                        <input
+                          id="admin-product-promo-titleEn"
+                          name="promotionTitleEn"
+                          value={productForm.promotionTitleEn}
+                          onChange={handleProductFieldChange}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-promo-description">
+                          {t('admin.products.promotion.description')}
+                        </label>
+                        <textarea
+                          id="admin-product-promo-description"
+                          name="promotionDescription"
+                          value={productForm.promotionDescription}
+                          onChange={handleProductFieldChange}
+                          className="min-h-[80px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-promo-descriptionEn">
+                          {t('admin.products.promotion.descriptionEn')}
+                        </label>
+                        <textarea
+                          id="admin-product-promo-descriptionEn"
+                          name="promotionDescriptionEn"
+                          value={productForm.promotionDescriptionEn}
+                          onChange={handleProductFieldChange}
+                          className="min-h-[80px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-promo-price">
+                          {t('admin.products.promotion.price')}
+                        </label>
+                        <input
+                          id="admin-product-promo-price"
+                          name="promotionPrice"
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={productForm.promotionPrice}
+                          onChange={handleProductFieldChange}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-promo-discount">
+                          {t('admin.products.promotion.discount')}
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="admin-product-promo-discount"
+                            name="promotionDiscountPercentage"
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={productForm.promotionDiscountPercentage}
+                            onChange={handleProductFieldChange}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          />
+                          <Percent className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-promo-validUntil">
+                          {t('admin.products.promotion.validUntil')}
+                        </label>
+                        <input
+                          id="admin-product-promo-validUntil"
+                          name="promotionValidUntil"
+                          type="date"
+                          value={productForm.promotionValidUntil}
+                          onChange={handleProductFieldChange}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="admin-product-promo-badgeColor">
+                          {t('admin.products.promotion.badgeColor')}
+                        </label>
+                        <select
+                          id="admin-product-promo-badgeColor"
+                          name="promotionBadgeColor"
+                          value={productForm.promotionBadgeColor}
+                          onChange={handleProductFieldChange}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        >
+                          {PRODUCT_BADGE_COLORS.map((color) => (
+                            <option key={color} value={color}>
+                              {t(`admin.products.promotion.badgeColors.${color}`)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+                  <button
+                    type="button"
+                    onClick={handleProductReset}
+                    disabled={!hasProductChanges || isProductSaving}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {t('admin.products.actions.reset')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!hasProductChanges || isProductSaving}
+                    className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isProductSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <span>
+                          {isNewProduct
+                            ? t('admin.products.actions.creating')
+                            : t('admin.products.actions.saving')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        <span>
+                          {isNewProduct
+                            ? t('admin.products.actions.create')
+                            : t('admin.products.actions.save')}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center space-y-3 rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-slate-500">
+                <ShoppingBag className="h-10 w-10 text-slate-300" />
+                <p>{t('admin.products.noSelection')}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -2021,6 +3040,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               {t('admin.panel.tabs.orders')}
             </button>
           )}
+          {availableViews.includes('products') && (
+            <button
+              type="button"
+              onClick={() => setActiveView('products')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeView === 'products'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'text-slate-500 hover:text-emerald-600'
+              }`}
+            >
+              {t('admin.panel.tabs.products')}
+            </button>
+          )}
           {availableViews.includes('news') && (
             <button
               type="button"
@@ -2037,6 +3069,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         </div>
         {renderUsersAndPermissionsView()}
         {renderOrdersView()}
+        {renderProductsView()}
         {renderNewsView()}
       </div>
     );
