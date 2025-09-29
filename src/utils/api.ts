@@ -9,7 +9,6 @@ const pickEnvApiBase = (): string | undefined => {
   const candidates = [
     import.meta.env.VITE_API_BASE_URL,
     import.meta.env.VITE_API_URL,
-    import.meta.env.VITE_API_URL_DOCKER,
   ];
 
   for (const candidate of candidates) {
@@ -59,12 +58,17 @@ const isLocalHostname = (hostname: string): boolean => {
 const resolveDefaultBase = (): string => {
   if (typeof window !== 'undefined' && window.location) {
     const { hostname } = window.location;
+
     if (hostname && isLocalHostname(hostname)) {
       return 'http://localhost:8080/api';
     }
+
+    return '/api';
   }
 
-  return '/api';
+  // When executing outside the browser (e.g. SSR or build tools) fall back to the
+  // development API base so local rendering keeps working without window access.
+  return 'http://localhost:8080/api';
 };
 
 const normalizeBase = (rawBase: string): string => {
