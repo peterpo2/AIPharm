@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Search,
