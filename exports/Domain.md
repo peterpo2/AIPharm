@@ -70,10 +70,12 @@ namespace AIPharm.Domain.Entities
 {
     public enum OrderStatus
     {
-        Waiting = 0,
-        Accepted = 1,
-        Delivered = 2,
-        Rejected = 3
+        Pending = 0,
+        Confirmed = 1,
+        Processing = 2,
+        Shipped = 3,
+        Delivered = 4,
+        Cancelled = 5
     }
 
     public class Order
@@ -87,7 +89,7 @@ namespace AIPharm.Domain.Entities
         [MaxLength(100)]
         public string OrderNumber { get; set; } = string.Empty;
         
-        public OrderStatus Status { get; set; } = OrderStatus.Waiting;
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
         
         [Column(TypeName = "decimal(10,2)")]
         public decimal Total { get; set; }

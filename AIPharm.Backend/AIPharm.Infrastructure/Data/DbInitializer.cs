@@ -473,10 +473,12 @@ namespace AIPharm.Infrastructure.Data
 
             var statuses = new[]
             {
-                OrderStatus.Rejected,
-                OrderStatus.Accepted,
-                OrderStatus.Waiting,
+                OrderStatus.Pending,
+                OrderStatus.Confirmed,
+                OrderStatus.Processing,
+                OrderStatus.Shipped,
                 OrderStatus.Delivered,
+                OrderStatus.Cancelled,
             };
 
             var now = DateTime.UtcNow;
@@ -501,7 +503,14 @@ namespace AIPharm.Infrastructure.Data
                 var lineNet = decimal.Round(lineGross - lineVat, 2, MidpointRounding.AwayFromZero);
 
                 var createdAt = now.AddDays(-(index + 1));
-                var updatedAt = status == OrderStatus.Delivered ? createdAt.AddHours(6) : createdAt;
+                var updatedAt = status switch
+                {
+                    OrderStatus.Confirmed => createdAt.AddHours(2),
+                    OrderStatus.Processing => createdAt.AddHours(4),
+                    OrderStatus.Shipped => createdAt.AddHours(6),
+                    OrderStatus.Delivered => createdAt.AddHours(24),
+                    _ => createdAt,
+                };
 
                 var order = new Order
                 {
@@ -520,10 +529,12 @@ namespace AIPharm.Infrastructure.Data
                     PhoneNumber = user.PhoneNumber,
                     Notes = status switch
                     {
-                        OrderStatus.Rejected => "Order rejected during review.",
-                        OrderStatus.Waiting => "Awaiting manual confirmation.",
+                        OrderStatus.Pending => "Pending manual confirmation.",
+                        OrderStatus.Confirmed => "Order confirmed by the pharmacy team.",
+                        OrderStatus.Processing => "Order is currently being prepared.",
+                        OrderStatus.Shipped => "Order has left the warehouse.",
                         OrderStatus.Delivered => "Package delivered successfully.",
-                        OrderStatus.Accepted => "Order accepted and being prepared.",
+                        OrderStatus.Cancelled => "Order cancelled by customer support.",
                         _ => null,
                     },
                     CreatedAt = createdAt,

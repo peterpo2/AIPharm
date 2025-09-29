@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ComponentType, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Ban,
@@ -98,6 +98,17 @@ interface ManagedOrder {
   userEmail?: string;
   userFullName?: string;
   items: ManagedOrderItem[];
+}
+
+type OrderStatusIcon = ComponentType<React.SVGProps<SVGSVGElement>>;
+
+interface OrderStatusActionConfig {
+  status: OrderStatus;
+  label: string;
+  icon: OrderStatusIcon;
+  activeClass: string;
+  idleClass: string;
+  focusRing: string;
 }
 
 interface UsersApiResponse {
@@ -226,7 +237,14 @@ const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
 
 const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, '')}`;
 
-const ORDER_STATUSES: OrderStatus[] = ['Waiting', 'Accepted', 'Delivered', 'Rejected'];
+const ORDER_STATUSES: OrderStatus[] = [
+  'Pending',
+  'Confirmed',
+  'Processing',
+  'Shipped',
+  'Delivered',
+  'Cancelled',
+];
 
 const mapToEditable = (user: ManagedUser): EditableUserFields => ({
   email: user.email,
@@ -241,10 +259,10 @@ const mapToEditable = (user: ManagedUser): EditableUserFields => ({
 
 const normalizeOrderStatus = (status: OrderStatus | number): OrderStatus => {
   if (typeof status === 'number') {
-    return ORDER_STATUSES[status] ?? 'Waiting';
+    return ORDER_STATUSES[status] ?? 'Pending';
   }
 
-  return ORDER_STATUSES.includes(status) ? status : 'Waiting';
+  return ORDER_STATUSES.includes(status) ? status : 'Pending';
 };
 
 type PromotionBadgeColor = ProductPromotion['badgeColor'] | '';
@@ -1114,20 +1132,82 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const orderStatusConfig = useMemo(
     () => [
       {
-        label: t('orders.status.waiting'),
+        label: t('orders.status.pending'),
         className: 'bg-amber-100 text-amber-700 border-amber-200',
       },
       {
-        label: t('orders.status.accepted'),
+        label: t('orders.status.confirmed'),
         className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       },
       {
-        label: t('orders.status.delivered'),
+        label: t('orders.status.processing'),
+        className: 'bg-blue-100 text-blue-700 border-blue-200',
+      },
+      {
+        label: t('orders.status.shipped'),
         className: 'bg-sky-100 text-sky-700 border-sky-200',
       },
       {
-        label: t('orders.status.rejected'),
+        label: t('orders.status.delivered'),
+        className: 'bg-teal-100 text-teal-700 border-teal-200',
+      },
+      {
+        label: t('orders.status.cancelled'),
         className: 'bg-rose-100 text-rose-700 border-rose-200',
+      },
+    ],
+    [t]
+  );
+
+  const orderStatusActions = useMemo<OrderStatusActionConfig[]>(
+    () => [
+      {
+        status: 'Pending',
+        label: t('admin.orders.actions.pending'),
+        icon: Clock3,
+        activeClass: 'bg-amber-500 text-white shadow-sm',
+        idleClass: 'border border-amber-200 text-amber-700 hover:bg-amber-50',
+        focusRing: 'focus:ring-amber-100',
+      },
+      {
+        status: 'Confirmed',
+        label: t('admin.orders.actions.confirm'),
+        icon: CheckCircle2,
+        activeClass: 'bg-emerald-600 text-white shadow-sm',
+        idleClass: 'border border-emerald-200 text-emerald-700 hover:bg-emerald-50',
+        focusRing: 'focus:ring-emerald-100',
+      },
+      {
+        status: 'Processing',
+        label: t('admin.orders.actions.process'),
+        icon: ClipboardList,
+        activeClass: 'bg-blue-600 text-white shadow-sm',
+        idleClass: 'border border-blue-200 text-blue-700 hover:bg-blue-50',
+        focusRing: 'focus:ring-blue-100',
+      },
+      {
+        status: 'Shipped',
+        label: t('admin.orders.actions.ship'),
+        icon: Truck,
+        activeClass: 'bg-sky-600 text-white shadow-sm',
+        idleClass: 'border border-sky-200 text-sky-700 hover:bg-sky-50',
+        focusRing: 'focus:ring-sky-100',
+      },
+      {
+        status: 'Delivered',
+        label: t('admin.orders.actions.deliver'),
+        icon: PackageCheck,
+        activeClass: 'bg-teal-600 text-white shadow-sm',
+        idleClass: 'border border-teal-200 text-teal-700 hover:bg-teal-50',
+        focusRing: 'focus:ring-teal-100',
+      },
+      {
+        status: 'Cancelled',
+        label: t('admin.orders.actions.cancel'),
+        icon: Ban,
+        activeClass: 'bg-rose-600 text-white shadow-sm',
+        idleClass: 'border border-rose-200 text-rose-700 hover:bg-rose-50',
+        focusRing: 'focus:ring-rose-100',
       },
     ],
     [t]
@@ -2432,14 +2512,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               const normalizedStatus = normalizeOrderStatus(order.status);
               const updatingStatus = statusUpdates[order.id] ?? null;
               const isUpdatingStatus = Boolean(updatingStatus);
-              const acceptDisabled =
-                isUpdatingStatus || normalizedStatus === 'Accepted' || normalizedStatus === 'Delivered';
-              const waitDisabled =
-                isUpdatingStatus || normalizedStatus === 'Waiting' || normalizedStatus === 'Delivered';
-              const declineDisabled =
-                isUpdatingStatus || normalizedStatus === 'Rejected' || normalizedStatus === 'Delivered';
-              const deliverDisabled =
-                isUpdatingStatus || normalizedStatus === 'Delivered';
+              const isFinalStatus =
+                normalizedStatus === 'Delivered' || normalizedStatus === 'Cancelled';
               return (
                 <div key={order.id} className="space-y-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                   <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 md:flex-row md:items-center md:justify-between">
@@ -2467,74 +2541,44 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       <span>{t('admin.orders.actions.title')}</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void handleUpdateOrderStatus(order.id, 'Accepted')}
-                        disabled={acceptDisabled}
-                        className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-100 ${
-                          normalizedStatus === 'Accepted'
-                            ? 'bg-emerald-600 text-white shadow-sm'
-                            : 'border border-emerald-200 text-emerald-700 hover:bg-emerald-50'
-                        } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
-                      >
-                        {isUpdatingStatus && updatingStatus === 'Accepted' ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4" />
-                        )}
-                        <span>{t('admin.orders.actions.approve')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleUpdateOrderStatus(order.id, 'Waiting')}
-                        disabled={waitDisabled}
-                        className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-100 ${
-                          normalizedStatus === 'Waiting'
-                            ? 'bg-amber-500 text-white shadow-sm'
-                            : 'border border-amber-200 text-amber-700 hover:bg-amber-50'
-                        } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
-                      >
-                        {isUpdatingStatus && updatingStatus === 'Waiting' ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Clock3 className="h-4 w-4" />
-                        )}
-                        <span>{t('admin.orders.actions.wait')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleUpdateOrderStatus(order.id, 'Rejected')}
-                        disabled={declineDisabled}
-                        className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-rose-100 ${
-                          normalizedStatus === 'Rejected'
-                            ? 'bg-rose-600 text-white shadow-sm'
-                            : 'border border-rose-200 text-rose-700 hover:bg-rose-50'
-                        } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
-                      >
-                        {isUpdatingStatus && updatingStatus === 'Rejected' ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Ban className="h-4 w-4" />
-                        )}
-                        <span>{t('admin.orders.actions.decline')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleUpdateOrderStatus(order.id, 'Delivered')}
-                        disabled={deliverDisabled}
-                        className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-sky-100 ${
-                          normalizedStatus === 'Delivered'
-                            ? 'bg-sky-600 text-white shadow-sm'
-                            : 'border border-sky-200 text-sky-700 hover:bg-sky-50'
-                        } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
-                      >
-                        {isUpdatingStatus && updatingStatus === 'Delivered' ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <PackageCheck className="h-4 w-4" />
-                        )}
-                        <span>{t('admin.orders.actions.deliver')}</span>
-                      </button>
+                      {orderStatusActions.map((action) => {
+                        const Icon = action.icon;
+                        const isActive = normalizedStatus === action.status;
+                        const isLoadingAction =
+                          isUpdatingStatus && updatingStatus === action.status;
+                        const disabled =
+                          isUpdatingStatus ||
+                          isActive ||
+                          (isFinalStatus && normalizedStatus !== action.status);
+                        const className = [
+                          'inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none',
+                          action.focusRing,
+                          isActive ? action.activeClass : action.idleClass,
+                          'disabled:cursor-not-allowed',
+                          disabled ? 'cursor-not-allowed opacity-60' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ');
+
+                        return (
+                          <button
+                            key={action.status}
+                            type="button"
+                            onClick={() =>
+                              void handleUpdateOrderStatus(order.id, action.status)
+                            }
+                            disabled={disabled}
+                            className={className}
+                          >
+                            {isLoadingAction ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Icon className="h-4 w-4" />
+                            )}
+                            <span>{action.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
