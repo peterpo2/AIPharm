@@ -28,6 +28,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNews } from '../../context/NewsContext';
 import { useProductCatalog } from '../../context/ProductCatalogContext';
+import { useFeatureToggles } from '../../context/FeatureToggleContext';
 import type { NewsArticle, OrderStatus, PaymentMethod, Product, ProductPromotion } from '../../types';
 import { generateNewsImage } from '../../utils/imageGenerator';
 
@@ -316,8 +317,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     updateProduct,
     deleteProduct: removeProductFromCatalog,
   } = useProductCatalog();
+  const { prescriptionFeaturesEnabled, setPrescriptionFeaturesEnabled } = useFeatureToggles();
   const isModal = variant === 'modal';
   const canAccessAdmin = isAdmin || isStaffUser;
+  const handlePrescriptionFeatureToggle = () => {
+    setPrescriptionFeaturesEnabled(!prescriptionFeaturesEnabled);
+  };
   const isPanelOpen = isModal ? isOpen : true;
   const canManageOrders = canAccessAdmin;
   const canManageUsers = isAdmin;
@@ -1512,7 +1517,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="space-y-6 p-6">
+          {activeView === 'permissions' && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                    {t('admin.features.sectionTitle')}
+                  </span>
+                  <p className="mt-2 text-sm font-semibold text-emerald-900">
+                    {t('admin.features.prescriptionTitle')}
+                  </p>
+                  <p className="mt-1 text-sm text-emerald-900/80">
+                    {t('admin.features.prescriptionDescription')}
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-emerald-700">
+                    {prescriptionFeaturesEnabled
+                      ? t('admin.features.prescriptionStatusEnabled')
+                      : t('admin.features.prescriptionStatusDisabled')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={prescriptionFeaturesEnabled}
+                  onClick={handlePrescriptionFeatureToggle}
+                  className={`relative inline-flex h-10 w-20 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                    prescriptionFeaturesEnabled ? 'bg-emerald-500' : 'bg-emerald-200'
+                  }`}
+                >
+                  <span className="sr-only">{t('admin.features.prescriptionToggle')}</span>
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-8 w-8 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                      prescriptionFeaturesEnabled ? 'translate-x-10' : 'translate-x-0'
+                    }`}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold uppercase text-white">
+                    {prescriptionFeaturesEnabled
+                      ? t('admin.features.prescriptionEnabled')
+                      : t('admin.features.prescriptionDisabled')}
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
           {selectedUser && editData ? (
             <form onSubmit={handleSave} className="space-y-6">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

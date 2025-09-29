@@ -278,16 +278,6 @@ const translations = {
     'profile.readonlyEmail': 'Имейл адресът не може да бъде променян.',
     'profile.adminBadge': 'Администратор',
     'profile.staffBadge': 'Служител',
-    'profile.prescriptionFeaturesTitle': 'Рецептурни услуги',
-    'profile.prescriptionFeaturesDescription':
-      'Контролирайте достъпа до продукти с рецепта и подаването на е-рецепти.',
-    'profile.prescriptionFeaturesStatusEnabled':
-      'Потребителите виждат продуктите с рецепта и могат да завършват е-рецепти.',
-    'profile.prescriptionFeaturesStatusDisabled':
-      'Продуктите с рецепта и е-рецепциите са скрити за всички потребители.',
-    'profile.prescriptionFeaturesToggle': 'Управление на рецептурните услуги',
-    'profile.prescriptionFeaturesEnabled': 'Вкл.',
-    'profile.prescriptionFeaturesDisabled': 'Изкл.',
     'profile.fullName': 'Пълно име',
     'profile.fullNamePlaceholder': 'Иван Иванов',
     'profile.phoneNumber': 'Телефон',
@@ -335,6 +325,17 @@ const translations = {
     'admin.panel.tabs.orders': 'Поръчки',
     'admin.panel.tabs.products': 'Каталог',
     'admin.panel.tabs.news': 'Новини',
+    'admin.features.sectionTitle': 'Функции на платформата',
+    'admin.features.prescriptionTitle': 'Рецептурни услуги',
+    'admin.features.prescriptionDescription':
+      'Контролирайте достъпа до продукти с рецепта и подаването на е-рецепти.',
+    'admin.features.prescriptionStatusEnabled':
+      'Потребителите виждат продуктите с рецепта и могат да завършват е-рецепти.',
+    'admin.features.prescriptionStatusDisabled':
+      'Продуктите с рецепта и е-рецепциите са скрити за всички потребители.',
+    'admin.features.prescriptionToggle': 'Управление на рецептурните услуги',
+    'admin.features.prescriptionEnabled': 'Вкл.',
+    'admin.features.prescriptionDisabled': 'Изкл.',
     'admin.users.searchLabel': 'Търсене на потребители',
     'admin.users.searchPlaceholder': 'Име, имейл или телефон...',
     'admin.users.errors.noSession': 'Не е намерен валиден админ токен. Влезте отново.',
@@ -974,16 +975,6 @@ const translations = {
     'profile.readonlyEmail': 'The email address cannot be changed.',
     'profile.adminBadge': 'Administrator',
     'profile.staffBadge': 'Staff member',
-    'profile.prescriptionFeaturesTitle': 'Prescription services',
-    'profile.prescriptionFeaturesDescription':
-      'Control the availability of prescription-only products and e-prescriptions.',
-    'profile.prescriptionFeaturesStatusEnabled':
-      'Customers can see prescription medicines and submit e-prescriptions.',
-    'profile.prescriptionFeaturesStatusDisabled':
-      'Prescription medicines and e-prescriptions are hidden for all customers.',
-    'profile.prescriptionFeaturesToggle': 'Toggle prescription services',
-    'profile.prescriptionFeaturesEnabled': 'On',
-    'profile.prescriptionFeaturesDisabled': 'Off',
     'profile.fullName': 'Full name',
     'profile.fullNamePlaceholder': 'John Doe',
     'profile.phoneNumber': 'Phone number',
@@ -1031,6 +1022,17 @@ const translations = {
     'admin.panel.tabs.orders': 'Orders',
     'admin.panel.tabs.products': 'Catalog',
     'admin.panel.tabs.news': 'News',
+    'admin.features.sectionTitle': 'Platform features',
+    'admin.features.prescriptionTitle': 'Prescription services',
+    'admin.features.prescriptionDescription':
+      'Control the availability of prescription-only products and e-prescription submissions.',
+    'admin.features.prescriptionStatusEnabled':
+      'Customers can see prescription-only items and submit e-prescriptions.',
+    'admin.features.prescriptionStatusDisabled':
+      'Prescription-only products and e-prescriptions are hidden for all customers.',
+    'admin.features.prescriptionToggle': 'Manage prescription services',
+    'admin.features.prescriptionEnabled': 'On',
+    'admin.features.prescriptionDisabled': 'Off',
     'admin.users.searchLabel': 'Search users',
     'admin.users.searchPlaceholder': 'Name, email or phone...',
     'admin.users.errors.noSession': 'Missing admin session. Please sign in again.',
