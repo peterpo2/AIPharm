@@ -10,7 +10,7 @@ import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { NewsProvider } from './context/NewsContext';
 import { FeatureToggleProvider, useFeatureToggles } from './context/FeatureToggleContext';
-import { categories, products, searchProducts, getProductsByCategory } from './data/mockData';
+import { useProductCatalog, ProductCatalogProvider } from './context/ProductCatalogContext';
 import HomePage from './components/pages/HomePage';
 import ProductsPage from './components/pages/ProductsPage';
 import CategoriesPage from './components/pages/CategoriesPage';
@@ -25,6 +25,7 @@ import ProductMoreInfoPage from './components/pages/ProductMoreInfoPage';
 
 function AppContent() {
   const { prescriptionFeaturesEnabled } = useFeatureToggles();
+  const { products, categories } = useProductCatalog();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -42,33 +43,47 @@ function AppContent() {
   }, [location.pathname]);
 
   // Filter products based on search and category
-  const baseProducts = useMemo(() => {
-    if (searchTerm.trim()) {
-      return searchProducts(searchTerm);
-    }
-
-    if (selectedCategory) {
-      return getProductsByCategory(selectedCategory);
-    }
-
-    return products;
-  }, [searchTerm, selectedCategory]);
-
-  const filteredProducts = useMemo(() => {
-    if (prescriptionFeaturesEnabled) {
-      return baseProducts;
-    }
-
-    return baseProducts.filter((product) => !product.requiresPrescription);
-  }, [baseProducts, prescriptionFeaturesEnabled]);
-
-  const availableProducts = useMemo(() => {
+  const normalizedProducts = useMemo(() => {
     if (prescriptionFeaturesEnabled) {
       return products;
     }
 
     return products.filter((product) => !product.requiresPrescription);
-  }, [prescriptionFeaturesEnabled]);
+  }, [prescriptionFeaturesEnabled, products]);
+
+  const baseProducts = useMemo(() => {
+    const source = normalizedProducts;
+
+    if (searchTerm.trim()) {
+      const query = searchTerm.trim().toLowerCase();
+      return source.filter((product) => {
+        const name = product.name.toLowerCase();
+        const nameEn = product.nameEn?.toLowerCase() ?? '';
+        const description = product.description?.toLowerCase() ?? '';
+        const descriptionEn = product.descriptionEn?.toLowerCase() ?? '';
+        return (
+          name.includes(query) ||
+          nameEn.includes(query) ||
+          description.includes(query) ||
+          descriptionEn.includes(query)
+        );
+      });
+    }
+
+    if (selectedCategory) {
+      return source.filter((product) => product.categoryId === selectedCategory);
+    }
+
+    return source;
+  }, [normalizedProducts, searchTerm, selectedCategory]);
+
+  const filteredProducts = useMemo(() => {
+    return baseProducts;
+  }, [baseProducts]);
+
+  const availableProducts = useMemo(() => {
+    return normalizedProducts;
+  }, [normalizedProducts]);
 
   const isDefaultView = !searchTerm.trim() && !selectedCategory;
 
@@ -204,13 +219,15 @@ function App() {
     <AuthProvider>
       <LanguageProvider>
         <FeatureToggleProvider>
-          <CartProvider>
-            <NewsProvider>
-              <ChatProvider>
-                <AppContent />
-              </ChatProvider>
-            </NewsProvider>
-          </CartProvider>
+          <ProductCatalogProvider>
+            <CartProvider>
+              <NewsProvider>
+                <ChatProvider>
+                  <AppContent />
+                </ChatProvider>
+              </NewsProvider>
+            </CartProvider>
+          </ProductCatalogProvider>
         </FeatureToggleProvider>
       </LanguageProvider>
     </AuthProvider>

@@ -1,13 +1,14 @@
 import React, { useMemo } from 'react';
 import { Tag, Clock, Gift, Percent } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { products } from '../../data/mockData';
 import ProductGrid from '../ProductGrid';
 import { useFeatureToggles } from '../../context/FeatureToggleContext';
+import { useProductCatalog } from '../../context/ProductCatalogContext';
 
 const Promotions: React.FC = () => {
   const { t } = useLanguage();
   const { prescriptionFeaturesEnabled } = useFeatureToggles();
+  const { products } = useProductCatalog();
 
   const promotedProducts = useMemo(
     () =>
@@ -26,7 +27,7 @@ const Promotions: React.FC = () => {
             : Number.POSITIVE_INFINITY;
           return timeA - timeB;
         }),
-    [prescriptionFeaturesEnabled]
+    [prescriptionFeaturesEnabled, products]
   );
 
   const { count, savings, averageDiscount, highestDiscount } = useMemo(() => {

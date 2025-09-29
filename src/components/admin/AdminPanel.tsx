@@ -13,6 +13,7 @@ import {
   MapPin,
   Pencil,
   Package,
+  Tag,
   PlusCircle,
   RefreshCw,
   Save,
@@ -26,7 +27,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNews } from '../../context/NewsContext';
-import type { NewsArticle, OrderStatus, PaymentMethod } from '../../types';
+import { useProductCatalog } from '../../context/ProductCatalogContext';
+import type { NewsArticle, OrderStatus, PaymentMethod, Product, ProductPromotion } from '../../types';
 import { generateNewsImage } from '../../utils/imageGenerator';
 
 interface AdminPanelProps {
@@ -44,6 +46,7 @@ interface ManagedUser {
   isAdmin: boolean;
   isStaff: boolean;
   isDeleted: boolean;
+  canManageProducts?: boolean;
   createdAt: string;
 }
 
@@ -55,11 +58,12 @@ interface EditableUserFields {
   isAdmin: boolean;
   isStaff: boolean;
   isDeleted: boolean;
+  canManageProducts: boolean;
 }
 
 type ToastState = { type: 'success' | 'error'; text: string } | null;
 
-type AdminView = 'users' | 'orders' | 'news' | 'permissions';
+type AdminView = 'users' | 'orders' | 'news' | 'permissions' | 'products';
 
 interface ManagedOrderItem {
   id: number;
@@ -151,6 +155,66 @@ const mapArticleToFormState = (article: NewsArticle): NewsFormState => ({
   readTimeMinutes: article.readTimeMinutes.toString(),
 });
 
+const mapProductToFormState = (product: Product): ProductFormState => ({
+  id: product.id,
+  name: product.name,
+  nameEn: product.nameEn ?? product.name,
+  description: product.description ?? '',
+  descriptionEn: product.descriptionEn ?? product.description ?? '',
+  price: product.price.toString(),
+  stockQuantity: product.stockQuantity.toString(),
+  imageUrl: product.imageUrl,
+  categoryId: product.categoryId.toString(),
+  requiresPrescription: product.requiresPrescription,
+  activeIngredient: product.activeIngredient ?? '',
+  activeIngredientEn: product.activeIngredientEn ?? product.activeIngredient ?? '',
+  dosage: product.dosage ?? '',
+  dosageEn: product.dosageEn ?? product.dosage ?? '',
+  manufacturer: product.manufacturer ?? '',
+  manufacturerEn: product.manufacturerEn ?? product.manufacturer ?? '',
+  hasPromotion: Boolean(product.promotion),
+  promotionId: product.promotion?.id ?? '',
+  promotionTitle: product.promotion?.title ?? '',
+  promotionTitleEn: product.promotion?.titleEn ?? '',
+  promotionDescription: product.promotion?.description ?? '',
+  promotionDescriptionEn: product.promotion?.descriptionEn ?? '',
+  promoPrice: product.promotion?.promoPrice ? product.promotion.promoPrice.toString() : '',
+  discountPercentage: product.promotion?.discountPercentage
+    ? product.promotion.discountPercentage.toString()
+    : '',
+  validUntil: product.promotion?.validUntil ?? '',
+  badgeColor: product.promotion?.badgeColor ?? '',
+});
+
+const buildEmptyProductForm = (): ProductFormState => ({
+  id: null,
+  name: '',
+  nameEn: '',
+  description: '',
+  descriptionEn: '',
+  price: '',
+  stockQuantity: '',
+  imageUrl: '',
+  categoryId: '',
+  requiresPrescription: false,
+  activeIngredient: '',
+  activeIngredientEn: '',
+  dosage: '',
+  dosageEn: '',
+  manufacturer: '',
+  manufacturerEn: '',
+  hasPromotion: false,
+  promotionId: '',
+  promotionTitle: '',
+  promotionTitleEn: '',
+  promotionDescription: '',
+  promotionDescriptionEn: '',
+  promoPrice: '',
+  discountPercentage: '',
+  validUntil: '',
+  badgeColor: '',
+});
+
 const RAW_API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
@@ -178,6 +242,7 @@ const mapToEditable = (user: ManagedUser): EditableUserFields => ({
   isAdmin: user.isAdmin,
   isStaff: user.isStaff,
   isDeleted: user.isDeleted,
+  canManageProducts: !!user.canManageProducts,
 });
 
 const normalizeOrderStatus = (status: OrderStatus | number): OrderStatus => {
@@ -187,6 +252,45 @@ const normalizeOrderStatus = (status: OrderStatus | number): OrderStatus => {
 
   return ORDER_STATUSES.includes(status) ? status : 'Pending';
 };
+
+type PromotionBadgeColor = ProductPromotion['badgeColor'] | '';
+
+interface ProductFormState {
+  id: number | null;
+  name: string;
+  nameEn: string;
+  description: string;
+  descriptionEn: string;
+  price: string;
+  stockQuantity: string;
+  imageUrl: string;
+  categoryId: string;
+  requiresPrescription: boolean;
+  activeIngredient: string;
+  activeIngredientEn: string;
+  dosage: string;
+  dosageEn: string;
+  manufacturer: string;
+  manufacturerEn: string;
+  hasPromotion: boolean;
+  promotionId: string;
+  promotionTitle: string;
+  promotionTitleEn: string;
+  promotionDescription: string;
+  promotionDescriptionEn: string;
+  promoPrice: string;
+  discountPercentage: string;
+  validUntil: string;
+  badgeColor: PromotionBadgeColor;
+}
+
+const PROMOTION_BADGE_COLORS: ProductPromotion['badgeColor'][] = [
+  'emerald',
+  'blue',
+  'purple',
+  'orange',
+  'pink',
+];
 
 const resolveOrderStatusIndex = (status: OrderStatus | number): number => {
   if (typeof status === 'number') {
@@ -205,6 +309,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const { isAdmin, user, isStaff: isStaffUser } = useAuth();
   const { t } = useLanguage();
   const { news, addArticle, deleteArticle } = useNews();
+  const {
+    products: catalogProducts,
+    categories: catalogCategories,
+    createProduct,
+    updateProduct,
+    deleteProduct: removeProductFromCatalog,
+  } = useProductCatalog();
   const isModal = variant === 'modal';
   const canAccessAdmin = isAdmin || isStaffUser;
   const isPanelOpen = isModal ? isOpen : true;
@@ -212,6 +323,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const canManageUsers = isAdmin;
   const canManageNews = isAdmin;
   const canManagePermissions = isAdmin;
+  const canViewProducts = canAccessAdmin;
+  const canEditProducts = isAdmin || (isStaffUser && !!user?.canManageProducts);
   const defaultAuthor = useMemo(
     () => (user?.fullName?.trim() || user?.email || '').trim(),
     [user?.email, user?.fullName]
@@ -250,11 +363,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     if (canManageOrders) {
       items.push('orders');
     }
+    if (canViewProducts) {
+      items.push('products');
+    }
     if (canManageNews) {
       items.push('news');
     }
     return items.length ? items : ['orders'];
-  }, [canManageNews, canManageOrders, canManagePermissions, canManageUsers]);
+  }, [canManageNews, canManageOrders, canManagePermissions, canManageUsers, canViewProducts]);
 
   const [activeView, setActiveView] = useState<AdminView>(availableViews[0] ?? 'orders');
   const [orders, setOrders] = useState<ManagedOrder[]>([]);
@@ -270,6 +386,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [articleToDelete, setArticleToDelete] = useState<NewsArticle | null>(null);
   const isEditingNews = editingArticleId !== null;
   const PAYMENT_METHODS: PaymentMethod[] = ['CashOnDelivery', 'Card', 'BankTransfer'];
+  const [productForm, setProductForm] = useState<ProductFormState>(() => buildEmptyProductForm());
+  const [productErrors, setProductErrors] = useState<string[]>([]);
+  const [productToast, setProductToast] = useState<ToastState>(null);
+  const [productSaving, setProductSaving] = useState(false);
+  const [selectedCatalogProductId, setSelectedCatalogProductId] = useState<number | null>(null);
+  const [productSearch, setProductSearch] = useState('');
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isCreatingNewProduct, setIsCreatingNewProduct] = useState(false);
 
   useEffect(() => {
     if (!availableViews.includes(activeView)) {
@@ -297,6 +421,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const timer = setTimeout(() => setNewsToast(null), 3600);
     return () => clearTimeout(timer);
   }, [newsToast]);
+
+  useEffect(() => {
+    if (!productToast) {
+      return;
+    }
+
+    const timer = setTimeout(() => setProductToast(null), 3600);
+    return () => clearTimeout(timer);
+  }, [productToast]);
 
   useEffect(() => {
     if (!isModal || !isPanelOpen || !onClose) {
@@ -339,6 +472,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setNewsToast(null);
     setNewsErrors([]);
     setNewsSubmitting(false);
+    setProductToast(null);
+    setProductErrors([]);
+    setProductSaving(false);
+    setProductToDelete(null);
+    setIsCreatingNewProduct(false);
   }, [isPanelOpen]);
 
   useEffect(() => {
@@ -388,7 +526,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       }
 
       const items: ManagedUser[] = Array.isArray(body.users)
-        ? body.users.map((entry) => ({ ...entry, isStaff: !!entry.isStaff }))
+        ? body.users.map((entry) => ({
+            ...entry,
+            isStaff: !!entry.isStaff,
+            canManageProducts: !!(entry as { canManageProducts?: boolean }).canManageProducts,
+          }))
         : [];
       setUsers(items);
 
@@ -743,6 +885,57 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       });
   }, [users, searchTerm]);
 
+  const filteredCatalogProducts = useMemo(() => {
+    const term = productSearch.trim().toLowerCase();
+    return [...catalogProducts]
+      .filter((product) => {
+        if (!term) {
+          return true;
+        }
+
+        const values = [
+          product.name,
+          product.nameEn ?? '',
+          product.activeIngredient ?? '',
+          product.manufacturer ?? '',
+          product.description ?? '',
+          product.descriptionEn ?? '',
+        ];
+
+        return values.some((value) => value.toLowerCase().includes(term));
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [catalogProducts, productSearch]);
+
+  const categoryById = useMemo(() => {
+    const map = new Map<number, string>();
+    catalogCategories.forEach((category) => {
+      map.set(category.id, category.name);
+    });
+    return map;
+  }, [catalogCategories]);
+
+  const selectedCatalogProduct = useMemo(
+    () =>
+      selectedCatalogProductId
+        ? catalogProducts.find((item) => item.id === selectedCatalogProductId) ?? null
+        : null,
+    [catalogProducts, selectedCatalogProductId],
+  );
+
+  const baselineProductForm = useMemo(
+    () => (selectedCatalogProduct ? mapProductToFormState(selectedCatalogProduct) : buildEmptyProductForm()),
+    [selectedCatalogProduct],
+  );
+
+  const hasProductChanges = useMemo(() => {
+    if (!selectedCatalogProduct) {
+      return true;
+    }
+
+    return JSON.stringify(productForm) !== JSON.stringify(baselineProductForm);
+  }, [baselineProductForm, productForm, selectedCatalogProduct]);
+
   useEffect(() => {
     if (!isPanelOpen || (activeView !== 'users' && activeView !== 'permissions')) {
       return;
@@ -760,6 +953,33 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       setEditData(mapToEditable(firstUser));
     }
   }, [activeView, filteredUsers, isPanelOpen, selectedUserId]);
+
+  useEffect(() => {
+    if (!isPanelOpen || activeView !== 'products' || isCreatingNewProduct) {
+      return;
+    }
+
+    if (!filteredCatalogProducts.length) {
+      setSelectedCatalogProductId(null);
+      setProductForm(buildEmptyProductForm());
+      return;
+    }
+
+    if (
+      !selectedCatalogProductId ||
+      !filteredCatalogProducts.some((item) => item.id === selectedCatalogProductId)
+    ) {
+      const firstProduct = filteredCatalogProducts[0];
+      setSelectedCatalogProductId(firstProduct.id);
+      setProductForm(mapProductToFormState(firstProduct));
+    }
+  }, [
+    activeView,
+    filteredCatalogProducts,
+    isCreatingNewProduct,
+    isPanelOpen,
+    selectedCatalogProductId,
+  ]);
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!isModal) {
@@ -799,6 +1019,76 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     });
   };
 
+  const handleSelectCatalogProduct = (productItem: Product) => {
+    setSelectedCatalogProductId(productItem.id);
+    setProductForm(mapProductToFormState(productItem));
+    setIsCreatingNewProduct(false);
+    setProductErrors([]);
+    setProductToast(null);
+    setProductToDelete(null);
+  };
+
+  const handleStartNewProduct = () => {
+    if (!canEditProducts) {
+      return;
+    }
+
+    setSelectedCatalogProductId(null);
+    setProductForm(buildEmptyProductForm());
+    setIsCreatingNewProduct(true);
+    setProductErrors([]);
+    setProductToast(null);
+    setProductToDelete(null);
+  };
+
+  const handleProductFieldChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    const { name, value, type } = event.target;
+
+    if (type === 'checkbox' && name === 'hasPromotion') {
+      const target = event.target as HTMLInputElement;
+      setProductForm((previous) =>
+        target.checked
+          ? { ...previous, hasPromotion: true }
+          : {
+              ...previous,
+              hasPromotion: false,
+              promotionId: '',
+              promotionTitle: '',
+              promotionTitleEn: '',
+              promotionDescription: '',
+              promotionDescriptionEn: '',
+              promoPrice: '',
+              discountPercentage: '',
+              validUntil: '',
+              badgeColor: '',
+            },
+      );
+      return;
+    }
+
+    if (type === 'checkbox') {
+      const target = event.target as HTMLInputElement;
+      setProductForm((previous) => ({ ...previous, [name]: target.checked }));
+      return;
+    }
+
+    setProductForm((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const resetProductChanges = () => {
+    setProductErrors([]);
+    setProductToast(null);
+
+    if (selectedCatalogProduct) {
+      setProductForm(mapProductToFormState(selectedCatalogProduct));
+      return;
+    }
+
+    setProductForm(buildEmptyProductForm());
+  };
+
   const selectedUser = selectedUserId
     ? users.find((item) => item.id === selectedUserId) ?? null
     : null;
@@ -814,7 +1104,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       normalized.address !== editData.address ||
       normalized.isAdmin !== editData.isAdmin ||
       normalized.isStaff !== editData.isStaff ||
-      normalized.isDeleted !== editData.isDeleted
+      normalized.isDeleted !== editData.isDeleted ||
+      normalized.canManageProducts !== editData.canManageProducts
     );
   }, [editData, selectedUser]);
 
@@ -908,6 +1199,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         isAdmin: editData.isAdmin,
         isStaff: editData.isStaff,
         isDeleted: editData.isDeleted,
+        canManageProducts: editData.canManageProducts,
       };
 
       const response = await fetch(buildUrl(`users/${selectedUser.id}`), {
@@ -937,6 +1229,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       const normalizedUpdated: ManagedUser = {
         ...updated,
         isStaff: !!updated.isStaff,
+        canManageProducts: !!updated.canManageProducts,
       };
       setUsers((prev) =>
         prev.map((item) => (item.id === updated.id ? normalizedUpdated : item))
@@ -949,6 +1242,163 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       setToast({ type: 'error', text: message });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const requestProductDeletion = (productItem: Product) => {
+    if (!canEditProducts) {
+      return;
+    }
+
+    setProductToDelete(productItem);
+    setProductToast(null);
+  };
+
+  const handleCancelDeleteProduct = () => {
+    setProductToDelete(null);
+  };
+
+  const handleConfirmDeleteProduct = () => {
+    if (!productToDelete) {
+      return;
+    }
+
+    removeProductFromCatalog(productToDelete.id);
+    setProductToast({ type: 'success', text: t('admin.products.messages.deleted') });
+    setProductToDelete(null);
+    setProductForm(buildEmptyProductForm());
+    setSelectedCatalogProductId(null);
+    setIsCreatingNewProduct(false);
+    setProductErrors([]);
+  };
+
+  const handleProductSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canEditProducts || productSaving) {
+      return;
+    }
+
+    const errors: string[] = [];
+    const name = productForm.name.trim();
+    const nameEn = productForm.nameEn.trim();
+    const description = productForm.description.trim();
+    const descriptionEn = productForm.descriptionEn.trim();
+    const imageUrl = productForm.imageUrl.trim();
+    const activeIngredient = productForm.activeIngredient.trim();
+    const activeIngredientEn = productForm.activeIngredientEn.trim();
+    const dosage = productForm.dosage.trim();
+    const dosageEn = productForm.dosageEn.trim();
+    const manufacturer = productForm.manufacturer.trim();
+    const manufacturerEn = productForm.manufacturerEn.trim();
+    const categoryId = Number(productForm.categoryId);
+    const price = Number(productForm.price);
+    const stockQuantity = Number(productForm.stockQuantity);
+
+    if (!name) errors.push(t('admin.products.errors.name'));
+    if (!nameEn) errors.push(t('admin.products.errors.nameEn'));
+    if (!Number.isFinite(price) || price <= 0) errors.push(t('admin.products.errors.price'));
+    if (!Number.isFinite(stockQuantity) || stockQuantity < 0)
+      errors.push(t('admin.products.errors.stock'));
+    if (!Number.isInteger(categoryId) || categoryId <= 0)
+      errors.push(t('admin.products.errors.category'));
+    if (!imageUrl) errors.push(t('admin.products.errors.imageUrl'));
+
+    let promotionPayload: ProductPromotion | null = null;
+    if (productForm.hasPromotion) {
+      const promotionTitle = productForm.promotionTitle.trim();
+      const promotionTitleEn = productForm.promotionTitleEn.trim();
+      const promotionDescription = productForm.promotionDescription.trim();
+      const promotionDescriptionEn = productForm.promotionDescriptionEn.trim();
+      const promoPrice = Number(productForm.promoPrice);
+
+      if (!promotionTitle) errors.push(t('admin.products.errors.promotionTitle'));
+      if (!promotionTitleEn) errors.push(t('admin.products.errors.promotionTitleEn'));
+      if (!Number.isFinite(promoPrice) || promoPrice <= 0) {
+        errors.push(t('admin.products.errors.promoPrice'));
+      } else if (promoPrice >= price) {
+        errors.push(t('admin.products.errors.promoPriceCompare'));
+      }
+
+      let discountValue: number | undefined;
+      const discountText = productForm.discountPercentage.trim();
+      if (discountText) {
+        const parsed = Number(discountText);
+        if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+          errors.push(t('admin.products.errors.discount'));
+        } else {
+          discountValue = parsed;
+        }
+      }
+
+      const badgeColor = PROMOTION_BADGE_COLORS.includes(
+        productForm.badgeColor as ProductPromotion['badgeColor'],
+      )
+        ? (productForm.badgeColor as ProductPromotion['badgeColor'])
+        : undefined;
+
+      promotionPayload = {
+        id: productForm.promotionId.trim() || `promo-${Date.now()}`,
+        title: promotionTitle,
+        titleEn: promotionTitleEn || promotionTitle,
+        description: promotionDescription,
+        descriptionEn: promotionDescriptionEn || promotionDescription,
+        promoPrice,
+        discountPercentage: discountValue,
+        validUntil: productForm.validUntil.trim() || undefined,
+        badgeColor,
+      };
+    }
+
+    if (errors.length) {
+      setProductErrors(errors);
+      setProductToast({ type: 'error', text: t('admin.products.errors.general') });
+      return;
+    }
+
+    setProductErrors([]);
+    setProductSaving(true);
+
+    try {
+      const payload = {
+        name,
+        nameEn: nameEn || name,
+        description: description || undefined,
+        descriptionEn: descriptionEn || description || undefined,
+        price,
+        stockQuantity,
+        imageUrl,
+        categoryId,
+        requiresPrescription: productForm.requiresPrescription,
+        activeIngredient: activeIngredient || undefined,
+        activeIngredientEn: activeIngredientEn || activeIngredient || undefined,
+        dosage: dosage || undefined,
+        dosageEn: dosageEn || dosage || undefined,
+        manufacturer: manufacturer || undefined,
+        manufacturerEn: manufacturerEn || manufacturer || undefined,
+        promotion: productForm.hasPromotion ? promotionPayload : null,
+      };
+
+      if (productForm.id) {
+        const updated = updateProduct(productForm.id, payload);
+        if (!updated) {
+          throw new Error(t('admin.products.errors.general'));
+        }
+        setProductForm(mapProductToFormState(updated));
+        setProductToast({ type: 'success', text: t('admin.products.messages.updated') });
+        setSelectedCatalogProductId(updated.id);
+        setIsCreatingNewProduct(false);
+      } else {
+        const created = createProduct(payload);
+        setProductForm(mapProductToFormState(created));
+        setProductToast({ type: 'success', text: t('admin.products.messages.created') });
+        setSelectedCatalogProductId(created.id);
+        setIsCreatingNewProduct(false);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('admin.products.errors.general');
+      setProductToast({ type: 'error', text: message });
+    } finally {
+      setProductSaving(false);
     }
   };
 
@@ -1191,20 +1641,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       />
                       <span>{t('admin.permissions.admin')}</span>
                     </label>
-                    <label className="flex items-center space-x-3 text-sm text-slate-600">
-                      <input
-                        type="checkbox"
-                        name="isStaff"
-                        checked={editData.isStaff}
-                        onChange={handleFieldChange}
-                        className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                      />
-                      <span>{t('admin.permissions.staff')}</span>
-                    </label>
-                    <label className="flex items-center space-x-3 text-sm text-slate-600">
-                      <input
-                        type="checkbox"
-                        name="isDeleted"
+                  <label className="flex items-center space-x-3 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      name="isStaff"
+                      checked={editData.isStaff}
+                      onChange={handleFieldChange}
+                      className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                    />
+                    <span>{t('admin.permissions.staff')}</span>
+                  </label>
+                  <label className="flex items-center space-x-3 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      name="canManageProducts"
+                      checked={editData.canManageProducts}
+                      onChange={handleFieldChange}
+                      className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span>{t('admin.permissions.manageProducts')}</span>
+                  </label>
+                  <label className="flex items-center space-x-3 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      name="isDeleted"
                         checked={editData.isDeleted}
                         onChange={handleFieldChange}
                         className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
@@ -1273,6 +1733,636 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
           )}
         </div>
+      </div>
+    );
+  };
+
+  const renderProductsView = (): JSX.Element | null => {
+    if (activeView !== 'products') {
+      return null;
+    }
+
+    const productCount = catalogProducts.length;
+    const formTitle =
+      isCreatingNewProduct || !productForm.id
+        ? t('admin.products.form.createTitle')
+        : t('admin.products.form.editTitle');
+    const formSubtitle =
+      isCreatingNewProduct || !productForm.id
+        ? t('admin.products.form.createSubtitle')
+        : t('admin.products.form.editSubtitle');
+
+    return (
+      <div className="space-y-6 border-b border-slate-100 p-6 md:px-8">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">{t('admin.products.title')}</h3>
+            <p className="text-sm text-slate-500">{t('admin.products.subtitle')}</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              {t('admin.products.count', { count: productCount })}
+            </span>
+            <button
+              type="button"
+              onClick={handleStartNewProduct}
+              disabled={!canEditProducts}
+              className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <PlusCircle className="mr-1 h-4 w-4" />
+              {t('admin.products.actions.new')}
+            </button>
+          </div>
+        </div>
+
+        {productToast && (
+          <div
+            className={`flex items-start space-x-2 rounded-2xl border px-4 py-3 text-sm ${
+              productToast.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-rose-200 bg-rose-50 text-rose-700'
+            }`}
+          >
+            {productToast.type === 'success' ? (
+              <CheckCircle2 className="mt-0.5 h-4 w-4" />
+            ) : (
+              <AlertCircle className="mt-0.5 h-4 w-4" />
+            )}
+            <span>{productToast.text}</span>
+          </div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-slate-600" htmlFor="admin-product-search">
+                {t('admin.products.searchLabel')}
+              </label>
+              <div className="relative mt-2">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="admin-product-search"
+                  type="search"
+                  value={productSearch}
+                  onChange={(event) => setProductSearch(event.target.value)}
+                  placeholder={t('admin.products.searchPlaceholder')}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                />
+              </div>
+            </div>
+
+            <div className="relative max-h-[60vh] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+              {filteredCatalogProducts.length ? (
+                <div className="space-y-2 overflow-y-auto p-3">
+                  {filteredCatalogProducts.map((product) => {
+                    const isSelected = product.id === selectedCatalogProductId && !isCreatingNewProduct;
+                    return (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => handleSelectCatalogProduct(product)}
+                        className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                          isSelected
+                            ? 'border-emerald-300 bg-white shadow-md shadow-emerald-100'
+                            : 'border-transparent bg-white hover:border-emerald-200 hover:shadow-sm'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{product.name}</p>
+                            <p className="mt-1 flex items-center space-x-2 text-xs text-slate-500">
+                              <Package className="h-3.5 w-3.5 text-slate-400" />
+                              <span>
+                                {categoryById.get(product.categoryId) ||
+                                  t('admin.products.unknownCategory')}
+                              </span>
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-emerald-600">
+                              €{(product.promotion?.promoPrice ?? product.price).toFixed(2)}
+                            </p>
+                            {product.promotion && (
+                              <span className="mt-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                                <Tag className="mr-1 h-3 w-3" />
+                                {t('admin.products.labels.promo')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex h-48 flex-col items-center justify-center space-y-2 px-6 text-center text-sm text-slate-500">
+                  <Package className="h-8 w-8 text-slate-300" />
+                  <p>{t('admin.products.empty')}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-base font-semibold text-slate-900">{formTitle}</h4>
+              <p className="text-sm text-slate-500">{formSubtitle}</p>
+              {!canEditProducts && (
+                <p className="mt-3 flex items-center space-x-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <Shield className="h-3.5 w-3.5 text-slate-400" />
+                  <span>{t('admin.products.readOnlyNotice')}</span>
+                </p>
+              )}
+            </div>
+
+            {productErrors.length > 0 && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                <p className="font-semibold">{t('admin.products.errors.listTitle')}</p>
+                <ul className="mt-2 list-disc space-y-1 pl-4">
+                  {productErrors.map((error, index) => (
+                    <li key={`${error}-${index}`}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <form onSubmit={handleProductSubmit} className="space-y-6">
+              <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div>
+                  <h5 className="text-sm font-semibold text-slate-800">
+                    {t('admin.products.form.section.details')}
+                  </h5>
+                  <p className="text-xs text-slate-500">
+                    {t('admin.products.form.section.detailsSubtitle')}
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-name">
+                      {t('admin.products.form.fields.nameBg')}
+                    </label>
+                    <input
+                      id="admin-product-name"
+                      name="name"
+                      type="text"
+                      value={productForm.name}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-name-en">
+                      {t('admin.products.form.fields.nameEn')}
+                    </label>
+                    <input
+                      id="admin-product-name-en"
+                      name="nameEn"
+                      type="text"
+                      value={productForm.nameEn}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-description">
+                      {t('admin.products.form.fields.descriptionBg')}
+                    </label>
+                    <textarea
+                      id="admin-product-description"
+                      name="description"
+                      value={productForm.description}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="h-24 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-description-en">
+                      {t('admin.products.form.fields.descriptionEn')}
+                    </label>
+                    <textarea
+                      id="admin-product-description-en"
+                      name="descriptionEn"
+                      value={productForm.descriptionEn}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="h-24 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-price">
+                      {t('admin.products.form.fields.price')}
+                    </label>
+                    <input
+                      id="admin-product-price"
+                      name="price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={productForm.price}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-stock">
+                      {t('admin.products.form.fields.stock')}
+                    </label>
+                    <input
+                      id="admin-product-stock"
+                      name="stockQuantity"
+                      type="number"
+                      min="0"
+                      value={productForm.stockQuantity}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-category">
+                      {t('admin.products.form.fields.category')}
+                    </label>
+                    <select
+                      id="admin-product-category"
+                      name="categoryId"
+                      value={productForm.categoryId}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <option value="">{t('admin.products.form.fields.categoryPlaceholder')}</option>
+                      {catalogCategories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-image">
+                      {t('admin.products.form.fields.imageUrl')}
+                    </label>
+                    <input
+                      id="admin-product-image"
+                      name="imageUrl"
+                      type="url"
+                      value={productForm.imageUrl}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <label className="flex items-center space-x-3 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      name="requiresPrescription"
+                      checked={productForm.requiresPrescription}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                    <span>{t('admin.products.form.fields.requiresPrescription')}</span>
+                  </label>
+                </div>
+              </section>
+
+              <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div>
+                  <h5 className="text-sm font-semibold text-slate-800">
+                    {t('admin.products.form.section.composition')}
+                  </h5>
+                  <p className="text-xs text-slate-500">
+                    {t('admin.products.form.section.compositionSubtitle')}
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-active-bg">
+                      {t('admin.products.form.fields.activeIngredientBg')}
+                    </label>
+                    <input
+                      id="admin-product-active-bg"
+                      name="activeIngredient"
+                      type="text"
+                      value={productForm.activeIngredient}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-active-en">
+                      {t('admin.products.form.fields.activeIngredientEn')}
+                    </label>
+                    <input
+                      id="admin-product-active-en"
+                      name="activeIngredientEn"
+                      type="text"
+                      value={productForm.activeIngredientEn}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-dosage-bg">
+                      {t('admin.products.form.fields.dosageBg')}
+                    </label>
+                    <input
+                      id="admin-product-dosage-bg"
+                      name="dosage"
+                      type="text"
+                      value={productForm.dosage}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-dosage-en">
+                      {t('admin.products.form.fields.dosageEn')}
+                    </label>
+                    <input
+                      id="admin-product-dosage-en"
+                      name="dosageEn"
+                      type="text"
+                      value={productForm.dosageEn}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-manufacturer-bg">
+                      {t('admin.products.form.fields.manufacturerBg')}
+                    </label>
+                    <input
+                      id="admin-product-manufacturer-bg"
+                      name="manufacturer"
+                      type="text"
+                      value={productForm.manufacturer}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-manufacturer-en">
+                      {t('admin.products.form.fields.manufacturerEn')}
+                    </label>
+                    <input
+                      id="admin-product-manufacturer-en"
+                      name="manufacturerEn"
+                      type="text"
+                      value={productForm.manufacturerEn}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h5 className="text-sm font-semibold text-slate-800">
+                      {t('admin.products.form.section.promotion')}
+                    </h5>
+                    <p className="text-xs text-slate-500">
+                      {t('admin.products.form.section.promotionSubtitle')}
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center space-x-2 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      name="hasPromotion"
+                      checked={productForm.hasPromotion}
+                      onChange={handleProductFieldChange}
+                      disabled={!canEditProducts || productSaving}
+                      className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                    <span>{t('admin.products.form.fields.enablePromotion')}</span>
+                  </label>
+                </div>
+
+                {productForm.hasPromotion && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-id">
+                        {t('admin.products.form.fields.promotionId')}
+                      </label>
+                      <input
+                        id="admin-product-promo-id"
+                        name="promotionId"
+                        type="text"
+                        value={productForm.promotionId}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-title-bg">
+                        {t('admin.products.form.fields.promotionTitleBg')}
+                      </label>
+                      <input
+                        id="admin-product-promo-title-bg"
+                        name="promotionTitle"
+                        type="text"
+                        value={productForm.promotionTitle}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-title-en">
+                        {t('admin.products.form.fields.promotionTitleEn')}
+                      </label>
+                      <input
+                        id="admin-product-promo-title-en"
+                        name="promotionTitleEn"
+                        type="text"
+                        value={productForm.promotionTitleEn}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-price">
+                        {t('admin.products.form.fields.promotionPrice')}
+                      </label>
+                      <input
+                        id="admin-product-promo-price"
+                        name="promoPrice"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={productForm.promoPrice}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-discount">
+                        {t('admin.products.form.fields.promotionDiscount')}
+                      </label>
+                      <input
+                        id="admin-product-promo-discount"
+                        name="discountPercentage"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={productForm.discountPercentage}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-valid">
+                        {t('admin.products.form.fields.promotionValidUntil')}
+                      </label>
+                      <input
+                        id="admin-product-promo-valid"
+                        name="validUntil"
+                        type="date"
+                        value={productForm.validUntil}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-description-bg">
+                        {t('admin.products.form.fields.promotionDescriptionBg')}
+                      </label>
+                      <textarea
+                        id="admin-product-promo-description-bg"
+                        name="promotionDescription"
+                        value={productForm.promotionDescription}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="h-20 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-description-en">
+                        {t('admin.products.form.fields.promotionDescriptionEn')}
+                      </label>
+                      <textarea
+                        id="admin-product-promo-description-en"
+                        name="promotionDescriptionEn"
+                        value={productForm.promotionDescriptionEn}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="h-20 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="admin-product-promo-badge">
+                        {t('admin.products.form.fields.promotionBadge')}
+                      </label>
+                      <select
+                        id="admin-product-promo-badge"
+                        name="badgeColor"
+                        value={productForm.badgeColor}
+                        onChange={handleProductFieldChange}
+                        disabled={!canEditProducts || productSaving}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <option value="">{t('admin.products.form.fields.promotionBadgePlaceholder')}</option>
+                        {PROMOTION_BADGE_COLORS.map((color) => (
+                          <option key={color} value={color}>
+                            {t(`admin.products.form.fields.badge.${color}`)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={resetProductChanges}
+                  disabled={productSaving || (!isCreatingNewProduct && !hasProductChanges)}
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {t('admin.products.actions.reset')}
+                </button>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  {selectedCatalogProduct && canEditProducts && (
+                    <button
+                      type="button"
+                      onClick={() => requestProductDeletion(selectedCatalogProduct)}
+                      className="inline-flex items-center justify-center rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700"
+                      disabled={productSaving}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {t('admin.products.actions.delete')}
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={!canEditProducts || productSaving || (!isCreatingNewProduct && !hasProductChanges)}
+                    className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {productSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <span>{t('admin.products.actions.saving')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        <span>
+                          {productForm.id
+                            ? t('admin.products.actions.save')
+                            : t('admin.products.actions.create')}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {productToDelete && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            <p className="font-semibold">{t('admin.products.delete.title')}</p>
+            <p className="mt-1">
+              {t('admin.products.delete.description', { name: productToDelete.name })}
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={handleConfirmDeleteProduct}
+                className="inline-flex items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('admin.products.actions.confirmDelete')}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelDeleteProduct}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+              >
+                {t('admin.products.actions.cancelDelete')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -2013,6 +3103,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               {t('admin.panel.tabs.orders')}
             </button>
           )}
+          {availableViews.includes('products') && (
+            <button
+              type="button"
+              onClick={() => setActiveView('products')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeView === 'products'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'text-slate-500 hover:text-emerald-600'
+              }`}
+            >
+              {t('admin.panel.tabs.products')}
+            </button>
+          )}
           {availableViews.includes('news') && (
             <button
               type="button"
@@ -2028,6 +3131,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
           )}
         </div>
         {renderUsersAndPermissionsView()}
+        {renderProductsView()}
         {renderOrdersView()}
         {renderNewsView()}
       </div>

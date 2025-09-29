@@ -131,6 +131,7 @@ export interface User {
   address?: string;
   isAdmin?: boolean;
   isStaff?: boolean;
+  canManageProducts?: boolean;
   isDeleted?: boolean;
   createdAt?: string;
 }

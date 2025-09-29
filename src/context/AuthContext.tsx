@@ -10,6 +10,7 @@ interface User {
   isStaff: boolean;
   createdAt: string;
   isDeleted: boolean;
+  canManageProducts?: boolean;
 }
 
 interface RegisterData {
@@ -29,6 +30,7 @@ interface ProfileUpdateData {
   isAdmin?: boolean;
   isStaff?: boolean;
   isDeleted?: boolean;
+  canManageProducts?: boolean;
 }
 
 interface UpdateProfileResponse {
