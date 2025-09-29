@@ -905,15 +905,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setToast(null);
 
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         email: editData.email.trim(),
         fullName: editData.fullName.trim(),
         phoneNumber: editData.phoneNumber.trim(),
         address: editData.address.trim(),
-        isAdmin: editData.isAdmin,
-        isStaff: editData.isStaff,
-        isDeleted: editData.isDeleted,
       };
+
+      if (canManagePermissions) {
+        payload.isAdmin = editData.isAdmin;
+        payload.isStaff = editData.isStaff;
+        payload.isDeleted = editData.isDeleted;
+      }
 
       const response = await fetch(buildApiUrl(`users/${selectedUser.id}`), {
         method: 'PUT',

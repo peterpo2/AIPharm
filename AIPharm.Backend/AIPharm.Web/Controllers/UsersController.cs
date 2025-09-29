@@ -21,7 +21,7 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> GetUsers()
         {
             var users = await _userRepository.GetAllAsync();
@@ -82,14 +82,16 @@ namespace AIPharm.Web.Controllers
 
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
-
-            if (!isAdmin && !string.Equals(currentUserId, id, StringComparison.Ordinal))
-            {
-                return Forbid();
-            }
+            var isStaff = User.IsInRole("Staff");
+            var isSelf = string.Equals(currentUserId, id, StringComparison.Ordinal);
 
             if (!isAdmin)
             {
+                if (!isStaff && !isSelf)
+                {
+                    return Forbid();
+                }
+
                 if (request.IsAdmin.HasValue || request.IsDeleted.HasValue || request.IsStaff.HasValue)
                 {
                     return BadRequest(new
@@ -98,15 +100,17 @@ namespace AIPharm.Web.Controllers
                         message = "You are not allowed to update administrative flags."
                     });
                 }
+            }
 
-                if (!string.IsNullOrWhiteSpace(request.Email) && !string.Equals(request.Email.Trim(), user.Email, StringComparison.OrdinalIgnoreCase))
+            var canChangeEmail = isAdmin || (isStaff && !isSelf);
+            if (!canChangeEmail && !string.IsNullOrWhiteSpace(request.Email) &&
+                !string.Equals(request.Email.Trim(), user.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new
                 {
-                    return BadRequest(new
-                    {
-                        success = false,
-                        message = "You are not allowed to change your email address."
-                    });
-                }
+                    success = false,
+                    message = "You are not allowed to change your email address."
+                });
             }
 
             if (!string.IsNullOrWhiteSpace(request.Email))
