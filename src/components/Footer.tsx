@@ -1,12 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Facebook, Instagram, Stethoscope, Shield, Award } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Instagram, Stethoscope, Shield, Award, Star } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import AIPharmLogo from './Logo';
 import { quickLinks } from '../data/navigation';
 
 const Footer: React.FC = () => {
   const { t } = useLanguage();
+  const [rating, setRating] = React.useState(0);
+  const [message, setMessage] = React.useState('');
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!rating || !message.trim()) {
+      return;
+    }
+
+    const subject = encodeURIComponent(t('footer.feedbackEmailSubject'));
+    const body = encodeURIComponent(
+      `${t('footer.ratingLabel')}: ${rating}/5\n\n${message.trim()}`,
+    );
+
+    window.location.href = `mailto:aipharmproject@gmail.com?subject=${subject}&body=${body}`;
+  };
 
   return (
     <footer className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
@@ -114,6 +131,82 @@ const Footer: React.FC = () => {
               <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
                 {t('footer.workingHoursText')}
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Feedback */}
+        <div className="mt-16">
+          <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 p-8 lg:p-12">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+              <div className="lg:w-1/2 space-y-3">
+                <h3 className="font-display text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                  {t('footer.feedbackTitle')}
+                </h3>
+                <p className="text-gray-300 text-lg leading-relaxed">
+                  {t('footer.feedbackDescription')}
+                </p>
+              </div>
+
+              <form className="lg:w-1/2 space-y-6" onSubmit={handleSubmit}>
+                <div>
+                  <span className="text-sm font-semibold uppercase tracking-wide text-gray-400">
+                    {t('footer.ratingLabel')}
+                  </span>
+                  <div className="mt-2 flex items-center space-x-3">
+                    {Array.from({ length: 5 }).map((_, index) => {
+                      const value = index + 1;
+                      const isActive = value <= rating;
+
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setRating(value)}
+                          className={`p-3 rounded-xl border transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/60 ${
+                            isActive
+                              ? 'bg-gradient-to-r from-amber-400 to-amber-500 border-amber-300 shadow-lg shadow-amber-500/30'
+                              : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          }`}
+                          aria-label={`${value} ${t('footer.starsLabel')}`}
+                        >
+                          <Star
+                            className={`w-6 h-6 transition-colors ${
+                              isActive ? 'text-white fill-white' : 'text-amber-200/60'
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="feedback-message" className="text-sm font-semibold uppercase tracking-wide text-gray-400">
+                    {t('footer.messageLabel')}
+                  </label>
+                  <textarea
+                    id="feedback-message"
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    placeholder={t('footer.messagePlaceholder')}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-white placeholder:text-gray-400 focus:border-primary-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/40 min-h-[140px] resize-none"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <p className="text-sm text-gray-400">
+                    {t('footer.feedbackPrivacy')}
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={!rating || !message.trim()}
+                    className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 px-6 py-3 font-semibold text-white shadow-lg shadow-primary-500/30 transition-all duration-300 hover:from-primary-600 hover:to-secondary-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {t('footer.submitButton')}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

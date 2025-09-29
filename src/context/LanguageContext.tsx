@@ -551,6 +551,15 @@ const translations = {
     'footer.privacy': 'Политика за поверителност',
     'footer.terms': 'Условия за ползване',
     'footer.cookies': 'Бисквитки',
+    'footer.feedbackTitle': 'Споделете мнението си',
+    'footer.feedbackDescription': 'Вашата обратна връзка ни помага да подобряваме платформата и услугите на AIPHARM+. Споделете какво мислите за сайта и проекта.',
+    'footer.ratingLabel': 'Оценка',
+    'footer.starsLabel': 'звезди',
+    'footer.messageLabel': 'Отзив',
+    'footer.messagePlaceholder': 'Опишете вашето впечатление, какво харесвате и какво можем да подобрим...',
+    'footer.feedbackPrivacy': 'Мнението ви ще бъде изпратено по имейл до екипа на AIPHARM+',
+    'footer.submitButton': 'Изпрати по имейл',
+    'footer.feedbackEmailSubject': 'Обратна връзка за AIPHARM+',
 
     // Common
     'common.loading': 'Зареждане...',
@@ -1247,6 +1256,15 @@ const translations = {
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Terms of Use',
     'footer.cookies': 'Cookies',
+    'footer.feedbackTitle': 'Share Your Opinion',
+    'footer.feedbackDescription': 'Your insights help us improve AIPHARM+ and its services. Let us know what you think about the site and the project.',
+    'footer.ratingLabel': 'Rating',
+    'footer.starsLabel': 'stars',
+    'footer.messageLabel': 'Review',
+    'footer.messagePlaceholder': 'Tell us what stands out to you and how we can enhance your experience...',
+    'footer.feedbackPrivacy': 'Your opinion will be sent directly to the AIPHARM+ team via email',
+    'footer.submitButton': 'Send Email',
+    'footer.feedbackEmailSubject': 'Feedback for AIPHARM+',
 
     // Common
     'common.loading': 'Loading...',
