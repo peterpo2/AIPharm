@@ -252,13 +252,15 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('products.category')}</p>
-                <button
-                  type="button"
-                  onClick={() => onCategoryChange(null)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-emerald-50 px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-emerald-700 transition hover:border-emerald-200 hover:bg-white"
-                >
-                  {t('products.viewAll')}
-                </button>
+                {selectedCategory !== null && (
+                  <button
+                    type="button"
+                    onClick={() => onCategoryChange(null)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-transparent bg-emerald-50 px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-emerald-700 transition hover:border-emerald-200 hover:bg-white"
+                  >
+                    {t('products.viewAll')}
+                  </button>
+                )}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {categorySummaries.map((category) => {
