@@ -100,6 +100,7 @@ const translations = {
     'products.pieces': 'бр.',
     'products.add': 'Добави',
     'products.askAssistant': 'Попитай AI асистента',
+    'products.moreInfo': 'Повече информация',
     'products.productDetails': 'Детайли за продукта',
     'products.descriptionLabel': 'Описание',
     'products.prescriptionRequiredLabel': 'Режим на отпускане',
@@ -133,6 +134,13 @@ const translations = {
     'products.sortPriceLowHigh': 'Цена: ниска към висока',
     'products.sortPriceHighLow': 'Цена: висока към ниска',
     'products.clearFilters': 'Изчисти филтрите',
+    'products.moreInfoTitle': 'Допълнителна информация',
+    'products.moreInfoSubtitle':
+      'Скоро ще добавим подробни указания, листовки и препоръки за прием за всеки продукт.',
+    'products.moreInfoPlaceholder':
+      'Тук ще откриете официалната листовка, допълнителни съвети за употреба и важни предупреждения.',
+    'products.moreInfoNotFoundTitle': 'Продуктът не беше намерен',
+    'products.moreInfoNotFoundDescription': 'Моля, върнете се към каталога и изберете друг продукт.',
 
     // Cart
     'cart.title': 'Количка',
@@ -708,6 +716,7 @@ const translations = {
     'products.pieces': 'pcs.',
     'products.add': 'Add',
     'products.askAssistant': 'Ask the AI assistant',
+    'products.moreInfo': 'More information',
     'products.productDetails': 'Product details',
     'products.descriptionLabel': 'Description',
     'products.prescriptionRequiredLabel': 'Prescription requirement',
@@ -741,6 +750,13 @@ const translations = {
     'products.sortPriceLowHigh': 'Price: low to high',
     'products.sortPriceHighLow': 'Price: high to low',
     'products.clearFilters': 'Clear filters',
+    'products.moreInfoTitle': 'Additional information',
+    'products.moreInfoSubtitle':
+      'We will soon add detailed instructions, leaflets, and intake recommendations for every product.',
+    'products.moreInfoPlaceholder':
+      'This section will host the official leaflet, usage guidance, and important warnings.',
+    'products.moreInfoNotFoundTitle': 'Product not found',
+    'products.moreInfoNotFoundDescription': 'Please return to the catalog and choose another product.',
 
     // Cart
     'cart.title': 'Cart',

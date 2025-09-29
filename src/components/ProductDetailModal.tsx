@@ -7,6 +7,7 @@ import {
   MessageCircle,
   Tag,
   Calendar,
+  Info,
 } from 'lucide-react';
 import { Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -67,6 +68,12 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
 
     if (product.id) {
       void askAssistant(question, product.id);
+    }
+  };
+
+  const handleOpenMoreInfo = () => {
+    if (product.id) {
+      window.open(`/products/${product.id}/info`, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -229,7 +236,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
             )}
           </div>
 
-          <div className="mt-auto flex flex-col gap-3 sm:flex-row">
+          <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button
               type="button"
               onClick={handleAddToCart}
@@ -245,6 +252,14 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
             >
               <MessageCircle className="h-5 w-5" />
               <span>{t('products.askAssistant')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenMoreInfo}
+              className="flex flex-1 items-center justify-center space-x-2 rounded-2xl border border-transparent px-6 py-3 font-semibold text-emerald-600 transition hover:scale-[1.02] hover:bg-emerald-50"
+            >
+              <Info className="h-5 w-5" />
+              <span>{t('products.moreInfo')}</span>
             </button>
           </div>
         </div>

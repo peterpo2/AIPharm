@@ -11,7 +11,6 @@ import { LanguageProvider } from './context/LanguageContext';
 import { NewsProvider } from './context/NewsContext';
 import { FeatureToggleProvider, useFeatureToggles } from './context/FeatureToggleContext';
 import { categories, products, searchProducts, getProductsByCategory } from './data/mockData';
-import { Product } from './types';
 import HomePage from './components/pages/HomePage';
 import ProductsPage from './components/pages/ProductsPage';
 import CategoriesPage from './components/pages/CategoriesPage';
@@ -22,6 +21,7 @@ import Promotions from './components/pages/Promotions';
 import News from './components/pages/News';
 import FAQ from './components/pages/FAQ';
 import AdminDashboard from './components/pages/AdminDashboard';
+import ProductMoreInfoPage from './components/pages/ProductMoreInfoPage';
 
 function AppContent() {
   const { prescriptionFeaturesEnabled } = useFeatureToggles();
@@ -187,6 +187,7 @@ function AppContent() {
           <Route path="/news" element={<News />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/products/:productId/info" element={<ProductMoreInfoPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
