@@ -527,16 +527,7 @@ namespace AIPharm.Infrastructure.Data
                     CustomerName = string.IsNullOrWhiteSpace(user.FullName) ? user.Email : user.FullName,
                     CustomerEmail = user.Email,
                     PhoneNumber = user.PhoneNumber,
-                    Notes = status switch
-                    {
-                        OrderStatus.Pending => "Pending manual confirmation.",
-                        OrderStatus.Confirmed => "Order confirmed by the pharmacy team.",
-                        OrderStatus.Processing => "Order is currently being prepared.",
-                        OrderStatus.Shipped => "Order has left the warehouse.",
-                        OrderStatus.Delivered => "Package delivered successfully.",
-                        OrderStatus.Cancelled => "Order cancelled by customer support.",
-                        _ => null,
-                    },
+                    Notes = null,
                     CreatedAt = createdAt,
                     UpdatedAt = updatedAt,
                     Items = new List<OrderItem>

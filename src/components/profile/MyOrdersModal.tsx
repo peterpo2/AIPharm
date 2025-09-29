@@ -263,11 +263,6 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose }) => {
               </p>
               <p className="text-sm text-slate-900">{formatCurrency(grandTotal)}</p>
             </div>
-            {order.notes && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                {order.notes}
-              </div>
-            )}
           </div>
           <div className="space-y-3">
             <div className="flex items-center space-x-2 text-sm text-slate-600">
