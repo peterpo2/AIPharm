@@ -999,17 +999,37 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     ? users.find((item) => item.id === selectedUserId) ?? null
     : null;
 
-  const canEditSelectedUser = useMemo(() => {
+  const editRestrictionReason = useMemo(() => {
     if (!selectedUser) {
-      return false;
+      return null;
     }
 
-    if (!isAdmin && selectedUser.isAdmin) {
-      return false;
+    if (!isAdmin) {
+      if (selectedUser.isAdmin) {
+        return 'admin';
+      }
+
+      if (selectedUser.isStaff && selectedUser.id !== user?.id) {
+        return 'staff';
+      }
     }
 
-    return true;
-  }, [isAdmin, selectedUser]);
+    return null;
+  }, [isAdmin, selectedUser, user?.id]);
+
+  const canEditSelectedUser = !editRestrictionReason;
+
+  const editRestrictionMessageKey = useMemo(() => {
+    if (!editRestrictionReason) {
+      return null;
+    }
+
+    return editRestrictionReason === 'staff'
+      ? 'admin.users.errors.cannotEditStaff'
+      : 'admin.users.errors.cannotEditAdmin';
+  }, [editRestrictionReason]);
+
+  const EditRestrictionIcon = editRestrictionReason === 'staff' ? ClipboardList : Shield;
 
   const selectedProduct = selectedProductId
     ? inventoryProducts.find((item) => item.id === selectedProductId) ?? null
@@ -1165,7 +1185,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     }
 
     if (!canEditSelectedUser) {
-      setToast({ type: 'error', text: t('admin.users.errors.cannotEditAdmin') });
+      setToast({
+        type: 'error',
+        text: editRestrictionMessageKey
+          ? t(editRestrictionMessageKey)
+          : t('admin.users.errors.cannotEditAdmin'),
+      });
       return;
     }
 
@@ -1511,8 +1536,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                             <span className="break-all">{item.email}</span>
                           </p>
                         </div>
-                        <div className="space-y-1 text-right">
-                          <div className="space-y-1">
+                        <div className="flex flex-col items-end gap-1 text-right">
+                          <div className="flex flex-wrap justify-end gap-1">
                             {item.isAdmin && (
                               <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
                                 <Shield className="mr-1 h-3 w-3" />
@@ -1525,18 +1550,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                                 {t('admin.users.badges.staff')}
                               </span>
                             )}
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                item.isDeleted
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : 'bg-emerald-100 text-emerald-700'
+                              }`}
+                            >
+                              {item.isDeleted
+                                ? t('admin.users.badges.deactivated')
+                                : t('admin.users.badges.active')}
+                            </span>
                           </div>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                              item.isDeleted
-                                ? 'bg-rose-100 text-rose-700'
-                                : 'bg-emerald-100 text-emerald-700'
-                            }`}
-                          >
-                            {item.isDeleted
-                              ? t('admin.users.badges.deactivated')
-                              : t('admin.users.badges.active')}
-                          </span>
                         </div>
                       </div>
                     </button>
@@ -1581,10 +1606,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
-              {!canEditSelectedUser && selectedUser.isAdmin && (
+              {editRestrictionMessageKey && (
                 <div className="flex items-start space-x-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  <Shield className="mt-0.5 h-4 w-4" />
-                  <span>{t('admin.users.errors.cannotEditAdmin')}</span>
+                  <EditRestrictionIcon className="mt-0.5 h-4 w-4" />
+                  <span>{t(editRestrictionMessageKey)}</span>
                 </div>
               )}
 
