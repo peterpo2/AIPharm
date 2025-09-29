@@ -9,12 +9,12 @@ import {
   ShoppingCart,
   Tag,
 } from 'lucide-react';
-import { products } from '../../data/mockData';
 import { Product } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { useFeatureToggles } from '../../context/FeatureToggleContext';
 import { useCart } from '../../context/CartContext';
 import { useChat } from '../../context/ChatContext';
+import { useProductCatalog } from '../../context/ProductCatalogContext';
 
 const ProductMoreInfoPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -23,10 +23,11 @@ const ProductMoreInfoPage: React.FC = () => {
   const { prescriptionFeaturesEnabled } = useFeatureToggles();
   const { dispatch } = useCart();
   const { askAssistant } = useChat();
+  const { products } = useProductCatalog();
 
   const product: Product | undefined = useMemo(
     () => products.find((item) => item.id === Number(productId)),
-    [productId],
+    [productId, products],
   );
 
   const getProductName = (currentProduct: Product) =>
