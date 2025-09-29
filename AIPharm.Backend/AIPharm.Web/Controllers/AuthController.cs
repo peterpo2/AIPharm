@@ -425,7 +425,7 @@ namespace AIPharm.Web.Controllers
             user.TwoFactorLoginTokenExpiry.HasValue;
 
         private static bool RequiresTwoFactor(User user) =>
-            user.TwoFactorEnabled && !user.IsAdmin;
+            user.TwoFactorEnabled && !user.IsAdmin && !user.IsStaff;
 
         private async Task<bool> TrySendRegistrationEmailAsync(User user, CancellationToken cancellationToken)
         {

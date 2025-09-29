@@ -1,6 +1,6 @@
 # Email-based Two-Factor Authentication
 
-The backend now enforces email-based two-factor authentication (2FA) for every user account. After a user enters valid credentials, a short-lived verification code is sent to the account's email address. The login flow completes only after the code is confirmed.
+The backend now enforces email-based two-factor authentication (2FA) for every customer account. After a user enters valid credentials, a short-lived verification code is sent to the account's email address. The login flow completes only after the code is confirmed. Administrative users and staff accounts are excluded from the 2FA requirement so they can access internal tooling without an extra verification step.
 
 ## How it works
 
