@@ -155,19 +155,19 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose }) => {
       },
       {
         label: t('orders.status.confirmed'),
-        className: 'bg-sky-100 text-sky-700 border-sky-200',
+        className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       },
       {
         label: t('orders.status.processing'),
-        className: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-      },
-      {
-        label: t('orders.status.shipped'),
         className: 'bg-blue-100 text-blue-700 border-blue-200',
       },
       {
+        label: t('orders.status.shipped'),
+        className: 'bg-sky-100 text-sky-700 border-sky-200',
+      },
+      {
         label: t('orders.status.delivered'),
-        className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        className: 'bg-teal-100 text-teal-700 border-teal-200',
       },
       {
         label: t('orders.status.cancelled'),
@@ -263,11 +263,6 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose }) => {
               </p>
               <p className="text-sm text-slate-900">{formatCurrency(grandTotal)}</p>
             </div>
-            {order.notes && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                {order.notes}
-              </div>
-            )}
           </div>
           <div className="space-y-3">
             <div className="flex items-center space-x-2 text-sm text-slate-600">
