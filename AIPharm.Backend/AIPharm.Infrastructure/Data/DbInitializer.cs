@@ -438,6 +438,122 @@ namespace AIPharm.Infrastructure.Data
                 await context.SaveChangesAsync(ct);
                 Console.WriteLine($"✅ Seeded {newUsers.Count} demo user(s).");
             }
+
+            await EnsureDemoOrdersAsync(context, ct);
+        }
+
+        private static async Task EnsureDemoOrdersAsync(AIPharmDbContext context, CancellationToken ct)
+        {
+            var users = await context.Users
+                .AsNoTracking()
+                .OrderBy(u => u.CreatedAt)
+                .ToListAsync(ct);
+
+            if (users.Count == 0)
+            {
+                return;
+            }
+
+            var referenceProduct = await context.Products
+                .AsNoTracking()
+                .OrderBy(p => p.Id)
+                .FirstOrDefaultAsync(ct);
+
+            if (referenceProduct is null)
+            {
+                return;
+            }
+
+            var userIdsWithOrders = new HashSet<string>(
+                await context.Orders
+                    .AsNoTracking()
+                    .Select(o => o.UserId)
+                    .Distinct()
+                    .ToListAsync(ct));
+
+            var statuses = new[]
+            {
+                OrderStatus.Rejected,
+                OrderStatus.Accepted,
+                OrderStatus.Waiting,
+                OrderStatus.Delivered,
+            };
+
+            var now = DateTime.UtcNow;
+            var ordersToAdd = new List<Order>();
+
+            for (var index = 0; index < users.Count; index++)
+            {
+                var user = users[index];
+
+                if (userIdsWithOrders.Contains(user.Id))
+                {
+                    continue;
+                }
+
+                var status = statuses[index % statuses.Length];
+                var quantity = (index % 3) + 1;
+                var unitPrice = decimal.Round(referenceProduct.Price, 2, MidpointRounding.AwayFromZero);
+                var vatRate = referenceProduct.VatRate > 0 ? referenceProduct.VatRate : 0.20m;
+                var vatPerUnit = decimal.Round(unitPrice - decimal.Round(unitPrice / (1 + vatRate), 4, MidpointRounding.AwayFromZero), 2, MidpointRounding.AwayFromZero);
+                var lineVat = decimal.Round(vatPerUnit * quantity, 2, MidpointRounding.AwayFromZero);
+                var lineGross = decimal.Round(unitPrice * quantity, 2, MidpointRounding.AwayFromZero);
+                var lineNet = decimal.Round(lineGross - lineVat, 2, MidpointRounding.AwayFromZero);
+
+                var createdAt = now.AddDays(-(index + 1));
+                var updatedAt = status == OrderStatus.Delivered ? createdAt.AddHours(6) : createdAt;
+
+                var order = new Order
+                {
+                    UserId = user.Id,
+                    OrderNumber = $"DEMO-{createdAt:yyyyMMdd}-{index + 1:D4}",
+                    Status = status,
+                    PaymentMethod = PaymentMethod.CashOnDelivery,
+                    Total = lineGross,
+                    Subtotal = lineNet,
+                    VatAmount = lineVat,
+                    VatRate = vatRate,
+                    DeliveryFee = 0m,
+                    DeliveryAddress = user.Address,
+                    CustomerName = string.IsNullOrWhiteSpace(user.FullName) ? user.Email : user.FullName,
+                    CustomerEmail = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    Notes = status switch
+                    {
+                        OrderStatus.Rejected => "Order rejected during review.",
+                        OrderStatus.Waiting => "Awaiting manual confirmation.",
+                        OrderStatus.Delivered => "Package delivered successfully.",
+                        OrderStatus.Accepted => "Order accepted and being prepared.",
+                        _ => null,
+                    },
+                    CreatedAt = createdAt,
+                    UpdatedAt = updatedAt,
+                    Items = new List<OrderItem>
+                    {
+                        new()
+                        {
+                            ProductId = referenceProduct.Id,
+                            Quantity = quantity,
+                            UnitPrice = unitPrice,
+                            VatRate = vatRate,
+                            VatAmount = lineVat,
+                            ProductName = referenceProduct.Name,
+                            ProductDescription = referenceProduct.Description,
+                        }
+                    }
+                };
+
+                ordersToAdd.Add(order);
+            }
+
+            if (ordersToAdd.Count == 0)
+            {
+                return;
+            }
+
+            await context.Orders.AddRangeAsync(ordersToAdd, ct);
+            await context.SaveChangesAsync(ct);
+            Console.WriteLine($"✅ Seeded {ordersToAdd.Count} demo order(s).");
         }
 
         private static async Task EnsureAdminTwoFactorDisabledAsync(AIPharmDbContext context, CancellationToken ct)

@@ -104,7 +104,7 @@ namespace AIPharm.Core.Services
                 UserId = userId,
                 User = user,
                 OrderNumber = GenerateOrderNumber(),
-                Status = OrderStatus.Pending,
+                Status = OrderStatus.Waiting,
                 PaymentMethod = orderDto.PaymentMethod,
                 Total = totalWithVat,
                 Subtotal = subtotal,

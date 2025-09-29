@@ -6,12 +6,10 @@ namespace AIPharm.Domain.Entities
 {
     public enum OrderStatus
     {
-        Pending = 0,
-        Confirmed = 1,
-        Processing = 2,
-        Shipped = 3,
-        Delivered = 4,
-        Cancelled = 5
+        Waiting = 0,
+        Accepted = 1,
+        Delivered = 2,
+        Rejected = 3
     }
 
     public enum PaymentMethod
@@ -35,7 +33,7 @@ namespace AIPharm.Domain.Entities
         public string OrderNumber { get; set; } = string.Empty;
 
         [Column("OrderStatus")]
-        public OrderStatus Status { get; set; } = OrderStatus.Pending;
+        public OrderStatus Status { get; set; } = OrderStatus.Waiting;
 
         public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
 

@@ -13,6 +13,7 @@ import {
   MapPin,
   Pencil,
   Package,
+  PackageCheck,
   Tag,
   PlusCircle,
   RefreshCw,
@@ -225,14 +226,7 @@ const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
 
 const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, '')}`;
 
-const ORDER_STATUSES: OrderStatus[] = [
-  'Pending',
-  'Confirmed',
-  'Processing',
-  'Shipped',
-  'Delivered',
-  'Cancelled',
-];
+const ORDER_STATUSES: OrderStatus[] = ['Waiting', 'Accepted', 'Delivered', 'Rejected'];
 
 const mapToEditable = (user: ManagedUser): EditableUserFields => ({
   email: user.email,
@@ -247,10 +241,10 @@ const mapToEditable = (user: ManagedUser): EditableUserFields => ({
 
 const normalizeOrderStatus = (status: OrderStatus | number): OrderStatus => {
   if (typeof status === 'number') {
-    return ORDER_STATUSES[status] ?? 'Pending';
+    return ORDER_STATUSES[status] ?? 'Waiting';
   }
 
-  return ORDER_STATUSES.includes(status) ? status : 'Pending';
+  return ORDER_STATUSES.includes(status) ? status : 'Waiting';
 };
 
 type PromotionBadgeColor = ProductPromotion['badgeColor'] | '';
@@ -1120,27 +1114,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const orderStatusConfig = useMemo(
     () => [
       {
-        label: t('orders.status.pending'),
+        label: t('orders.status.waiting'),
         className: 'bg-amber-100 text-amber-700 border-amber-200',
       },
       {
-        label: t('orders.status.confirmed'),
-        className: 'bg-sky-100 text-sky-700 border-sky-200',
-      },
-      {
-        label: t('orders.status.processing'),
-        className: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-      },
-      {
-        label: t('orders.status.shipped'),
-        className: 'bg-blue-100 text-blue-700 border-blue-200',
-      },
-      {
-        label: t('orders.status.delivered'),
+        label: t('orders.status.accepted'),
         className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       },
       {
-        label: t('orders.status.cancelled'),
+        label: t('orders.status.delivered'),
+        className: 'bg-sky-100 text-sky-700 border-sky-200',
+      },
+      {
+        label: t('orders.status.rejected'),
         className: 'bg-rose-100 text-rose-700 border-rose-200',
       },
     ],
@@ -2446,12 +2432,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               const normalizedStatus = normalizeOrderStatus(order.status);
               const updatingStatus = statusUpdates[order.id] ?? null;
               const isUpdatingStatus = Boolean(updatingStatus);
-              const approveDisabled =
-                isUpdatingStatus || normalizedStatus === 'Confirmed';
+              const acceptDisabled =
+                isUpdatingStatus || normalizedStatus === 'Accepted' || normalizedStatus === 'Delivered';
               const waitDisabled =
-                isUpdatingStatus || normalizedStatus === 'Pending';
+                isUpdatingStatus || normalizedStatus === 'Waiting' || normalizedStatus === 'Delivered';
               const declineDisabled =
-                isUpdatingStatus || normalizedStatus === 'Cancelled';
+                isUpdatingStatus || normalizedStatus === 'Rejected' || normalizedStatus === 'Delivered';
+              const deliverDisabled =
+                isUpdatingStatus || normalizedStatus === 'Delivered';
               return (
                 <div key={order.id} className="space-y-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                   <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 md:flex-row md:items-center md:justify-between">
@@ -2481,15 +2469,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => void handleUpdateOrderStatus(order.id, 'Confirmed')}
-                        disabled={approveDisabled}
+                        onClick={() => void handleUpdateOrderStatus(order.id, 'Accepted')}
+                        disabled={acceptDisabled}
                         className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-100 ${
-                          normalizedStatus === 'Confirmed'
+                          normalizedStatus === 'Accepted'
                             ? 'bg-emerald-600 text-white shadow-sm'
                             : 'border border-emerald-200 text-emerald-700 hover:bg-emerald-50'
                         } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
                       >
-                        {isUpdatingStatus && updatingStatus === 'Confirmed' ? (
+                        {isUpdatingStatus && updatingStatus === 'Accepted' ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <CheckCircle2 className="h-4 w-4" />
@@ -2498,15 +2486,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleUpdateOrderStatus(order.id, 'Pending')}
+                        onClick={() => void handleUpdateOrderStatus(order.id, 'Waiting')}
                         disabled={waitDisabled}
                         className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-100 ${
-                          normalizedStatus === 'Pending'
+                          normalizedStatus === 'Waiting'
                             ? 'bg-amber-500 text-white shadow-sm'
                             : 'border border-amber-200 text-amber-700 hover:bg-amber-50'
                         } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
                       >
-                        {isUpdatingStatus && updatingStatus === 'Pending' ? (
+                        {isUpdatingStatus && updatingStatus === 'Waiting' ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Clock3 className="h-4 w-4" />
@@ -2515,20 +2503,37 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleUpdateOrderStatus(order.id, 'Cancelled')}
+                        onClick={() => void handleUpdateOrderStatus(order.id, 'Rejected')}
                         disabled={declineDisabled}
                         className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-rose-100 ${
-                          normalizedStatus === 'Cancelled'
+                          normalizedStatus === 'Rejected'
                             ? 'bg-rose-600 text-white shadow-sm'
                             : 'border border-rose-200 text-rose-700 hover:bg-rose-50'
                         } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
                       >
-                        {isUpdatingStatus && updatingStatus === 'Cancelled' ? (
+                        {isUpdatingStatus && updatingStatus === 'Rejected' ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Ban className="h-4 w-4" />
                         )}
                         <span>{t('admin.orders.actions.decline')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleUpdateOrderStatus(order.id, 'Delivered')}
+                        disabled={deliverDisabled}
+                        className={`inline-flex items-center space-x-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-sky-100 ${
+                          normalizedStatus === 'Delivered'
+                            ? 'bg-sky-600 text-white shadow-sm'
+                            : 'border border-sky-200 text-sky-700 hover:bg-sky-50'
+                        } ${isUpdatingStatus ? 'cursor-not-allowed opacity-60' : ''} disabled:cursor-not-allowed`}
+                      >
+                        {isUpdatingStatus && updatingStatus === 'Delivered' ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <PackageCheck className="h-4 w-4" />
+                        )}
+                        <span>{t('admin.orders.actions.deliver')}</span>
                       </button>
                     </div>
                   </div>

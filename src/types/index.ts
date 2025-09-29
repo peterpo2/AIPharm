@@ -49,13 +49,7 @@ export interface CartItem {
 
 export type PaymentMethod = 'CashOnDelivery' | 'Card' | 'BankTransfer';
 
-export type OrderStatus =
-  | 'Pending'
-  | 'Confirmed'
-  | 'Processing'
-  | 'Shipped'
-  | 'Delivered'
-  | 'Cancelled';
+export type OrderStatus = 'Waiting' | 'Accepted' | 'Delivered' | 'Rejected';
 
 export interface OrderItemSummary {
   id: number;

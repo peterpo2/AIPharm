@@ -36,14 +36,7 @@ const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
 
 const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, '')}`;
 
-const ORDER_STATUSES: OrderStatus[] = [
-  'Pending',
-  'Confirmed',
-  'Processing',
-  'Shipped',
-  'Delivered',
-  'Cancelled',
-];
+const ORDER_STATUSES: OrderStatus[] = ['Waiting', 'Accepted', 'Delivered', 'Rejected'];
 
 const PAYMENT_METHODS: PaymentMethod[] = [
   'CashOnDelivery',
@@ -150,27 +143,19 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose }) => {
   const statusConfig = useMemo(
     () => [
       {
-        label: t('orders.status.pending'),
+        label: t('orders.status.waiting'),
         className: 'bg-amber-100 text-amber-700 border-amber-200',
       },
       {
-        label: t('orders.status.confirmed'),
-        className: 'bg-sky-100 text-sky-700 border-sky-200',
-      },
-      {
-        label: t('orders.status.processing'),
-        className: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-      },
-      {
-        label: t('orders.status.shipped'),
-        className: 'bg-blue-100 text-blue-700 border-blue-200',
-      },
-      {
-        label: t('orders.status.delivered'),
+        label: t('orders.status.accepted'),
         className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       },
       {
-        label: t('orders.status.cancelled'),
+        label: t('orders.status.delivered'),
+        className: 'bg-sky-100 text-sky-700 border-sky-200',
+      },
+      {
+        label: t('orders.status.rejected'),
         className: 'bg-rose-100 text-rose-700 border-rose-200',
       },
     ],
