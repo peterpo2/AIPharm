@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
@@ -21,19 +22,27 @@ namespace AIPharm.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> GetUsers()
         {
             var users = await _userRepository.GetAllAsync();
 
-            var result = users
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+            var isStaff = User.IsInRole("Staff");
+
+            var filtered = users
+                .Where(u =>
+                    isAdmin ||
+                    (!u.IsAdmin && !u.IsStaff) ||
+                    (isStaff && string.Equals(u.Id, currentUserId, StringComparison.Ordinal)))
                 .OrderByDescending(u => u.CreatedAt)
                 .Select(MapToResponse);
 
             return Ok(new
             {
                 success = true,
-                users = result
+                users = filtered
             });
         }
 
@@ -42,16 +51,27 @@ namespace AIPharm.Web.Controllers
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
-
-            if (!isAdmin && !string.Equals(currentUserId, id, StringComparison.Ordinal))
-            {
-                return Forbid();
-            }
+            var isStaff = User.IsInRole("Staff");
 
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { success = false, message = "User not found" });
+            }
+
+            if (!isAdmin)
+            {
+                if (isStaff)
+                {
+                    if (user.IsAdmin || (user.IsStaff && !string.Equals(user.Id, currentUserId, StringComparison.Ordinal)))
+                    {
+                        return Forbid();
+                    }
+                }
+                else if (!string.Equals(currentUserId, id, StringComparison.Ordinal))
+                {
+                    return Forbid();
+                }
             }
 
             return Ok(new
@@ -74,38 +94,59 @@ namespace AIPharm.Web.Controllers
                 });
             }
 
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+            var isStaff = User.IsInRole("Staff");
+            var editingSelf = string.Equals(currentUserId, id, StringComparison.Ordinal);
+
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { success = false, message = "User not found" });
             }
 
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
-            if (!isAdmin && !string.Equals(currentUserId, id, StringComparison.Ordinal))
-            {
-                return Forbid();
-            }
-
             if (!isAdmin)
             {
-                if (request.IsAdmin.HasValue || request.IsDeleted.HasValue || request.IsStaff.HasValue)
+                if (isStaff)
                 {
-                    return BadRequest(new
+                    if (user.IsAdmin || (user.IsStaff && !editingSelf))
                     {
-                        success = false,
-                        message = "You are not allowed to update administrative flags."
-                    });
-                }
+                        return Forbid();
+                    }
 
-                if (!string.IsNullOrWhiteSpace(request.Email) && !string.Equals(request.Email.Trim(), user.Email, StringComparison.OrdinalIgnoreCase))
-                {
-                    return BadRequest(new
+                    if (request.IsAdmin.HasValue || request.IsStaff.HasValue || request.IsDeleted.HasValue)
                     {
-                        success = false,
-                        message = "You are not allowed to change your email address."
-                    });
+                        return BadRequest(new
+                        {
+                            success = false,
+                            message = "Staff members cannot modify administrative flags or deactivate accounts."
+                        });
+                    }
+                }
+                else
+                {
+                    if (!editingSelf)
+                    {
+                        return Forbid();
+                    }
+
+                    if (request.IsAdmin.HasValue || request.IsDeleted.HasValue || request.IsStaff.HasValue)
+                    {
+                        return BadRequest(new
+                        {
+                            success = false,
+                            message = "You are not allowed to update administrative flags."
+                        });
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(request.Email) && !string.Equals(request.Email.Trim(), user.Email, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return BadRequest(new
+                        {
+                            success = false,
+                            message = "You are not allowed to change your email address."
+                        });
+                    }
                 }
             }
 

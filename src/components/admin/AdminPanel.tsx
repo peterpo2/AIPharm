@@ -332,16 +332,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const { prescriptionFeaturesEnabled, setPrescriptionFeaturesEnabled } = useFeatureToggles();
   const isModal = variant === 'modal';
   const canAccessAdmin = isAdmin || isStaffUser;
+  const panelTitle = isAdmin ? t('admin.panel.title') : t('admin.panel.staffTitle');
+  const panelSubtitle = isAdmin
+    ? t('admin.panel.subtitle')
+    : t('admin.panel.staffSubtitle');
+  const panelDescription = isAdmin
+    ? t('admin.panel.description')
+    : t('admin.panel.staffDescription');
+  const PanelIcon = isAdmin ? Shield : ClipboardList;
   const handlePrescriptionFeatureToggle = () => {
     setPrescriptionFeaturesEnabled(!prescriptionFeaturesEnabled);
   };
   const isPanelOpen = isModal ? isOpen : true;
   const canManageOrders = canAccessAdmin;
-  const canManageUsers = isAdmin;
-  const canManageNews = isAdmin;
+  const canManageUsers = canAccessAdmin;
+  const canManageNews = canAccessAdmin;
   const canManagePermissions = isAdmin;
   const canViewProducts = canAccessAdmin;
-  const canEditProducts = isAdmin || (isStaffUser && !!user?.canManageProducts);
+  const canEditProducts = isAdmin || isStaffUser;
   const defaultAuthor = useMemo(
     () => (user?.fullName?.trim() || user?.email || '').trim(),
     [user?.email, user?.fullName]
@@ -549,9 +557,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             canManageProducts: !!(entry as { canManageProducts?: boolean }).canManageProducts,
           }))
         : [];
-      setUsers(items);
+      const filteredItems = !isAdmin && isStaffUser
+        ? items.filter(
+            (entry) => (!entry.isAdmin && !entry.isStaff) || entry.id === user?.id,
+          )
+        : items;
+      setUsers(filteredItems);
 
-      if (!items.length) {
+      if (!filteredItems.length) {
         setSelectedUserId(null);
         setEditData(null);
       }
@@ -564,7 +577,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+  }, [isAdmin, isStaffUser, t, user?.id]);
 
   const fetchOrders = useCallback(async () => {
     setOrdersLoading(true);
@@ -1023,6 +1036,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleFieldChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!editData) return;
 
+    if (!isAdmin && !canEditSelectedUser) {
+      return;
+    }
+
     const { name, value, type, checked } = event.target;
 
     setEditData((prev) => {
@@ -1110,8 +1127,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     ? users.find((item) => item.id === selectedUserId) ?? null
     : null;
 
+  const canEditSelectedUser = useMemo(() => {
+    if (!selectedUser) {
+      return false;
+    }
+
+    if (isAdmin) {
+      return true;
+    }
+
+    if (!isStaffUser) {
+      return false;
+    }
+
+    if (selectedUser.isAdmin) {
+      return false;
+    }
+
+    if (selectedUser.isStaff && selectedUser.id !== user?.id) {
+      return false;
+    }
+
+    return true;
+  }, [isAdmin, isStaffUser, selectedUser, user?.id]);
+
   const hasChanges = useMemo(() => {
     if (!editData || !selectedUser) return false;
+
+    if (!isAdmin && !canEditSelectedUser) {
+      return false;
+    }
 
     const normalized = mapToEditable(selectedUser);
     return (
@@ -1124,7 +1169,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       normalized.isDeleted !== editData.isDeleted ||
       normalized.canManageProducts !== editData.canManageProducts
     );
-  }, [editData, selectedUser]);
+  }, [canEditSelectedUser, editData, isAdmin, selectedUser]);
 
   const formatDate = (value: string) => {
     const date = new Date(value);
@@ -1250,6 +1295,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       return;
     }
 
+    if (!isAdmin && !canEditSelectedUser) {
+      setToast({ type: 'error', text: t('admin.users.errors.staffForbidden') });
+      return;
+    }
+
     const token =
       localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 
@@ -1262,16 +1312,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setToast(null);
 
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         email: editData.email.trim(),
         fullName: editData.fullName.trim(),
         phoneNumber: editData.phoneNumber.trim(),
         address: editData.address.trim(),
-        isAdmin: editData.isAdmin,
-        isStaff: editData.isStaff,
-        isDeleted: editData.isDeleted,
-        canManageProducts: editData.canManageProducts,
       };
+
+      if (isAdmin) {
+        Object.assign(payload, {
+          isAdmin: editData.isAdmin,
+          isStaff: editData.isStaff,
+          isDeleted: editData.isDeleted,
+          canManageProducts: editData.canManageProducts,
+        });
+      }
 
       const response = await fetch(buildUrl(`users/${selectedUser.id}`), {
         method: 'PUT',
@@ -1673,6 +1728,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               )}
 
+              {!isAdmin && selectedUser && !canEditSelectedUser && (
+                <div className="flex items-start space-x-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4" />
+                  <span>{t('admin.users.restrictedNotice')}</span>
+                </div>
+              )}
+
               {activeView === 'users' ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2">
@@ -1686,7 +1748,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       required
                       value={editData.email}
                       onChange={handleFieldChange}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      disabled={isSaving || (!isAdmin && !canEditSelectedUser)}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
 
@@ -1701,7 +1764,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       onChange={handleFieldChange}
                       maxLength={150}
                       placeholder={t('admin.users.fields.fullNamePlaceholder')}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      disabled={isSaving || (!isAdmin && !canEditSelectedUser)}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
 
@@ -1716,7 +1780,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       onChange={handleFieldChange}
                       maxLength={30}
                       placeholder={t('admin.users.fields.phonePlaceholder')}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      disabled={isSaving || (!isAdmin && !canEditSelectedUser)}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
 
@@ -1731,7 +1796,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       onChange={handleFieldChange}
                       maxLength={250}
                       placeholder={t('admin.users.fields.addressPlaceholder')}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                      disabled={isSaving || (!isAdmin && !canEditSelectedUser)}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-inner focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                 </div>
@@ -3140,17 +3206,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5 md:px-8">
           <div>
             <div className="flex items-center space-x-2 text-emerald-600">
-              <Shield className="h-5 w-5" />
+              <PanelIcon className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-wide">
-                {t('admin.panel.title')}
+                {panelTitle}
               </span>
             </div>
             <h2 className="mt-1 text-2xl font-display font-semibold text-slate-900">
-              {t('admin.panel.subtitle')}
+              {panelSubtitle}
             </h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">
-              {t('admin.panel.description')}
-            </p>
+            <p className="mt-1 max-w-2xl text-sm text-slate-500">{panelDescription}</p>
           </div>
           {isModal && onClose && (
             <button
