@@ -540,6 +540,7 @@ const translations = {
     // Footer
     'footer.title': 'AIPHARM+',
     'footer.description': 'Качествени лекарства с AI консултации и бърза доставка.',
+    'footer.version': 'Версия {version}',
     'footer.quickLinks': 'Бързи връзки',
     'footer.aboutUs': 'За нас',
     'footer.products': 'Продукти',
@@ -1249,6 +1250,7 @@ const translations = {
     // Footer
     'footer.title': 'AIPHARM+',
     'footer.description': 'Quality medicines with AI consultations and fast delivery.',
+    'footer.version': 'Version {version}',
     'footer.quickLinks': 'Quick Links',
     'footer.aboutUs': 'About Us',
     'footer.products': 'Products',

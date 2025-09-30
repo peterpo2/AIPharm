@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, Facebook, Instagram, Stethoscope, Shield, Award, S
 import { useLanguage } from '../context/LanguageContext';
 import AIPharmLogo from './Logo';
 import { quickLinks } from '../data/navigation';
+import { APP_VERSION } from '../config/appVersion';
 
 const Footer: React.FC = () => {
   const { t } = useLanguage();
@@ -212,10 +213,15 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Bottom section */}
-        <div className="border-t border-white/10 mt-12 pt-8 flex flex-col lg:flex-row items-center justify-between">
-          <p className="text-gray-400 text-sm mb-4 lg:mb-0">
-            {t('footer.copyright')}
-          </p>
+        <div className="border-t border-white/10 mt-12 pt-8 flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-center sm:text-left">
+            <p className="text-gray-400 text-sm">
+              {t('footer.version', { version: APP_VERSION })}
+            </p>
+            <p className="text-gray-400 text-sm">
+              {t('footer.copyright')}
+            </p>
+          </div>
           <div className="flex flex-wrap justify-center lg:justify-end space-x-6 text-sm text-gray-400">
             <button className="hover:text-white transition-colors duration-300 hover:underline">
               {t('footer.privacy')}

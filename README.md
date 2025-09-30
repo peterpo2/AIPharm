@@ -4,6 +4,13 @@ AIPharm+ is a full digital-pharmacy demo that combines a .NET 8 Web API, a React
 data, and an AI chat assistant powered by OpenAI. The goal is to help you explore a realistic e-commerce experience that includes
 medical product browsing, ordering, and conversational support.
 
+> **Current version:** 0.1.0 (January 2025)
+
+### 0.1.0 release notes
+- Version banner added to the storefront footer so visitors always know which release is running.
+- Documentation refreshed with AI agent guidance and up-to-date setup instructions.
+- Verified that no client-side caching layer is active yet—see the new performance notes if you plan to add one.
+
 This README keeps the original project context while adding step-by-step setup guidance for newcomers. If you follow each section
 in order you will have the project running locally.
 
@@ -25,6 +32,11 @@ in order you will have the project running locally.
 | Tailwind CSS styling with responsive layouts | Entity Framework Core with SQL Server |
 | Dynamic product catalog, cart, and checkout flows | JWT authentication, email notifications, and background services |
 | Built-in AI chat widget for customer help | Swagger/OpenAPI docs, health checks, and seeded demo data |
+
+### Performance and caching
+- **Client-side caching:** Not yet implemented. Product and news data are fetched directly from the API on each visit, so consider integrating React Query, SWR, or a service worker cache for frequently accessed resources.
+- **Build-time optimization:** The Vite build already code-splits the React bundle. Host the compiled assets behind a CDN to take advantage of HTTP caching headers.
+- **Backend caching:** The .NET API queries SQL Server per request. Introduce Redis or in-memory caching for high-traffic endpoints when you move beyond demo scale.
 
 ### Architecture at a glance
 ```mermaid
@@ -68,6 +80,12 @@ graph TB
 ```
 
 </details>
+
+## AI agents & automation (AI агенти)
+- Learn how the AI chat assistant is wired into the backend, how it stores context, and how to extend it for customer-service automations in [`docs/AI-AGENTS.md`](docs/AI-AGENTS.md).
+- Документът включва **начални промптове** за стартиране на агент за разработка, примерни правила за безопасност и инструкции за наблюдение на разходите към OpenAI API.
+- Recommended starter prompt for development work: _"Act as the AIPharm+ development co-pilot. Before coding, confirm the active feature flag set, check the current version (0.1.0), and list impacted microservices. Provide a step-by-step plan before editing files."_  
+  Препоръчителен начален промпт (BG): _"Действай като AIPharm+ агент за разработка. Провери текущата версия (0.1.0), активните функционални флагове и зависимостите към бекенда, след което предложи план на български преди да правиш промени."_
 
 Use the sections below when you are ready to clone the repository and configure your environment.
 
