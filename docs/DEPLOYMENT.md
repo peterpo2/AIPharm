@@ -83,7 +83,7 @@ SA_PASSWORD=YourStrongPassword123!
 CONNECTION_STRING=Server=database,1433;Database=AIPharm;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=true
 
 # JWT
-JWT_KEY=YourSuperSecretJWTKeyForProduction2024VeryLongAndSecure
+JWT_KEY=YourSuperSecretJWTKeyForProduction2025VeryLongAndSecure
 
 # API
 API_BASE_URL=https://your-domain.com/api

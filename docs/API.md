@@ -148,8 +148,8 @@ X-User-Id: demo-user
   ],
   "total": 4.60,
   "itemCount": 2,
-  "createdAt": "2024-01-01T10:00:00Z",
-  "updatedAt": "2024-01-01T10:30:00Z"
+  "createdAt": "2025-01-01T10:00:00Z",
+  "updatedAt": "2025-01-01T10:30:00Z"
 }
 ```
 
@@ -207,7 +207,7 @@ Content-Type: application/json
   "question": "Как се взима парацетамол?",
   "answer": "Парацетамолът се взима по 500-1000мг на 4-6 часа, максимум 4г дневно. Не трябва да се комбинира с алкохол.",
   "productId": 1,
-  "timestamp": "2024-01-01T10:00:00Z",
+  "timestamp": "2025-01-01T10:00:00Z",
   "disclaimer": "⚠️ Това е обща информация. Консултирайте се с лекар."
 }
 ```
@@ -243,7 +243,7 @@ Content-Type: application/json
     "email": "aipharmproject@gmail.com",
     "fullName": "AIPharm Administrator",
     "isAdmin": true,
-    "createdAt": "2024-01-01T00:00:00Z"
+    "createdAt": "2025-01-01T00:00:00Z"
   }
 }
 ```
@@ -296,7 +296,7 @@ GET /api/health
 ```json
 {
   "status": "Healthy",
-  "timestamp": "2024-01-01T10:00:00Z",
+  "timestamp": "2025-01-01T10:00:00Z",
   "environment": "Development"
 }
 ```

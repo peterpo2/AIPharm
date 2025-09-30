@@ -58,7 +58,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 # {
 #   "requiresTwoFactor": true,
 #   "twoFactorToken": "...",
-#   "codeExpiresAt": "2024-09-18T11:22:33.123Z"
+#   "codeExpiresAt": "2025-09-18T11:22:33.123Z"
 # }
 
 # 2) Retrieve the code from your inbox (the sender is aipharmproject@gmail.com). If you enabled the pickup directory, the `.eml` file is stored under AIPharm.Backend/AIPharm.Web/App_Data/Emails instead of being sent.

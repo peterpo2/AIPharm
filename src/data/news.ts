@@ -25,7 +25,7 @@ export const newsArticles: NewsArticle[] = [
     categoryEn: 'Health Tips',
     author: 'Д-р Мария Стоянова',
     imageUrl: generateNewsImage('How to Prepare for Flu Season', 'Health Tips'),
-    publishedAt: '2024-11-05',
+    publishedAt: '2025-11-05',
     readTimeMinutes: 4,
   },
   {
@@ -51,7 +51,7 @@ export const newsArticles: NewsArticle[] = [
     categoryEn: 'Vitamins & Supplements',
     author: 'Фармацевт Николай Петров',
     imageUrl: generateNewsImage('Benefits of Vitamin D in Winter', 'Vitamins & Supplements'),
-    publishedAt: '2024-12-12',
+    publishedAt: '2025-12-12',
     readTimeMinutes: 5,
   },
   {
