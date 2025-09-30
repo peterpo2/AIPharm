@@ -1926,7 +1926,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
             </div>
 
-            <div className="relative max-h-[60vh] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+            <div className="relative max-h-[75vh] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 lg:max-h-[80vh]">
               {filteredCatalogProducts.length ? (
                 <div className="space-y-2 overflow-y-auto p-3">
                   {filteredCatalogProducts.map((product) => {
