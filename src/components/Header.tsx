@@ -52,6 +52,7 @@ const Header: React.FC<HeaderProps> = ({
   const [showOrdersModal, setShowOrdersModal] = useState(false);
 
   const canAccessAdmin = isAdmin || isStaff;
+  const panelLabelKey = isAdmin ? 'header.adminPanel' : 'header.staffPanel';
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -136,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({
                 ) : (
                   <Settings className="h-4 w-4" />
                 )}
-                <span>{t(isAdmin ? 'header.adminPanel' : 'header.staffPanel')}</span>
+                <span>{t(panelLabelKey)}</span>
               </Link>
             )}
             {isAuthenticated && (
@@ -283,7 +284,7 @@ const Header: React.FC<HeaderProps> = ({
                         ) : (
                           <Settings className="w-4 h-4" />
                         )}
-                        <span>{t(isAdmin ? 'header.adminPanel' : 'header.staffPanel')}</span>
+                        <span>{t(panelLabelKey)}</span>
                       </Link>
                     )}
                     <button 

@@ -10,7 +10,7 @@ import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { NewsProvider } from './context/NewsContext';
 import { FeatureToggleProvider, useFeatureToggles } from './context/FeatureToggleContext';
-import { InventoryProvider, useInventory } from './context/InventoryContext';
+import { categories, products, searchProducts, getProductsByCategory } from './data/mockData';
 import HomePage from './components/pages/HomePage';
 import ProductsPage from './components/pages/ProductsPage';
 import CategoriesPage from './components/pages/CategoriesPage';
@@ -25,7 +25,6 @@ import ProductMoreInfoPage from './components/pages/ProductMoreInfoPage';
 
 function AppContent() {
   const { prescriptionFeaturesEnabled } = useFeatureToggles();
-  const { products: inventoryProducts, searchProducts: searchInventory, getProductsByCategory, categories } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -45,15 +44,15 @@ function AppContent() {
   // Filter products based on search and category
   const baseProducts = useMemo(() => {
     if (searchTerm.trim()) {
-      return searchInventory(searchTerm);
+      return searchProducts(searchTerm);
     }
 
     if (selectedCategory) {
       return getProductsByCategory(selectedCategory);
     }
 
-    return inventoryProducts;
-  }, [searchTerm, selectedCategory, getProductsByCategory, inventoryProducts, searchInventory]);
+    return products;
+  }, [searchTerm, selectedCategory]);
 
   const filteredProducts = useMemo(() => {
     if (prescriptionFeaturesEnabled) {
@@ -65,11 +64,11 @@ function AppContent() {
 
   const availableProducts = useMemo(() => {
     if (prescriptionFeaturesEnabled) {
-      return inventoryProducts;
+      return products;
     }
 
-    return inventoryProducts.filter((product) => !product.requiresPrescription);
-  }, [inventoryProducts, prescriptionFeaturesEnabled]);
+    return products.filter((product) => !product.requiresPrescription);
+  }, [prescriptionFeaturesEnabled]);
 
   const isDefaultView = !searchTerm.trim() && !selectedCategory;
 
@@ -206,13 +205,11 @@ function App() {
       <LanguageProvider>
         <FeatureToggleProvider>
           <CartProvider>
-            <InventoryProvider>
-              <NewsProvider>
-                <ChatProvider>
-                  <AppContent />
-                </ChatProvider>
-              </NewsProvider>
-            </InventoryProvider>
+            <NewsProvider>
+              <ChatProvider>
+                <AppContent />
+              </ChatProvider>
+            </NewsProvider>
           </CartProvider>
         </FeatureToggleProvider>
       </LanguageProvider>

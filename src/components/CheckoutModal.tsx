@@ -18,7 +18,6 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useFeatureToggles } from '../context/FeatureToggleContext';
 import type { CartItem, PaymentMethod } from '../types';
-import { buildApiUrl } from '../utils/api';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -81,6 +80,16 @@ interface CreateOrderResponse {
 }
 
 type CheckoutStep = 'prescription' | 'form' | 'eprescription' | 'success';
+
+const RAW_API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_URL_DOCKER ||
+  'http://localhost:8080/api';
+
+const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
+
+const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, '')}`;
 
 const PAYMENT_METHODS: PaymentMethod[] = [
   'CashOnDelivery',
@@ -351,7 +360,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     };
 
     try {
-      const response = await fetch(buildApiUrl('orders'), {
+      const response = await fetch(buildUrl('orders'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

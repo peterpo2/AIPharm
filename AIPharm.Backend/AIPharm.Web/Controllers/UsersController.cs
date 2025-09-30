@@ -40,18 +40,30 @@ namespace AIPharm.Web.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(string id)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
-            if (!isAdmin && !string.Equals(currentUserId, id, StringComparison.Ordinal))
-            {
-                return Forbid();
-            }
-
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { success = false, message = "User not found" });
+            }
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+            var isStaff = User.IsInRole("Staff");
+            var isSelf = string.Equals(currentUserId, id, StringComparison.Ordinal);
+
+            if (!isAdmin)
+            {
+                if (isStaff)
+                {
+                    if (!isSelf && user.IsAdmin)
+                    {
+                        return Forbid();
+                    }
+                }
+                else if (!isSelf)
+                {
+                    return Forbid();
+                }
             }
 
             return Ok(new
@@ -85,14 +97,16 @@ namespace AIPharm.Web.Controllers
             var isStaff = User.IsInRole("Staff");
             var isSelf = string.Equals(currentUserId, id, StringComparison.Ordinal);
 
-            if (!isAdmin && user.IsAdmin)
-            {
-                return Forbid();
-            }
-
             if (!isAdmin)
             {
-                if (!isStaff && !isSelf)
+                if (isStaff)
+                {
+                    if (!isSelf && user.IsAdmin)
+                    {
+                        return Forbid();
+                    }
+                }
+                else if (!isSelf)
                 {
                     return Forbid();
                 }
@@ -105,26 +119,26 @@ namespace AIPharm.Web.Controllers
                         message = "You are not allowed to update administrative flags."
                     });
                 }
+
             }
 
-            var canChangeEmail = isAdmin || (isStaff && !isSelf);
-            if (!canChangeEmail && !string.IsNullOrWhiteSpace(request.Email) &&
-                !string.Equals(request.Email.Trim(), user.Email, StringComparison.OrdinalIgnoreCase))
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "You are not allowed to change your email address."
-                });
-            }
-
+            string? trimmedEmail = null;
             if (!string.IsNullOrWhiteSpace(request.Email))
             {
-                var trimmedEmail = request.Email.Trim();
+                trimmedEmail = request.Email.Trim();
                 var emailAttribute = new EmailAddressAttribute();
                 if (!emailAttribute.IsValid(trimmedEmail))
                 {
                     return BadRequest(new { success = false, message = "Invalid email address format." });
+                }
+
+                if (!isAdmin && isSelf && !string.Equals(trimmedEmail, user.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "You are not allowed to change your email address."
+                    });
                 }
 
                 var existingUser = await _userRepository.FirstOrDefaultAsync(u => u.Email == trimmedEmail && u.Id != user.Id);

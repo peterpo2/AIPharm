@@ -14,7 +14,6 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import type { OrderStatus, OrderSummary, PaymentMethod } from '../../types';
-import { buildApiUrl } from '../../utils/api';
 
 interface MyOrdersModalProps {
   isOpen: boolean;
@@ -26,6 +25,16 @@ interface OrdersApiResponse {
   message?: string;
   orders?: OrderSummary[];
 }
+
+const RAW_API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_URL_DOCKER ||
+  'http://localhost:8080/api';
+
+const API_BASE = RAW_API_BASE.replace(/\/+$/, '');
+
+const buildUrl = (path: string) => `${API_BASE}/${path.replace(/^\/+/, '')}`;
 
 const ORDER_STATUSES: OrderStatus[] = [
   'Pending',
@@ -82,7 +91,7 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ isOpen, onClose }) => {
     setError(null);
 
     try {
-      const response = await fetch(buildApiUrl('orders/mine'), {
+      const response = await fetch(buildUrl('orders/mine'), {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
