@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
 using AIPharm.Core.Security;
 using AIPharm.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AIPharm.Infrastructure.Data
 {
@@ -17,6 +22,8 @@ namespace AIPharm.Infrastructure.Data
             }
 
             await context.Database.MigrateAsync(ct);
+
+            await EnsureTablesExistAsync(context, ct);
 
             await EnsureAdminTwoFactorDisabledAsync(context, ct);
 
@@ -558,6 +565,104 @@ namespace AIPharm.Infrastructure.Data
             Console.WriteLine($"✅ Seeded {ordersToAdd.Count} demo order(s).");
         }
 
+        private static async Task EnsureTablesExistAsync(AIPharmDbContext context, CancellationToken ct)
+        {
+            var database = context.Database;
+            var databaseCreator = database.GetService<IRelationalDatabaseCreator>();
+
+            await using var connection = database.GetDbConnection();
+            var shouldCloseConnection = connection.State != ConnectionState.Open;
+
+            if (shouldCloseConnection)
+            {
+                await connection.OpenAsync(ct);
+            }
+
+            try
+            {
+                var missingTables = new List<string>();
+                var entityTables = new HashSet<(string Schema, string Table)>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var entityType in context.Model.GetEntityTypes())
+                {
+                    if (entityType.IsOwned())
+                    {
+                        continue;
+                    }
+
+                    var tableName = entityType.GetTableName();
+                    if (string.IsNullOrWhiteSpace(tableName))
+                    {
+                        continue;
+                    }
+
+                    var schema = entityType.GetSchema() ?? "dbo";
+
+                    if (!entityTables.Add((schema, tableName)))
+                    {
+                        continue;
+                    }
+
+                    await using var command = connection.CreateCommand();
+                    command.CommandText = "SELECT OBJECT_ID(@FullName, 'U')";
+
+                    var parameter = command.CreateParameter();
+                    parameter.ParameterName = "@FullName";
+                    parameter.Value = $"[{schema}].[{tableName}]";
+                    command.Parameters.Add(parameter);
+
+                    var result = await command.ExecuteScalarAsync(ct);
+                    if (result == null || result == DBNull.Value)
+                    {
+                        missingTables.Add($"{schema}.{tableName}");
+                    }
+                }
+
+                if (missingTables.Count > 0)
+                {
+                    try
+                    {
+                        await databaseCreator.CreateTablesAsync(ct);
+
+                        foreach (var table in missingTables)
+                        {
+                            Console.WriteLine($"✅ Created missing table: {table}");
+                        }
+                    }
+                    catch (DbException)
+                    {
+                        var createScript = database.GenerateCreateScript();
+                        foreach (var (schema, table) in missingTables
+                                     .Select(t =>
+                                     {
+                                         var parts = t.Split('.', 2);
+                                         return (
+                                             Schema: parts.Length == 2 ? parts[0] : "dbo",
+                                             Table: parts.Length == 2 ? parts[1] : parts[0]);
+                                     }))
+                        {
+                            var statement = ExtractCreateTableStatement(createScript, schema, table);
+                            if (string.IsNullOrWhiteSpace(statement))
+                            {
+                                Console.WriteLine($"⚠️ Unable to generate CREATE TABLE script for {schema}.{table}.");
+                                continue;
+                            }
+
+                            await database.ExecuteSqlRawAsync(statement, ct);
+                            Console.WriteLine($"✅ Created missing table: {schema}.{table}");
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if (shouldCloseConnection)
+                {
+                    await connection.CloseAsync();
+                }
+            }
+        }
+
         private static async Task EnsureAdminTwoFactorDisabledAsync(AIPharmDbContext context, CancellationToken ct)
         {
             var adminUsers = await context.Users
@@ -583,6 +688,53 @@ namespace AIPharm.Infrastructure.Data
             await context.SaveChangesAsync(ct);
 
             Console.WriteLine($"✅ Disabled two-factor authentication for {adminUsers.Count} admin account(s).");
+        }
+
+        private static string? ExtractCreateTableStatement(string createScript, string schema, string table)
+        {
+            var search = $"CREATE TABLE [{schema}].[{table}]";
+            var startIndex = createScript.IndexOf(search, StringComparison.OrdinalIgnoreCase);
+            if (startIndex < 0)
+            {
+                return null;
+            }
+
+            var endIndexCandidates = new List<int>();
+
+            var semicolonIndex = createScript.IndexOf(";\r\n", startIndex, StringComparison.Ordinal);
+            if (semicolonIndex >= 0)
+            {
+                endIndexCandidates.Add(semicolonIndex + 3);
+            }
+
+            semicolonIndex = createScript.IndexOf(";\n", startIndex, StringComparison.Ordinal);
+            if (semicolonIndex >= 0)
+            {
+                endIndexCandidates.Add(semicolonIndex + 2);
+            }
+
+            var goIndex = createScript.IndexOf("\nGO", startIndex, StringComparison.OrdinalIgnoreCase);
+            if (goIndex >= 0)
+            {
+                endIndexCandidates.Add(goIndex);
+            }
+
+            var nextCreateIndex = createScript.IndexOf("CREATE TABLE", startIndex + search.Length, StringComparison.OrdinalIgnoreCase);
+            if (nextCreateIndex >= 0)
+            {
+                endIndexCandidates.Add(nextCreateIndex);
+            }
+
+            var endIndex = endIndexCandidates.Count > 0 ? endIndexCandidates.Min() : createScript.Length;
+
+            var statement = createScript.Substring(startIndex, endIndex - startIndex).Trim();
+
+            if (!statement.EndsWith(";", StringComparison.Ordinal))
+            {
+                statement += ";";
+            }
+
+            return statement;
         }
     }
 }
