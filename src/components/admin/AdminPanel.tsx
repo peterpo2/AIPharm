@@ -332,13 +332,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const { prescriptionFeaturesEnabled, setPrescriptionFeaturesEnabled } = useFeatureToggles();
   const isModal = variant === 'modal';
   const canAccessAdmin = isAdmin || isStaffUser;
+  const panelTitle = isAdmin ? t('admin.panel.title') : t('admin.panel.staffTitle');
+  const panelSubtitle = isAdmin
+    ? t('admin.panel.subtitle')
+    : t('admin.panel.staffSubtitle');
+  const panelDescription = isAdmin
+    ? t('admin.panel.description')
+    : t('admin.panel.staffDescription');
+  const PanelIcon = isAdmin ? Shield : ClipboardList;
   const handlePrescriptionFeatureToggle = () => {
     setPrescriptionFeaturesEnabled(!prescriptionFeaturesEnabled);
   };
   const isPanelOpen = isModal ? isOpen : true;
   const canManageOrders = canAccessAdmin;
-  const canManageUsers = isAdmin;
-  const canManageNews = isAdmin;
+  const canManageUsers = canAccessAdmin;
+  const canManageNews = canAccessAdmin;
   const canManagePermissions = isAdmin;
   const canViewProducts = canAccessAdmin;
   const canEditProducts = isAdmin || (isStaffUser && !!user?.canManageProducts);
@@ -3140,17 +3148,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5 md:px-8">
           <div>
             <div className="flex items-center space-x-2 text-emerald-600">
-              <Shield className="h-5 w-5" />
+              <PanelIcon className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-wide">
-                {t('admin.panel.title')}
+                {panelTitle}
               </span>
             </div>
             <h2 className="mt-1 text-2xl font-display font-semibold text-slate-900">
-              {t('admin.panel.subtitle')}
+              {panelSubtitle}
             </h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">
-              {t('admin.panel.description')}
-            </p>
+            <p className="mt-1 max-w-2xl text-sm text-slate-500">{panelDescription}</p>
           </div>
           {isModal && onClose && (
             <button

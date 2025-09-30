@@ -11,6 +11,7 @@ import {
   Settings,
   Shield,
   Receipt,
+  ClipboardList,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -54,6 +55,8 @@ const Header: React.FC<HeaderProps> = ({
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const canAccessAdmin = isAdmin || isStaff;
+  const panelLabel = isAdmin ? t('header.adminPanel') : t('header.staffPanel');
+  const PanelBadgeIcon = isAdmin ? Shield : ClipboardList;
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -186,12 +189,8 @@ const Header: React.FC<HeaderProps> = ({
                 to="/admin"
                 className="inline-flex items-center space-x-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
               >
-                {isAdmin ? (
-                  <Shield className="h-4 w-4" />
-                ) : (
-                  <Settings className="h-4 w-4" />
-                )}
-                <span>{t('header.adminPanel')}</span>
+                <PanelBadgeIcon className="h-4 w-4" />
+                <span>{panelLabel}</span>
               </Link>
             )}
             {isAuthenticated && (
@@ -207,11 +206,9 @@ const Header: React.FC<HeaderProps> = ({
               <span className="text-emerald-600 font-medium">
                 {t('header.hello')}, {user?.fullName || user?.email}
                 {canAccessAdmin && (
-                  isAdmin ? (
-                    <Shield className="inline w-4 h-4 ml-1 text-amber-500" />
-                  ) : (
-                    <Settings className="inline w-4 h-4 ml-1 text-sky-500" />
-                  )
+                  <PanelBadgeIcon className={`inline w-4 h-4 ml-1 ${
+                    isAdmin ? 'text-amber-500' : 'text-sky-500'
+                  }`} />
                 )}
               </span>
             ) : (
@@ -333,12 +330,8 @@ const Header: React.FC<HeaderProps> = ({
                             : 'text-sky-600 hover:bg-sky-50'
                         }`}
                       >
-                        {isAdmin ? (
-                          <Shield className="w-4 h-4" />
-                        ) : (
-                          <Settings className="w-4 h-4" />
-                        )}
-                        <span>{t('header.adminPanel')}</span>
+                        <PanelBadgeIcon className="w-4 h-4" />
+                        <span>{panelLabel}</span>
                       </Link>
                     )}
                     <button 
