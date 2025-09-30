@@ -346,6 +346,7 @@ const translations = {
     'admin.users.errors.noSession': 'Не е намерен валиден админ токен. Влезте отново.',
     'admin.users.errors.fetchFailed': 'Неуспешно зареждане на потребителите.',
     'admin.users.errors.saveFailed': 'Неуспешно запазване на промените.',
+    'admin.users.errors.staffForbidden': 'Нямате права да редактирате този потребител.',
     'admin.users.retry': 'Опитайте отново',
     'admin.users.badges.admin': 'Администратор',
     'admin.users.badges.staff': 'Служител',
@@ -355,6 +356,8 @@ const translations = {
     'admin.users.unknownName': 'Няма име',
     'admin.users.memberSince': 'Член от {date}',
     'admin.users.saveSuccess': 'Потребителят е обновен успешно.',
+    'admin.users.restrictedNotice':
+      'Можете да редактирате само стандартни потребители. Администраторите и служителите са защитени.',
     'admin.users.permissions.title': 'Права и статус',
     'admin.users.permissions.admin': 'Администраторски права',
     'admin.users.permissions.deactivate': 'Маркирай като деактивиран',
@@ -1060,6 +1063,7 @@ const translations = {
     'admin.users.errors.noSession': 'Missing admin session. Please sign in again.',
     'admin.users.errors.fetchFailed': 'Unable to load users.',
     'admin.users.errors.saveFailed': 'Unable to save the changes.',
+    'admin.users.errors.staffForbidden': 'You are not allowed to edit this account.',
     'admin.users.retry': 'Try again',
     'admin.users.badges.admin': 'Admin',
     'admin.users.badges.staff': 'Staff',
@@ -1069,6 +1073,8 @@ const translations = {
     'admin.users.unknownName': 'No name provided',
     'admin.users.memberSince': 'Member since {date}',
     'admin.users.saveSuccess': 'User updated successfully.',
+    'admin.users.restrictedNotice':
+      'You can only edit standard customers. Administrators and staff accounts are protected.',
     'admin.users.permissions.title': 'Permissions & status',
     'admin.users.permissions.admin': 'Administrator rights',
     'admin.users.permissions.deactivate': 'Mark as deactivated',
