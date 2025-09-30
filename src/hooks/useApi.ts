@@ -49,7 +49,7 @@ export function useProducts(filter: ProductFilter = {}) {
   return useApi(() => apiClient.getProducts(filter), [JSON.stringify(filter)]);
 }
 
-export function useProduct(id: number) {
+export function useProduct(id: string) {
   return useApi(() => apiClient.getProduct(id), [id]);
 }
 
@@ -66,19 +66,19 @@ export function useCart() {
     refetch,
   } = useApi<ApiCart>(() => apiClient.getCart(), []);
 
-  const addToCart = async (productId: number, quantity = 1) => {
+  const addToCart = async (productId: string, quantity = 1) => {
     const updatedCart = await apiClient.addToCart(productId, quantity);
     await refetch();
     return updatedCart;
   };
 
-  const updateCartItem = async (cartItemId: number, quantity: number) => {
+  const updateCartItem = async (cartItemId: string, quantity: number) => {
     const updatedCart = await apiClient.updateCartItem(cartItemId, quantity);
     await refetch();
     return updatedCart;
   };
 
-  const removeFromCart = async (cartItemId: number) => {
+  const removeFromCart = async (cartItemId: string) => {
     const updatedCart = await apiClient.removeFromCart(cartItemId);
     await refetch();
     return updatedCart;
@@ -107,7 +107,7 @@ export function useAssistant() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const askQuestion = async (question: string, productId?: number) => {
+  const askQuestion = async (question: string, productId?: string) => {
     try {
       setLoading(true);
       setError(null);

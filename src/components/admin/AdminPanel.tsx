@@ -68,8 +68,8 @@ type ToastState = { type: 'success' | 'error'; text: string } | null;
 type AdminView = 'users' | 'orders' | 'news' | 'permissions' | 'products';
 
 interface ManagedOrderItem {
-  id: number;
-  productId: number;
+  id: string;
+  productId: string;
   productName: string;
   productDescription?: string;
   quantity: number;
@@ -78,7 +78,7 @@ interface ManagedOrderItem {
 }
 
 interface ManagedOrder {
-  id: number;
+  id: string;
   orderNumber: string;
   status: OrderStatus | number;
   paymentMethod: PaymentMethod | number;

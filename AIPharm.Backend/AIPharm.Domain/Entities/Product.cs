@@ -6,7 +6,7 @@ namespace AIPharm.Domain.Entities
 {
     public class Product
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         
         [Required]
         [MaxLength(200)]
@@ -32,7 +32,7 @@ namespace AIPharm.Domain.Entities
         [MaxLength(500)]
         public string? ImageUrl { get; set; }
         
-        public int CategoryId { get; set; }
+        public Guid CategoryId { get; set; }
         
         public bool RequiresPrescription { get; set; } = false;
         

@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Http.Json;
 using AIPharm.Core.DTOs;
@@ -23,7 +24,7 @@ public class ProductsControllerTests : IClassFixture<CustomWebApplicationFactory
             Name = string.Empty,
             Price = 0m,
             StockQuantity = -5,
-            CategoryId = 0,
+            CategoryId = Guid.Empty,
             RequiresPrescription = false
         };
 
@@ -41,18 +42,29 @@ public class ProductsControllerTests : IClassFixture<CustomWebApplicationFactory
         Assert.True(problem.Errors.ContainsKey(nameof(CreateProductDto.StockQuantity)));
         Assert.Contains("Stock quantity must be between", problem.Errors[nameof(CreateProductDto.StockQuantity)][0]);
         Assert.True(problem.Errors.ContainsKey(nameof(CreateProductDto.CategoryId)));
-        Assert.Contains("positive integer", problem.Errors[nameof(CreateProductDto.CategoryId)][0]);
+        Assert.Contains("required", problem.Errors[nameof(CreateProductDto.CategoryId)][0], StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
     public async Task CreateProduct_ValidPayload_ReturnsCreatedProduct()
     {
+        var categoryResponse = await _client.PostAsJsonAsync("/api/Categories", new
+        {
+            Name = "Test Category",
+            Icon = "pill"
+        });
+
+        categoryResponse.EnsureSuccessStatusCode();
+
+        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
+        Assert.NotNull(category);
+
         var payload = new
         {
             Name = "Integration Test Product",
             Price = 12.50m,
             StockQuantity = 10,
-            CategoryId = 1,
+            CategoryId = category!.Id,
             RequiresPrescription = false
         };
 

@@ -4,6 +4,8 @@ using System.Linq;
 using AIPharm.Core.Security;
 using AIPharm.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AIPharm.Infrastructure.Data
 {
@@ -14,9 +16,10 @@ namespace AIPharm.Infrastructure.Data
             if (dropAndRecreate)
             {
                 await context.Database.EnsureDeletedAsync(ct);
+                Console.WriteLine("✅ Existing database dropped.");
             }
 
-            await context.Database.MigrateAsync(ct);
+            await EnsureDatabaseSchemaAsync(context, ct);
 
             await EnsureAdminTwoFactorDisabledAsync(context, ct);
 
@@ -556,6 +559,70 @@ namespace AIPharm.Infrastructure.Data
             await context.Orders.AddRangeAsync(ordersToAdd, ct);
             await context.SaveChangesAsync(ct);
             Console.WriteLine($"✅ Seeded {ordersToAdd.Count} demo order(s).");
+        }
+
+        private static async Task EnsureDatabaseSchemaAsync(AIPharmDbContext context, CancellationToken ct)
+        {
+            var migrations = context.Database.GetMigrations().ToList();
+
+            try
+            {
+                if (migrations.Any())
+                {
+                    await context.Database.MigrateAsync(ct);
+
+                    var applied = await context.Database.GetAppliedMigrationsAsync(ct);
+                    Console.WriteLine($"ℹ️ Database schema ensured via migrations. Applied migrations: {string.Join(", ", applied)}");
+                }
+                else
+                {
+                    var created = await context.Database.EnsureCreatedAsync(ct);
+
+                    if (created)
+                    {
+                        Console.WriteLine("✅ Database schema created via EnsureCreated (no migrations detected).");
+                    }
+                    else
+                    {
+                        Console.WriteLine("ℹ️ Database already exists; EnsureCreated skipped (no migrations detected).");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Migration pipeline failed ({ex.GetType().Name}: {ex.Message}). Falling back to EnsureCreated.");
+
+                var created = await context.Database.EnsureCreatedAsync(ct);
+                Console.WriteLine(created
+                    ? "✅ Database schema created via EnsureCreated fallback."
+                    : "ℹ️ Database already existed during EnsureCreated fallback.");
+            }
+
+            await EnsureTablesExistAsync(context, ct);
+        }
+
+        private static async Task EnsureTablesExistAsync(AIPharmDbContext context, CancellationToken ct)
+        {
+            try
+            {
+                var databaseCreator = context.Database.GetService<IRelationalDatabaseCreator>();
+
+                if (!await databaseCreator.ExistsAsync(ct))
+                {
+                    await databaseCreator.CreateAsync(ct);
+                    Console.WriteLine("ℹ️ Database created via relational database creator fallback.");
+                }
+
+                if (!await databaseCreator.HasTablesAsync(ct))
+                {
+                    await databaseCreator.CreateTablesAsync(ct);
+                    Console.WriteLine("✅ Database tables created explicitly via CreateTablesAsync fallback.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Failed to verify database tables ({ex.GetType().Name}: {ex.Message}).");
+            }
         }
 
         private static async Task EnsureAdminTwoFactorDisabledAsync(AIPharmDbContext context, CancellationToken ct)

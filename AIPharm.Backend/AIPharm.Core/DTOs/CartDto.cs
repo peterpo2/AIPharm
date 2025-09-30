@@ -1,9 +1,11 @@
+using System;
+
 namespace AIPharm.Core.DTOs
 {
     public class CartDto
     {
-        public int Id { get; set; }
-        public string UserId { get; set; } = string.Empty;
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
         public List<CartItemDto> Items { get; set; } = new();
         public decimal Total { get; set; }
         public int ItemCount { get; set; }
@@ -13,8 +15,8 @@ namespace AIPharm.Core.DTOs
 
     public class CartItemDto
     {
-        public int Id { get; set; }
-        public int ProductId { get; set; }
+        public Guid Id { get; set; }
+        public Guid ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }
         public string? ActiveIngredient { get; set; }
@@ -25,7 +27,7 @@ namespace AIPharm.Core.DTOs
 
     public class AddToCartDto
     {
-        public int ProductId { get; set; }
+        public Guid ProductId { get; set; }
         public int Quantity { get; set; } = 1;
     }
 

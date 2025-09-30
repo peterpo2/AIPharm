@@ -1,3 +1,4 @@
+using System;
 using AutoMapper;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -89,7 +90,7 @@ namespace AIPharm.Core.Services
             };
         }
 
-        public async Task<ProductDto?> GetProductByIdAsync(int id)
+        public async Task<ProductDto?> GetProductByIdAsync(Guid id)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return null;
@@ -128,7 +129,7 @@ namespace AIPharm.Core.Services
             return _mapper.Map<ProductDto>(createdProduct);
         }
 
-        public async Task<ProductDto> UpdateProductAsync(int id, UpdateProductDto updateProductDto)
+        public async Task<ProductDto> UpdateProductAsync(Guid id, UpdateProductDto updateProductDto)
         {
             ArgumentNullException.ThrowIfNull(updateProductDto);
 
@@ -152,7 +153,7 @@ namespace AIPharm.Core.Services
             return _mapper.Map<ProductDto>(updatedProduct);
         }
 
-        public async Task DeleteProductAsync(int id)
+        public async Task DeleteProductAsync(Guid id)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null)
@@ -180,9 +181,9 @@ namespace AIPharm.Core.Services
                 throw new ArgumentOutOfRangeException(nameof(CreateProductDto.StockQuantity), "Stock quantity cannot be negative.");
             }
 
-            if (createProductDto.CategoryId <= 0)
+            if (createProductDto.CategoryId == Guid.Empty)
             {
-                throw new ArgumentOutOfRangeException(nameof(CreateProductDto.CategoryId), "CategoryId must be greater than zero.");
+                throw new ArgumentOutOfRangeException(nameof(CreateProductDto.CategoryId), "CategoryId must be a valid GUID.");
             }
         }
 
@@ -203,9 +204,9 @@ namespace AIPharm.Core.Services
                 throw new ArgumentOutOfRangeException(nameof(UpdateProductDto.StockQuantity), "Stock quantity cannot be negative.");
             }
 
-            if (updateProductDto.CategoryId.HasValue && updateProductDto.CategoryId.Value <= 0)
+            if (updateProductDto.CategoryId.HasValue && updateProductDto.CategoryId.Value == Guid.Empty)
             {
-                throw new ArgumentOutOfRangeException(nameof(UpdateProductDto.CategoryId), "CategoryId must be greater than zero.");
+                throw new ArgumentOutOfRangeException(nameof(UpdateProductDto.CategoryId), "CategoryId must be a valid GUID.");
             }
         }
     }

@@ -191,7 +191,7 @@ public class ProductServiceTests
         return configuration.CreateMapper();
     }
 
-    private sealed record SeedData(int AnalgesicsCategoryId, List<int> MatchingProductIds);
+    private sealed record SeedData(Guid AnalgesicsCategoryId, List<Guid> MatchingProductIds);
 
     private sealed class CommandCaptureInterceptor : DbCommandInterceptor
     {

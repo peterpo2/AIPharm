@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq.Expressions;
 using AIPharm.Core.Interfaces;
 using AIPharm.Infrastructure.Data;
@@ -21,7 +22,7 @@ namespace AIPharm.Infrastructure.Repositories
             return _dbSet.AsNoTracking();
         }
 
-        public virtual async Task<T?> GetByIdAsync(int id)
+        public virtual async Task<T?> GetByIdAsync(Guid id)
         {
             return await _dbSet.FindAsync(id);
         }
@@ -66,7 +67,7 @@ namespace AIPharm.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public virtual async Task DeleteAsync(int id)
+        public virtual async Task DeleteAsync(Guid id)
         {
             var entity = await GetByIdAsync(id);
             if (entity != null)
