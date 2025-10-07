@@ -1,4 +1,5 @@
 import { Category } from '../types';
+import { CATEGORY_IDS } from '../data/mockData';
 
 type Gradient = [string, string];
 
@@ -79,35 +80,35 @@ const createSvgDataUri = (
 };
 
 const productCategoryMap: Record<
-  number,
+  string,
   { subtitle: string; gradient: Gradient; icon: string }
 > = {
-  1: {
+  [CATEGORY_IDS.analgesics]: {
     subtitle: 'Pain Relief Essentials',
     gradient: ['#0f766e', '#14b8a6'],
     icon: '💊',
   },
-  2: {
+  [CATEGORY_IDS.vitamins]: {
     subtitle: 'Daily Vitamins & Wellness',
     gradient: ['#7c3aed', '#a855f7'],
     icon: '🌿',
   },
-  3: {
+  [CATEGORY_IDS.coldFlu]: {
     subtitle: 'Cold & Flu Care',
     gradient: ['#2563eb', '#38bdf8'],
     icon: '🤧',
   },
-  4: {
+  [CATEGORY_IDS.digestive]: {
     subtitle: 'Digestive Support',
     gradient: ['#f97316', '#fbbf24'],
     icon: '🫗',
   },
-  5: {
+  [CATEGORY_IDS.skincare]: {
     subtitle: 'Skin & Hair Care',
     gradient: ['#be123c', '#f43f5e'],
     icon: '✨',
   },
-  6: {
+  [CATEGORY_IDS.kids]: {
     subtitle: 'Kids Health',
     gradient: ['#2563eb', '#a855f7'],
     icon: '🧸',
@@ -125,7 +126,7 @@ const newsCategoryPalette: Record<string, Gradient> = {
 
 const defaultNewsGradient: Gradient = ['#312e81', '#6366f1'];
 
-export const generateProductImage = (title: string, categoryId: number): string => {
+export const generateProductImage = (title: string, categoryId: string): string => {
   const config = productCategoryMap[categoryId] ?? {
     subtitle: 'Pharmacy Essentials',
     gradient: ['#0369a1', '#38bdf8'] as Gradient,

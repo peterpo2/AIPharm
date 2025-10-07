@@ -1,3 +1,4 @@
+using System;
 using AutoMapper;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -27,7 +28,7 @@ namespace AIPharm.Core.Services
             var products = _productRepository.Query();
 
             // Apply filters
-            if (filter.CategoryId.HasValue)
+            if (filter.CategoryId.HasValue && filter.CategoryId.Value != Guid.Empty)
             {
                 products = products.Where(p => p.CategoryId == filter.CategoryId.Value);
             }
@@ -114,6 +115,11 @@ namespace AIPharm.Core.Services
 
         public async Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto)
         {
+            if (createProductDto.CategoryId == Guid.Empty)
+            {
+                throw new ArgumentException("CategoryId must be a non-empty GUID.", nameof(CreateProductDto.CategoryId));
+            }
+
             var category = await _categoryRepository.GetByIdAsync(createProductDto.CategoryId);
             if (category == null)
             {
@@ -138,6 +144,11 @@ namespace AIPharm.Core.Services
 
             if (updateProductDto.CategoryId.HasValue)
             {
+                if (updateProductDto.CategoryId.Value == Guid.Empty)
+                {
+                    throw new ArgumentException("CategoryId must be a non-empty GUID.", nameof(UpdateProductDto.CategoryId));
+                }
+
                 var category = await _categoryRepository.GetByIdAsync(updateProductDto.CategoryId.Value);
                 if (category == null)
                 {
@@ -180,9 +191,9 @@ namespace AIPharm.Core.Services
                 throw new ArgumentOutOfRangeException(nameof(CreateProductDto.StockQuantity), "Stock quantity cannot be negative.");
             }
 
-            if (createProductDto.CategoryId <= 0)
+            if (createProductDto.CategoryId == Guid.Empty)
             {
-                throw new ArgumentOutOfRangeException(nameof(CreateProductDto.CategoryId), "CategoryId must be greater than zero.");
+                throw new ArgumentException("CategoryId must be a non-empty GUID.", nameof(CreateProductDto.CategoryId));
             }
         }
 
@@ -203,9 +214,9 @@ namespace AIPharm.Core.Services
                 throw new ArgumentOutOfRangeException(nameof(UpdateProductDto.StockQuantity), "Stock quantity cannot be negative.");
             }
 
-            if (updateProductDto.CategoryId.HasValue && updateProductDto.CategoryId.Value <= 0)
+            if (updateProductDto.CategoryId.HasValue && updateProductDto.CategoryId.Value == Guid.Empty)
             {
-                throw new ArgumentOutOfRangeException(nameof(UpdateProductDto.CategoryId), "CategoryId must be greater than zero.");
+                throw new ArgumentException("CategoryId must be a non-empty GUID.", nameof(UpdateProductDto.CategoryId));
             }
         }
     }

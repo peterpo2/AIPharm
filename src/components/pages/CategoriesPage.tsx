@@ -9,7 +9,7 @@ import { getCategoryDisplayName, getCategoryIcon } from '../../utils/categories'
 interface CategoriesPageProps {
   categories: Category[];
   products: Product[];
-  onCategorySelect: (categoryId: number | null) => void;
+  onCategorySelect: (categoryId: string | null) => void;
 }
 
 const CategoriesPage: React.FC<CategoriesPageProps> = ({ categories, products, onCategorySelect }) => {
@@ -26,7 +26,7 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({ categories, products, o
     [categories, language, products],
   );
 
-  const handleCategoryClick = (categoryId: number) => {
+  const handleCategoryClick = (categoryId: string) => {
     onCategorySelect(categoryId);
   };
 

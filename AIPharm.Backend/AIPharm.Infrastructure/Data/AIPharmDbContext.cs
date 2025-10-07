@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using AIPharm.Domain.Entities;
 
@@ -51,8 +52,13 @@ namespace AIPharm.Infrastructure.Data
                         entity.ToTable("Categories", "dbo");
                         entity.HasKey(e => e.Id);
 
-                        entity.Property(e => e.Id)
+                        var categoryIdProperty = entity.Property(e => e.Id)
                         .ValueGeneratedOnAdd();
+
+                        if (Database.ProviderName?.Contains("SqlServer", StringComparison.OrdinalIgnoreCase) == true)
+                        {
+                              categoryIdProperty.HasDefaultValueSql("NEWID()");
+                        }
 
                         entity.Property(e => e.Name)
                         .IsRequired()

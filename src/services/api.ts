@@ -10,7 +10,7 @@ export interface ApiProduct {
     price: number;
     stockQuantity: number;
     imageUrl?: string;
-    categoryId: number;
+    categoryId: string;
     categoryName?: string;
     requiresPrescription: boolean;
     activeIngredient?: string;
@@ -21,7 +21,7 @@ export interface ApiProduct {
 }
 
 export interface ApiCategory {
-    id: number;
+    id: string;
     name: string;
     description?: string;
     icon: string;
@@ -60,7 +60,7 @@ export interface ApiPagedResult<T> {
 }
 
 export interface ProductFilter {
-    categoryId?: number;
+    categoryId?: string;
     minPrice?: number;
     maxPrice?: number;
     searchTerm?: string;
@@ -154,7 +154,7 @@ class ApiClient {
     // ----- Products -----
     getProducts(filter: ProductFilter = {}) {
         const params = new URLSearchParams();
-        if (filter.categoryId != null) params.append("categoryId", String(filter.categoryId));
+        if (filter.categoryId) params.append("categoryId", filter.categoryId);
         if (filter.minPrice != null) params.append("minPrice", String(filter.minPrice));
         if (filter.maxPrice != null) params.append("maxPrice", String(filter.maxPrice));
         if (filter.searchTerm) params.append("searchTerm", filter.searchTerm);
@@ -181,7 +181,7 @@ class ApiClient {
         return this.request<ApiCategory[]>("/categories");
     }
 
-    getCategory(id: number) {
+    getCategory(id: string) {
         return this.request<ApiCategory>(`/categories/${id}`);
     }
 
@@ -233,7 +233,7 @@ export function getProducts(filter?: ProductFilter) { return apiClient.getProduc
 export function getProduct(id: number) { return apiClient.getProduct(id); }
 export function searchProducts(searchTerm: string) { return apiClient.searchProducts(searchTerm); }
 export function getCategories() { return apiClient.getCategories(); }
-export function getCategory(id: number) { return apiClient.getCategory(id); }
+export function getCategory(id: string) { return apiClient.getCategory(id); }
 export function getCart() { return apiClient.getCart(); }
 export function addToCart(productId: number, quantity = 1) { return apiClient.addToCart(productId, quantity); }
 export function updateCartItem(cartItemId: number, quantity: number) { return apiClient.updateCartItem(cartItemId, quantity); }

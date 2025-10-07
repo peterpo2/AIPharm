@@ -177,7 +177,7 @@ const mapProductToFormState = (product: Product): ProductFormState => ({
   price: product.price.toString(),
   stockQuantity: product.stockQuantity.toString(),
   imageUrl: product.imageUrl,
-  categoryId: product.categoryId.toString(),
+  categoryId: product.categoryId,
   requiresPrescription: product.requiresPrescription,
   activeIngredient: product.activeIngredient ?? '',
   activeIngredientEn: product.activeIngredientEn ?? product.activeIngredient ?? '',
@@ -938,7 +938,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   }, [catalogProducts, productSearch]);
 
   const categoryById = useMemo(() => {
-    const map = new Map<number, string>();
+    const map = new Map<string, string>();
     catalogCategories.forEach((category) => {
       map.set(category.id, category.name);
     });
@@ -1416,7 +1416,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const dosageEn = productForm.dosageEn.trim();
     const manufacturer = productForm.manufacturer.trim();
     const manufacturerEn = productForm.manufacturerEn.trim();
-    const categoryId = Number(productForm.categoryId);
+    const categoryId = productForm.categoryId.trim();
     const price = Number(productForm.price);
     const stockQuantity = Number(productForm.stockQuantity);
 
@@ -1425,7 +1425,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     if (!Number.isFinite(price) || price <= 0) errors.push(t('admin.products.errors.price'));
     if (!Number.isFinite(stockQuantity) || stockQuantity < 0)
       errors.push(t('admin.products.errors.stock'));
-    if (!Number.isInteger(categoryId) || categoryId <= 0)
+    if (!categoryId || !categoryById.has(categoryId))
       errors.push(t('admin.products.errors.category'));
     if (!imageUrl) errors.push(t('admin.products.errors.imageUrl'));
 

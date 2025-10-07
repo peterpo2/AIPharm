@@ -1,5 +1,5 @@
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   icon: string;
@@ -26,7 +26,7 @@ export interface Product {
   price: number;
   stockQuantity: number;
   imageUrl: string;
-  categoryId: number;
+  categoryId: string;
   category?: Category;
   requiresPrescription: boolean;
   activeIngredient?: string;
@@ -137,7 +137,7 @@ export interface User {
 }
 
 export interface ProductFilter {
-  categoryId?: number;
+  categoryId?: string;
   minPrice?: number;
   maxPrice?: number;
   searchTerm?: string;

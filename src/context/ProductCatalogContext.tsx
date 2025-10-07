@@ -10,7 +10,7 @@ interface ProductInput {
   price: number;
   stockQuantity: number;
   imageUrl: string;
-  categoryId: number;
+  categoryId: string;
   requiresPrescription: boolean;
   activeIngredient?: string;
   activeIngredientEn?: string;

@@ -1,3 +1,4 @@
+using System;
 using AutoMapper;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
@@ -31,17 +32,19 @@ public class ProductServiceTests
     [Fact]
     public async Task CreateProductAsync_WithValidCategory_ReturnsProductDto()
     {
+        var categoryId = Guid.NewGuid();
+
         var createDto = new CreateProductDto
         {
             Name = "Painkiller",
             Description = "Fast acting relief",
             Price = 19.99m,
             StockQuantity = 10,
-            CategoryId = 1,
+            CategoryId = categoryId,
             RequiresPrescription = false
         };
 
-        var category = new Category { Id = 1, Name = "Analgesics", Icon = "pill" };
+        var category = new Category { Id = categoryId, Name = "Analgesics", Icon = "pill" };
 
         _categoryRepositoryMock
             .Setup(repo => repo.GetByIdAsync(createDto.CategoryId))
@@ -67,12 +70,13 @@ public class ProductServiceTests
     [Fact]
     public async Task CreateProductAsync_WithInvalidCategory_ThrowsArgumentException()
     {
+        var categoryId = Guid.NewGuid();
         var createDto = new CreateProductDto
         {
             Name = "Painkiller",
             Price = 19.99m,
             StockQuantity = 10,
-            CategoryId = 99
+            CategoryId = categoryId
         };
 
         _categoryRepositoryMock
@@ -88,11 +92,14 @@ public class ProductServiceTests
     [Fact]
     public async Task UpdateProductAsync_WithValidCategory_ReturnsUpdatedProductDto()
     {
+        var originalCategoryId = Guid.NewGuid();
+        var updatedCategoryId = Guid.NewGuid();
+
         var existingProduct = new Product
         {
             Id = 5,
             Name = "Painkiller",
-            CategoryId = 1,
+            CategoryId = originalCategoryId,
             Price = 9.99m,
             StockQuantity = 5,
             CreatedAt = DateTime.UtcNow.AddDays(-1),
@@ -102,11 +109,11 @@ public class ProductServiceTests
         var updateDto = new UpdateProductDto
         {
             Name = "Painkiller Plus",
-            CategoryId = 2,
+            CategoryId = updatedCategoryId,
             Price = 14.99m
         };
 
-        var category = new Category { Id = 2, Name = "Supplements", Icon = "leaf" };
+        var category = new Category { Id = updatedCategoryId, Name = "Supplements", Icon = "leaf" };
 
         _productRepositoryMock
             .Setup(repo => repo.GetByIdAsync(existingProduct.Id))
@@ -132,16 +139,18 @@ public class ProductServiceTests
     [Fact]
     public async Task UpdateProductAsync_WithInvalidCategory_ThrowsArgumentException()
     {
+        var originalCategoryId = Guid.NewGuid();
+        var missingCategoryId = Guid.NewGuid();
         var existingProduct = new Product
         {
             Id = 5,
             Name = "Painkiller",
-            CategoryId = 1
+            CategoryId = originalCategoryId
         };
 
         var updateDto = new UpdateProductDto
         {
-            CategoryId = 99
+            CategoryId = missingCategoryId
         };
 
         _productRepositoryMock
@@ -168,6 +177,6 @@ public class ProductServiceTests
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => _productService.UpdateProductAsync(123, updateDto));
 
-        _categoryRepositoryMock.Verify(repo => repo.GetByIdAsync(It.IsAny<int>()), Times.Never);
+        _categoryRepositoryMock.Verify(repo => repo.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
     }
 }

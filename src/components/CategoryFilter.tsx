@@ -6,8 +6,8 @@ import { useLanguage } from "../context/LanguageContext";
 import { getCategoryDisplayName, getCategoryIcon } from "../utils/categories";
 
 interface CategoryFilterProps {
-  selectedCategory: number | null;
-  onCategoryChange: (categoryId: number | null) => void;
+  selectedCategory: string | null;
+  onCategoryChange: (categoryId: string | null) => void;
   categories: Category[];
 }
 

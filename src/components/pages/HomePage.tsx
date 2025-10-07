@@ -10,8 +10,8 @@ import { getCategoryDisplayName, getCategoryIcon } from '../../utils/categories'
 
 interface HomePageProps {
   searchTerm: string;
-  selectedCategory: number | null;
-  onCategoryChange: (categoryId: number | null) => void;
+  selectedCategory: string | null;
+  onCategoryChange: (categoryId: string | null) => void;
   filteredProducts: Product[];
   categories: Category[];
   showHero: boolean;

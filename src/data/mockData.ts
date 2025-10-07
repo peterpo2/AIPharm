@@ -1,38 +1,47 @@
 import { Category, Product } from '../types';
 
+export const CATEGORY_IDS = {
+  analgesics: '11111111-1111-1111-1111-111111111111',
+  vitamins: '22222222-2222-2222-2222-222222222222',
+  coldFlu: '33333333-3333-3333-3333-333333333333',
+  digestive: '44444444-4444-4444-4444-444444444444',
+  skincare: '55555555-5555-5555-5555-555555555555',
+  kids: '66666666-6666-6666-6666-666666666666',
+} as const;
+
 export const categories: Category[] = [
   {
-    id: 1,
+    id: CATEGORY_IDS.analgesics,
     name: 'Обезболяващи',
     description: 'Лекарства за облекчаване на болка и възпаление',
     icon: 'pill',
   },
   {
-    id: 2,
+    id: CATEGORY_IDS.vitamins,
     name: 'Витамини',
     description: 'Хранителни добавки и витамини',
     icon: 'heart',
   },
   {
-    id: 3,
+    id: CATEGORY_IDS.coldFlu,
     name: 'Простуда и грип',
     description: 'Лекарства за простуда, кашлица и грип',
     icon: 'thermometer',
   },
   {
-    id: 4,
+    id: CATEGORY_IDS.digestive,
     name: 'Стомашно-чревни',
     description: 'Лекарства за храносмилателни проблеми',
     icon: 'stomach',
   },
   {
-    id: 5,
+    id: CATEGORY_IDS.skincare,
     name: 'Кожа и коса',
     description: 'Козметика и дермато-козметични продукти',
     icon: 'droplet',
   },
   {
-    id: 6,
+    id: CATEGORY_IDS.kids,
     name: 'Детски продукти',
     description: 'Специализирани продукти за деца',
     icon: 'baby',
@@ -52,7 +61,7 @@ export const products: Product[] = [
     stockQuantity: 150,
     imageUrl:
       'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 1,
+    categoryId: CATEGORY_IDS.analgesics,
     requiresPrescription: false,
     activeIngredient: 'Парацетамол',
     activeIngredientEn: 'Paracetamol',
@@ -72,7 +81,7 @@ export const products: Product[] = [
     stockQuantity: 95,
     imageUrl:
       'https://images.pexels.com/photos/3683081/pexels-photo-3683081.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 1,
+    categoryId: CATEGORY_IDS.analgesics,
     requiresPrescription: false,
     activeIngredient: 'Ибупрофен',
     activeIngredientEn: 'Ibuprofen',
@@ -92,7 +101,7 @@ export const products: Product[] = [
     stockQuantity: 200,
     imageUrl:
       'https://images.pexels.com/photos/3683107/pexels-photo-3683107.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 2,
+    categoryId: CATEGORY_IDS.vitamins,
     requiresPrescription: false,
     activeIngredient: 'Аскорбинова киселина',
     activeIngredientEn: 'Ascorbic Acid',
@@ -123,7 +132,7 @@ export const products: Product[] = [
     stockQuantity: 75,
     imageUrl:
       'https://images.pexels.com/photos/3683083/pexels-photo-3683083.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 2,
+    categoryId: CATEGORY_IDS.vitamins,
     requiresPrescription: false,
     activeIngredient: 'Магнезий оксид, Пиридоксин',
     activeIngredientEn: 'Magnesium Oxide, Pyridoxine',
@@ -154,7 +163,7 @@ export const products: Product[] = [
     stockQuantity: 120,
     imageUrl:
       'https://images.pexels.com/photos/3683051/pexels-photo-3683051.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 3,
+    categoryId: CATEGORY_IDS.coldFlu,
     requiresPrescription: false,
     activeIngredient: 'Екстракт от мед и лимон',
     activeIngredientEn: 'Honey and Lemon Extract',
@@ -174,7 +183,7 @@ export const products: Product[] = [
     stockQuantity: 85,
     imageUrl:
       'https://images.pexels.com/photos/3683050/pexels-photo-3683050.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 3,
+    categoryId: CATEGORY_IDS.coldFlu,
     requiresPrescription: false,
     activeIngredient: 'Ксилометазолин',
     activeIngredientEn: 'Xylometazoline',
@@ -194,7 +203,7 @@ export const products: Product[] = [
     stockQuantity: 60,
     imageUrl:
       'https://images.pexels.com/photos/3683110/pexels-photo-3683110.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 4,
+    categoryId: CATEGORY_IDS.digestive,
     requiresPrescription: false,
     activeIngredient: 'Лактобацили и бифидобактерии',
     activeIngredientEn: 'Lactobacilli and Bifidobacteria',
@@ -214,7 +223,7 @@ export const products: Product[] = [
     stockQuantity: 110,
     imageUrl:
       'https://images.pexels.com/photos/3683048/pexels-photo-3683048.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 4,
+    categoryId: CATEGORY_IDS.digestive,
     requiresPrescription: false,
     activeIngredient: 'Алуминиев хидроксид',
     activeIngredientEn: 'Aluminum Hydroxide',
@@ -245,7 +254,7 @@ export const products: Product[] = [
     stockQuantity: 90,
     imageUrl:
       'https://images.pexels.com/photos/3683099/pexels-photo-3683099.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 5,
+    categoryId: CATEGORY_IDS.skincare,
     requiresPrescription: false,
     activeIngredient: 'Хиалуронова киселина',
     activeIngredientEn: 'Hyaluronic Acid',
@@ -265,7 +274,7 @@ export const products: Product[] = [
     stockQuantity: 100,
     imageUrl:
       'https://images.pexels.com/photos/3683077/pexels-photo-3683077.jpeg?auto=compress&cs=tinysrgb&w=400',
-    categoryId: 6,
+    categoryId: CATEGORY_IDS.kids,
     requiresPrescription: false,
     activeIngredient: 'Парацетамол',
     activeIngredientEn: 'Paracetamol',
@@ -281,11 +290,11 @@ export const getProductById = (id: number): Product | undefined => {
   return products.find((p) => p.id === id);
 };
 
-export const getProductsByCategory = (categoryId: number): Product[] => {
+export const getProductsByCategory = (categoryId: string): Product[] => {
   return products.filter((p) => p.categoryId === categoryId);
 };
 
-export const getCategoryById = (id: number): Category | undefined => {
+export const getCategoryById = (id: string): Category | undefined => {
   return categories.find((c) => c.id === id);
 };
 
