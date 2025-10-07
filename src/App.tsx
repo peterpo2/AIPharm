@@ -27,7 +27,7 @@ function AppContent() {
   const { prescriptionFeaturesEnabled } = useFeatureToggles();
   const { products, categories } = useProductCatalog();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -138,7 +138,7 @@ function AppContent() {
     }
   };
 
-  const handleCategoryChange = (categoryId: number | null) => {
+  const handleCategoryChange = (categoryId: string | null) => {
     setSelectedCategory(categoryId);
     setSearchTerm('');
     if (categoryId && location.pathname !== '/products') {

@@ -1,3 +1,4 @@
+using System;
 using AIPharm.Core.DTOs;
 using AIPharm.Core.Interfaces;
 using AIPharm.Web.Controllers;
@@ -21,7 +22,7 @@ public class ProductsControllerTests
     [Fact]
     public async Task CreateProduct_WhenCategoryIsInvalid_ReturnsBadRequest()
     {
-        var dto = new CreateProductDto { CategoryId = 99 };
+        var dto = new CreateProductDto { CategoryId = Guid.NewGuid() };
 
         _productServiceMock
             .Setup(service => service.CreateProductAsync(It.IsAny<CreateProductDto>()))
@@ -36,7 +37,8 @@ public class ProductsControllerTests
     [Fact]
     public async Task CreateProduct_WhenSuccessful_ReturnsCreatedAtAction()
     {
-        var dto = new CreateProductDto { Name = "Painkiller", CategoryId = 1 };
+        var categoryId = Guid.NewGuid();
+        var dto = new CreateProductDto { Name = "Painkiller", CategoryId = categoryId };
         var product = new ProductDto { Id = 10, Name = dto.Name, CategoryId = dto.CategoryId };
 
         _productServiceMock
@@ -52,7 +54,7 @@ public class ProductsControllerTests
     [Fact]
     public async Task UpdateProduct_WhenCategoryIsInvalid_ReturnsBadRequest()
     {
-        var dto = new UpdateProductDto { CategoryId = 5 };
+        var dto = new UpdateProductDto { CategoryId = Guid.NewGuid() };
 
         _productServiceMock
             .Setup(service => service.UpdateProductAsync(It.IsAny<int>(), It.IsAny<UpdateProductDto>()))

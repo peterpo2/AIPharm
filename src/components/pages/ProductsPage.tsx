@@ -9,8 +9,8 @@ import { useFeatureToggles } from '../../context/FeatureToggleContext';
 
 interface ProductsPageProps {
   searchTerm: string;
-  selectedCategory: number | null;
-  onCategoryChange: (categoryId: number | null) => void;
+  selectedCategory: string | null;
+  onCategoryChange: (categoryId: string | null) => void;
   filteredProducts: Product[];
   categories: Category[];
   allProducts: Product[];

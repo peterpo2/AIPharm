@@ -19,8 +19,7 @@ namespace AIPharm.Infrastructure.Data.Migrations
                 schema: "dbo",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     Icon = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -67,7 +66,7 @@ namespace AIPharm.Infrastructure.Data.Migrations
                     Price = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     StockQuantity = table.Column<int>(type: "int", nullable: false),
                     ImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CategoryId = table.Column<int>(type: "int", nullable: false),
+                    CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RequiresPrescription = table.Column<bool>(type: "bit", nullable: false),
                     ActiveIngredient = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     ActiveIngredientEn = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
