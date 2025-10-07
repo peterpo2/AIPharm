@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using AIPharm.Core.Interfaces;
@@ -22,6 +23,11 @@ namespace AIPharm.Infrastructure.Repositories
         }
 
         public virtual async Task<T?> GetByIdAsync(int id)
+        {
+            return await _dbSet.FindAsync(id);
+        }
+
+        public virtual async Task<T?> GetByIdAsync(Guid id)
         {
             return await _dbSet.FindAsync(id);
         }
@@ -67,6 +73,15 @@ namespace AIPharm.Infrastructure.Repositories
         }
 
         public virtual async Task DeleteAsync(int id)
+        {
+            var entity = await GetByIdAsync(id);
+            if (entity != null)
+            {
+                await DeleteAsync(entity);
+            }
+        }
+
+        public virtual async Task DeleteAsync(Guid id)
         {
             var entity = await GetByIdAsync(id);
             if (entity != null)

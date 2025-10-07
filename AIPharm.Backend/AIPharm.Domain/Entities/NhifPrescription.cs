@@ -21,7 +21,7 @@ namespace AIPharm.Domain.Entities
         public DateTime PurchaseDate { get; set; }
 
         [Required]
-        public int OrderId { get; set; }
+        public Guid OrderId { get; set; }
 
         [Required]
         [MaxLength(100)]

@@ -85,7 +85,7 @@ export interface NhifPrescriptionSummary {
 }
 
 export interface OrderSummary {
-  id: number;
+  id: string;
   orderNumber: string;
   orderKey?: string;
   status: OrderStatus | number;

@@ -52,7 +52,8 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("NEWID()");
 
                         entity.Property(e => e.Name)
                         .IsRequired()
@@ -72,7 +73,8 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("NEWID()");
 
                         entity.Property(e => e.Name)
                         .IsRequired()
@@ -140,7 +142,8 @@ namespace AIPharm.Infrastructure.Data
                         entity.HasKey(e => e.Id);
 
                         entity.Property(e => e.Id)
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("NEWID()");
 
                         entity.Property(e => e.OrderNumber)
                         .IsRequired()

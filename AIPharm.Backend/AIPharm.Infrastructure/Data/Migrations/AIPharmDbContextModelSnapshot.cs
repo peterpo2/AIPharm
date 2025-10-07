@@ -134,11 +134,10 @@ namespace AIPharm.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("AIPharm.Domain.Entities.Order", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasDefaultValueSql("NEWID()")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -227,8 +226,8 @@ namespace AIPharm.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ProductDescription")
                         .HasMaxLength(200)
@@ -271,8 +270,8 @@ namespace AIPharm.Infrastructure.Data.Migrations
                     b.Property<decimal>("NhifPaidAmount")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()

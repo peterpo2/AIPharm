@@ -7,7 +7,7 @@ namespace AIPharm.Core.DTOs
 {
     public class OrderDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
         public string OrderKey => OrderNumber;
         public OrderStatus Status { get; set; }

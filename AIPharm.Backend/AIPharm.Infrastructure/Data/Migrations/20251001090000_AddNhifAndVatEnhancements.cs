@@ -105,7 +105,7 @@ namespace AIPharm.Infrastructure.Data.Migrations
                     PersonalIdentificationNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     PrescribedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PurchaseDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    OrderId = table.Column<int>(type: "int", nullable: false),
+                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     OrderNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     PatientPaidAmount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),

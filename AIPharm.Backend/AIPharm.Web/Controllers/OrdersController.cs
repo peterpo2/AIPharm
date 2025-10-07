@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -92,9 +93,9 @@ namespace AIPharm.Web.Controllers
             }
         }
 
-        [HttpPatch("{orderId:int}/status")]
+        [HttpPatch("{orderId:guid}/status")]
         [Authorize(Roles = "Admin,Staff")]
-        public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromBody] UpdateOrderStatusDto request)
+        public async Task<IActionResult> UpdateOrderStatus(Guid orderId, [FromBody] UpdateOrderStatusDto request)
         {
             if (!ModelState.IsValid)
             {

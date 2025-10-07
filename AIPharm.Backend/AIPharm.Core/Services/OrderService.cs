@@ -194,9 +194,9 @@ namespace AIPharm.Core.Services
             return orders.Select(MapOrder).ToList();
         }
 
-        public async Task<OrderDto> UpdateOrderStatusAsync(int orderId, OrderStatus status)
+        public async Task<OrderDto> UpdateOrderStatusAsync(Guid orderId, OrderStatus status)
         {
-            if (orderId <= 0)
+            if (orderId == Guid.Empty)
             {
                 throw new ArgumentOutOfRangeException(nameof(orderId));
             }

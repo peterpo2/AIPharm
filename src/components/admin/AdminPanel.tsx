@@ -78,7 +78,7 @@ interface ManagedOrderItem {
 }
 
 interface ManagedOrder {
-  id: number;
+  id: string;
   orderNumber: string;
   status: OrderStatus | number;
   paymentMethod: PaymentMethod | number;
@@ -402,7 +402,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [ordersToast, setOrdersToast] = useState<ToastState>(null);
-  const [statusUpdates, setStatusUpdates] = useState<Record<number, OrderStatus | null>>({});
+  const [statusUpdates, setStatusUpdates] = useState<Record<string, OrderStatus | null>>({});
   const [newsForm, setNewsForm] = useState<NewsFormState>(() => buildInitialNewsForm());
   const [newsErrors, setNewsErrors] = useState<string[]>([]);
   const [newsToast, setNewsToast] = useState<ToastState>(null);
@@ -644,7 +644,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   }, [activeView, canManageOrders, fetchOrders, isPanelOpen]);
 
   const handleUpdateOrderStatus = useCallback(
-    async (orderId: number, status: OrderStatus) => {
+    async (orderId: string, status: OrderStatus) => {
       const token =
         localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 
